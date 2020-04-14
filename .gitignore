@@ -1,0 +1,16 @@
+/.gradle
+/gradle
+/.idea
+/build
+/out
+/classes
+gradlew
+gradlew.bat
+/jstorage
+/docs
+*.key
+*.crt
+*.p12
+*.pem
+*.config
+*.storage
