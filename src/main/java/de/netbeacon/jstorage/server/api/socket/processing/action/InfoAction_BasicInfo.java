@@ -37,7 +37,7 @@ import java.util.List;
  * --- Requirements --- <br>
  * action: info <br>
  * http_method: get <br>
- * login-mode: token <br>
+ * login-mode: all <br>
  * payload: no <br>
  * permissions: none <br>
  * required_arguments: <br>
@@ -66,6 +66,11 @@ public class InfoAction_BasicInfo implements ProcessingAction{
         this.user = user;
         this.result = result;
         this.args = args;
+    }
+
+    @Override
+    public boolean loginModeIsSupported(int loginMode) {
+        return true;
     }
 
     @Override
