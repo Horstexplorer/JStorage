@@ -32,6 +32,7 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The type Api socket handler.
@@ -268,8 +269,11 @@ public class APISocketHandler extends Thread {
                 // send data
                 if(hpr.getResult() != null){
                     sendLines("Content-Type: application/json", "Content-Length: "+hpr.getResult().toString().length());
-                    sendData("\r\n"); // spacer between header and data
+                    endHeaders(); // spacer between header and data
                     sendData(hpr.getResult().toString());
+                    logger.info(hpr.getResult().toString().length()+", "+hpr.getResult().toString().getBytes().length);
+                }else{
+                    endHeaders(); // "server: I finished sending headers"
                 }
                 logger.debug("Send Result: "+hpr.getHTTPStatusMessage()+ " "+hpr.getResult().toString());
                 // done processing :3 *happy calculation noises*
@@ -281,10 +285,12 @@ public class APISocketHandler extends Thread {
                 }else{
                     sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Additional-Information: "+e.getAdditionalInformation());
                 }
+                endHeaders(); // "server: I finished sending headers"
             }
         }catch (Exception e){
             // return 500
-            try{sendLines("HTTP/1.1 500 Internal Server Error");}catch (Exception ignore){}
+            try{sendLines("HTTP/1.1 500 Internal Server Error"); endHeaders();}catch (Exception ignore){}
+            e.printStackTrace();
         }finally {
             logger.info("Finished Processing Of "+socket.getRemoteSocketAddress());
             close();
@@ -302,6 +308,11 @@ public class APISocketHandler extends Thread {
         for(String s : lines){
             bufferedWriter.write(s+"\r\n");
         }
+        bufferedWriter.flush();
+    }
+
+    private void endHeaders() throws Exception{
+        bufferedWriter.newLine();
         bufferedWriter.flush();
     }
 
