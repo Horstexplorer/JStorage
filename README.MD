@@ -1,6 +1,6 @@
 # JStorage
 ###### JSON based data storage & cache system with web api access
-> Version: 1.0.1_2 R
+> Version: 1.0.2_3 R
 
 
 ## Table of Content
@@ -57,3 +57,4 @@ Future releases might contain following features:
 - User: better permissions
 - Usage statistics
 - WebSocket: more nicely shutdown
+- Optional file encryption
