@@ -4,7 +4,6 @@
 
 
 ## Table of Content
-- [Docs](https://horstexplorer.github.io/JStorage/)
 - [Setup](#setup)
 - [Usage](#usage)
 - [Actions](./ACTIONS.MD)
