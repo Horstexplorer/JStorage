@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -256,10 +257,14 @@ public class UserManager {
                     // add default admin user
                     User user = new User("admin");
                     user.addGlobalPermission(GlobalPermission.Admin);
+                    String passwd = RandomStringUtils.randomAlphanumeric(16);
+                    user.setPassword(passwd);
                     userPool.put(user.getUserID(), user);
                     logger.info("--------------------------------------------------------------------------------");
                     logger.info("UserManager: Created Admin User:");
-                    logger.info("UserID: "+user.getUserID()+"  LoginToken: "+user.getLoginToken());
+                    logger.info("UserID: "+user.getUserID());
+                    logger.info("Password: "+passwd);
+                    logger.info("LoginToken: "+user.getLoginToken());
                     logger.info("--------------------------------------------------------------------------------");
                 }
             }catch (Exception e){
