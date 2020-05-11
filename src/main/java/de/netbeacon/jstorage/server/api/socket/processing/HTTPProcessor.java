@@ -148,6 +148,7 @@ public class HTTPProcessor {
                             case 215:
                             case 216:
                             case 220:
+                            case 221:
                             case 231:
                             case 232:
                             case 240:
@@ -157,6 +158,9 @@ public class HTTPProcessor {
                                 break;
                             case 300:
                                 result.setHTTPStatusCode(423);
+                                break;
+                            case 400:
+                                result.setHTTPStatusCode(400);
                                 break;
                             case 0:
                             default:
