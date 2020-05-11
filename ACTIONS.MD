@@ -43,15 +43,15 @@ Get DataType | Tries to get the data from a specific datatype within the selecte
 
 | Action | Description |
 --- | ---
-User Info | Tries to list information for all or a specific user | [View Docs](|
-User Settings | Tries to change settings for the current or selected user | [View Docs](|
-Create User | Tries to create a new user | [View Docs](|
-Delete User |  Tries to delete a user | [View Docs](|
-Change Password | Tries to change the password of the current or selected user | [View Docs](|
-Get Login Token |  Tries to create a new login token for the current or selected user | [View Docs](|
+User Info | Tries to list information for all or a specific user |
+User Settings | Tries to change settings for the current or selected user | 
+Create User | Tries to create a new user |
+Delete User |  Tries to delete a user |
+Change Password | Tries to change the password of the current or selected user |
+Get Login Token |  Tries to create a new login token for the current or selected user |
 
 ## Other Actions
 
-| Action | Description
+| Action | Description |
 --- | ---
-Basic Info | Provides basic information about this JStorage installation | [View Docs](|
+Basic Info | Provides basic information about this JStorage installation |

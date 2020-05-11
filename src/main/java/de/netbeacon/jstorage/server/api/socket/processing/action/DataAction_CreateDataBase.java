@@ -93,7 +93,7 @@ public class DataAction_CreateDataBase implements ProcessingAction{
     @Override
     public void process() throws DataStorageException, GenericObjectException {
         DataBase d = DataManager.createDataBase(args.get("identifier"));
-        user.addDependentPermission(d.getDataBaseName(), DependentPermission.DBAdmin_Creator);
-        result.addResult(new JSONObject().put("database", d.getDataBaseName()));
+        user.addDependentPermission(d.getIdentifier(), DependentPermission.DBAdmin_Creator);
+        result.addResult(new JSONObject().put("database", d.getIdentifier()));
     }
 }

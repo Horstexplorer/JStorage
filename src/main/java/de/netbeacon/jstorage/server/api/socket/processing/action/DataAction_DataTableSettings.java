@@ -105,8 +105,8 @@ public class DataAction_DataTableSettings implements ProcessingAction{
 
     @Override
     public void process() throws DataStorageException, GenericObjectException {
-        DataBase b = DataManager.getDataBase(args.get("database"));
-        DataTable t = b.getTable(args.get("identifier"));
+        DataBase d = DataManager.getDataBase(args.get("database"));
+        DataTable t = d.getTable(args.get("identifier"));
 
         if(data.has("adaptiveLoading")) {
             try {
@@ -117,9 +117,13 @@ public class DataAction_DataTableSettings implements ProcessingAction{
             }
         }
 
+        if(data.has("defaultStructure") && data.get("defaultStructure").getClass() == JSONObject.class){
+            t.setDefaultStructure(data.getJSONObject("defaultStructure"));
+        }
+
         // return info
         JSONArray jsonArray = new JSONArray();
         jsonArray.put(new JSONObject().put("adaptiveLoading", t.isAdaptive()));
-        result.addResult(new JSONObject().put("database", t.getDatabaseName()).put("table", t.getTableName()).put("settings", jsonArray));
+        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("settings", jsonArray).put("defaultStructure", t.getDefaultStructure()));
     }
 }

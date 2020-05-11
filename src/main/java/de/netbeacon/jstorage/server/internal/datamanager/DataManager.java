@@ -115,7 +115,7 @@ public class DataManager {
             if(ready.get()){
                 if(!dataBasePool.containsKey(identifier)){
                     DataBase dataBase = new DataBase(identifier);
-                    dataBasePool.put(dataBase.getDataBaseName(), dataBase);
+                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
                     lock.writeLock().unlock();
                     return dataBase;
                 }
@@ -189,13 +189,13 @@ public class DataManager {
         try{
             lock.writeLock().lock();
             if(ready.get()){
-                if(!dataBasePool.containsKey(dataBase.getDataBaseName())){
-                    dataBasePool.put(dataBase.getDataBaseName(), dataBase);
+                if(!dataBasePool.containsKey(dataBase.getIdentifier())){
+                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
                     lock.writeLock().unlock();
                     return;
                 }
-                logger.debug("DataBase "+dataBase.getDataBaseName()+" Already Existing");
-                throw new DataStorageException(214, "DataManager: DataBase "+dataBase.getDataBaseName()+" Already Existing.");
+                logger.debug("DataBase "+dataBase.getIdentifier()+" Already Existing");
+                throw new DataStorageException(214, "DataManager: DataBase "+dataBase.getIdentifier()+" Already Existing.");
             }
             logger.error("Not Ready Yet");
             throw new DataStorageException(231, "DataManager Not Ready Yet");
@@ -239,10 +239,10 @@ public class DataManager {
                             try{
                                 String dbn = jsonArray.getString(i).toLowerCase();
                                 DataBase dataBase = new DataBase(dbn);
-                                if(!dataBasePool.containsKey(dataBase.getDataBaseName())){
-                                    dataBasePool.put(dataBase.getDataBaseName(), dataBase);
+                                if(!dataBasePool.containsKey(dataBase.getIdentifier())){
+                                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
                                 }else{
-                                    throw new DataStorageException(214, "DataManager: Setup: DataBase "+dataBase.getDataBaseName()+" Already Existing.");
+                                    throw new DataStorageException(214, "DataManager: Setup: DataBase "+dataBase.getIdentifier()+" Already Existing.");
                                 }
                             }catch (DataStorageException e){
                                 logger.error("Failed To Create DataBase During Setup", e);
@@ -293,7 +293,7 @@ public class DataManager {
                 try{
                     entry.getValue().shutdown();
                 }catch (Exception ignore){}finally {
-                    jsonArray.put(entry.getValue().getDataBaseName());
+                    jsonArray.put(entry.getValue().getIdentifier());
                 }
             }
             jsonObject.put("databases", jsonArray).put("dataSetSettings", new JSONObject().put("dataSetsPerThread", DataSet.getDataSetsPerThread()).put("maxSTPEThreads", DataSet.getMaxSTPEThreads()));

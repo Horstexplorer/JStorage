@@ -9,7 +9,11 @@ Types which may be used:
 - T - Testing
 - R - Release
     
-
+## v1.0.3_4 R
+- improved linkage between objects
+- added support to limit objects to s given structure within the same table
+- creating password for admin users by default
+- minor improvements
 ## v1.0.2_3 R
 - fixed the issue where no end of headers would be sent
 - changed login-mode for InfoAction_BasicInfo to all

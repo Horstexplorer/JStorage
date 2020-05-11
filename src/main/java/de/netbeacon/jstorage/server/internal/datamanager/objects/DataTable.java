@@ -17,6 +17,7 @@
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
+import de.netbeacon.jstorage.server.tools.jsonmatcher.JSONMatcher;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -40,8 +41,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class DataTable {
 
-    private final String dataBaseName;
-    private final String tableName;
+    private final DataBase dataBase;
+    private final String identifier;
+    private JSONObject defaultStructure = new JSONObject();
     private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
     private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
 
@@ -61,17 +63,17 @@ public class DataTable {
      * <p>
      * Every String type input will be converted to lowercase only to simplify handling.
      *
-     * @param dataBaseName the name of the superordinate DataBase {@link DataBase} object.
-     * @param tableName    the name of the this object.
+     * @param dataBase  the superordinate DataBase {@link DataBase} object.
+     * @param identifier the name of the this object.
      * @throws DataStorageException when running setup() fails.
      */
-    public DataTable(String dataBaseName, String tableName) throws DataStorageException{
-        this.dataBaseName = dataBaseName.toLowerCase();
-        this.tableName = tableName.toLowerCase();
+    public DataTable(DataBase dataBase, String identifier) throws DataStorageException{
+        this.dataBase = dataBase;
+        this.identifier = identifier.toLowerCase();
         setup();
         ready.set(true);
 
-        logger.debug("Created New Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+")");
+        logger.debug("Created New Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+")");
     }
 
     /*                  OBJECT                  */
@@ -79,16 +81,16 @@ public class DataTable {
     /**
      * Returns the name of the superordinate DataBase {@link DataBase} object.
      *
-     * @return String string
+     * @return DataBase string
      */
-    public String getDatabaseName(){ return dataBaseName; }
+    public DataBase getDataBase(){ return dataBase; }
 
     /**
      * Returns the name of the current table
      *
      * @return String string
      */
-    public String getTableName(){ return tableName; }
+    public String getIdentifier(){ return identifier; }
 
     /**
      * Returns if this object supports adaptive loading
@@ -120,6 +122,64 @@ public class DataTable {
      */
     public boolean isShutdown(){ return shutdown.get(); }
 
+
+    /**
+     * Sets the target default structure for all objects in this table
+     * <p>
+     * this does not influence already existing objects
+     * will only set the jsonobject as structure if it matches the correct specifications for a dataset (only jsonObjects at layer 0; except id keys (they will be ignored))
+     * @param jsonObject representing target and or default structure
+     */
+    public void setDefaultStructure(JSONObject jsonObject){
+        // make sure this structure has the right dataset format
+        for(String s : jsonObject.keySet()){
+            if(!(s.equals("identifier") || s.equals("table") || s.equals("database"))){ // ignore default dataset keys
+                if(jsonObject.get(s).getClass() != JSONObject.class){
+                    return;
+                }
+            }
+        }
+        // has the right format, make sure all level 0 keys are lowercase
+        JSONObject defaultSNorm = new JSONObject();
+        for(String s: jsonObject.keySet()){
+            if(!(s.equals("identifier") || s.equals("table") || s.equals("database"))){ // remove default dataset keys (as they are not needed and will be set for checking anyway)
+                defaultSNorm.put(s.toLowerCase(), jsonObject.get(s));
+            }
+        }
+        this.defaultStructure = defaultSNorm;
+    }
+
+    /**
+     * Returns a serialized copy of the default structure
+     *
+     * @return JSONObject
+     */
+    public JSONObject getDefaultStructure(){
+        return new JSONObject(defaultStructure.toString());
+    }
+
+    /**
+     * Used to check whether a given dataset meets the requirements of the table
+     *
+     * @param dataSet DataSet
+     * @return boolean
+     */
+    private boolean matchesDefaultStructure(DataSet dataSet){
+        if(!defaultStructure.isEmpty()){
+            return JSONMatcher.structureMatch(defaultStructure.put("database", "").put("table", "").put("identifier", ""), dataSet.getFullData());
+        }
+        return true;
+    }
+
+    /**
+     * Used to determine if this table requires a specific structure;
+     *
+     * @return boolean
+     */
+    public boolean fixedStructure(){
+        return !defaultStructure.isEmpty();
+    }
+
     /*                  ACCESS                  */
 
     /**
@@ -150,32 +210,32 @@ public class DataTable {
                                 case 201:
                                     // data not found but listed in index
                                     dataInconsistency.set(true);
-                                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
-                                    throw new DataStorageException(201, "DataTable: "+dataBaseName+">"+tableName+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+                                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
+                                    throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
                                 default:
-                                    logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
+                                    logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
                                     throw e;
                             }
                         }
                     }
                     // shard not found but listed in index
                     dataInconsistency.set(true);
-                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
-                    throw new DataStorageException(202, "DataTable: "+dataBaseName+">"+tableName+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
+                    throw new DataStorageException(202, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
                 }
-                logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found");
-                throw new DataStorageException(201, "DataTable: "+dataBaseName+">"+tableName+": DataSet "+identifier+" Not Found.");
+                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found");
+                throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.readLock().unlock();
                 throw e;
             }catch (Exception e){
                 lock.readLock().unlock();
-                logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Unknown Error", e);
-                throw new DataStorageException(0, "DataTable: "+dataBaseName+">"+tableName+": Unknown Error: "+e.getMessage());
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
         }
-        logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Not Ready");
-        throw new DataStorageException(231, "DataTable: "+dataBaseName+">"+tableName+": Object Not Ready");
+        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
+        throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
     }
 
     /**
@@ -190,9 +250,14 @@ public class DataTable {
             if(!dataInconsistency.get()){
                 try{
                     // check if the dataset fits to this
-                    if(dataBaseName.equals(dataSet.getDataBaseName()) && tableName.equals(dataSet.getTableName())){
+                    if(dataBase.getIdentifier().equals(dataSet.getDataBase().getIdentifier()) && identifier.equals(dataSet.getTable().getIdentifier())){
                         // check if we dont have an object with the current id
                         if(!indexPool.containsKey(dataSet.getIdentifier())){
+                            // check if the object matches a specific structure
+                            if(fixedStructure() && !JSONMatcher.structureMatch(defaultStructure.put("identifier", "").put("table", "").put("database", ""), dataSet.getFullData())){
+                                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
+                                throw new DataStorageException(221, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
+                            }
                             // try to put this object in some shard
                             String validShardID = null;
                             // check if we have a shard ready which is active & has enough space
@@ -209,7 +274,7 @@ public class DataTable {
                             }
                             // if there is no shard available, just create a new one
                             if(validShardID == null){
-                                DataShard dataShard = new DataShard(dataBaseName, tableName);
+                                DataShard dataShard = new DataShard(dataBase, this);
                                 shardPool.put(dataShard.getShardID(), dataShard);
                                 validShardID = dataShard.getShardID();
                             }
@@ -223,25 +288,25 @@ public class DataTable {
                             lock.writeLock().unlock();
                             return;
                         }
-                        logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Already Existing");
-                        throw new DataStorageException(211, "DataShard: "+dataBaseName+">"+tableName+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
+                        logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Already Existing");
+                        throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
                     }
-                    logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Fit Here");
-                    throw new DataStorageException(220, "DataTable: "+dataBaseName+">"+tableName+">: DataSet "+dataSet.getIdentifier()+" ("+dataSet.getDataBaseName()+">"+dataSet.getTableName()+") Does Not Fit Here.");
+                    logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Fit Here");
+                    throw new DataStorageException(220, "DataTable: "+dataBase.getIdentifier()+">"+identifier+">: DataSet "+dataSet.getIdentifier()+" ("+dataSet.getDataBase().getIdentifier()+">"+dataSet.getTable().getIdentifier()+") Does Not Fit Here.");
                 }catch (DataStorageException e){
                     lock.writeLock().unlock();
                     throw e;
                 }catch (Exception e){
                     lock.writeLock().unlock();
-                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Unknown Error", e);
-                    throw new DataStorageException(0, "DataTable: "+dataBaseName+">"+tableName+": Unknown Error: "+e.getMessage());
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                    throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
                 }
             }
             lock.writeLock().unlock();
-            throw new DataStorageException(300, "DataTable: "+dataBaseName+">"+tableName+": Data Inconsistency Needs To Be Resolved Before Inserting New Objects.");
+            throw new DataStorageException(300, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Data Inconsistency Needs To Be Resolved Before Inserting New Objects.");
         }
-        logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Not Ready");
-        throw new DataStorageException(231, "DataTable: "+dataBaseName+">"+tableName+": Object Not Ready");
+        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
+        throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
     }
 
     /**
@@ -279,32 +344,32 @@ public class DataTable {
                             switch(e.getType()){
                                 case 201:
                                     dataInconsistency.set(true);
-                                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
-                                    throw new DataStorageException(201, "DataTable: "+dataBaseName+">"+tableName+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+                                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
+                                    throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
                                 default:
-                                    logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
+                                    logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
                                     throw e;
                             }
                         }
                     }
                     // shard not found but listed in index
                     dataInconsistency.set(true);
-                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
-                    throw new DataStorageException(202, "DataTable: "+dataBaseName+">"+tableName+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
+                    throw new DataStorageException(202, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
                 }
-                logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found");
-                throw new DataStorageException(201, "DataTable: "+dataBaseName+">"+tableName+": DataSet "+identifier+" Not Found.");
+                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found");
+                throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
-                logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Unknown Error", e);
-                throw new DataStorageException(0, "DataTable: "+dataBaseName+">"+tableName+": Unknown Error: "+e.getMessage());
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
         }
-        logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Not Ready");
-        throw new DataStorageException(231, "DataTable: "+dataBaseName+">"+tableName+": Object Not Ready");
+        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
+        throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
     }
 
     /**
@@ -343,20 +408,20 @@ public class DataTable {
             switch (mode){
                 case 0:
                     // do nothing but remove lock
-                    logger.info("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Data Consistency Restored");
+                    logger.info("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Data Consistency Restored");
                     dataInconsistency.set(false);
                     break;
                 case 1:
                     // remove entries from index with non existing shards only
                     indexPool.entrySet().stream().filter(e->!shardPool.containsKey(e.getValue())).forEach(e->indexPool.remove(e.getKey()));
-                    logger.info("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Data Consistency Restored");
+                    logger.info("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Data Consistency Restored");
                     dataInconsistency.set(false);
                     break;
                 case 2:
                     // remove entries from index with non existing shards & check if the shard contains the other objects
                     indexPool.entrySet().stream().filter(e->!shardPool.containsKey(e.getValue())).forEach(e->indexPool.remove(e.getKey()));
                     indexPool.entrySet().stream().filter(e->!shardPool.get(e.getValue()).containsDataSet(e.getKey())).forEach(e->indexPool.remove(e.getKey()));
-                    logger.info("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Data Consistency Restored");
+                    logger.info("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Data Consistency Restored");
                     dataInconsistency.set(false);
                     break;
                 case 3:
@@ -365,7 +430,7 @@ public class DataTable {
                     // get all dataSets from all running dataShards
                     shardPool.entrySet().stream().filter(e->e.getValue().getStatus() == 3).forEach(e-> {e.getValue().getDataPool().forEach((key, value) -> dataSets.put(value.getIdentifier(),value));});
                     // get all datasets from existing files except those with ids in processedShardIDs
-                    File d = new File("./jstorage/data/"+dataBaseName);
+                    File d = new File("./jstorage/data/"+dataBase.getIdentifier());
                     if(!d.exists()){ d.mkdirs(); }
                     File[] files = d.listFiles();
                     if(files != null){
@@ -382,20 +447,20 @@ public class DataTable {
                                                 String gdb = jsonObject.getString("database").toLowerCase();
                                                 String ctable = jsonObject.getString("table").toLowerCase();
                                                 String identifier = jsonObject.getString("identifier").toLowerCase();
-                                                if(dataBaseName.equals(gdb) && tableName.equals(ctable) && !dataSets.containsKey(identifier)){
-                                                    dataSets.put(identifier, new DataSet(gdb, ctable, identifier));
+                                                if(dataBase.getIdentifier().equals(gdb) && identifier.equals(ctable) && !dataSets.containsKey(identifier)){
+                                                    dataSets.put(identifier, new DataSet(dataBase, this, identifier));
                                                 }else{
-                                                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Creating DataSet From File "+f.getName()+" Failed. Data Does Not Fit To This Table/Database Or Does Already Exist.");
+                                                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Creating DataSet From File "+f.getName()+" Failed. Data Does Not Fit To This Table/Database Or Does Already Exist.");
                                                 }
                                             }catch (Exception e){
-                                                logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Creating DataSet From File "+f.getName()+" Failed. Data May Be Lost", e);
+                                                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Creating DataSet From File "+f.getName()+" Failed. Data May Be Lost", e);
                                             }
                                         }
                                     }
                                     bufferedReader.close();
                                 }catch (Exception e){
                                     // could not read
-                                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Loading Data From File "+f.getName()+" Failed. Data May Be Lost", e);
+                                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Loading Data From File "+f.getName()+" Failed. Data May Be Lost", e);
                                 }
                             }
                         }
@@ -403,13 +468,13 @@ public class DataTable {
                     try{
                         FileUtils.cleanDirectory(d);
                     }catch (Exception e){
-                        logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Could Not Remove All Files. Manual Deletion Required", e);
+                        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Could Not Remove All Files. Manual Deletion Required", e);
                     }
                     // unload all shards by deletion & clear & delete index
                     indexPool.clear();
                     shardPool.forEach((key, value) -> value.unloadDataAsync(false, false, true));
                     shardPool.clear();
-                    new File("./jstorage/data/"+dataBaseName+"/"+tableName+"_index").delete();
+                    new File("./jstorage/data/"+dataBase.getIdentifier()+"/"+identifier+"_index").delete();
                     // rebuild index & shards
                     List<DataSet> buffer = new ArrayList<>();
                     int processed = 0;
@@ -418,7 +483,7 @@ public class DataTable {
                         buffer.add(entry.getValue());
                         if(buffer.size() == DataShard.getMaxDataSetCountStatic() || processed == dataSets.size()) { // if we have enough objects to fill a shard or this is the last object we have
                             // create new Shard
-                            DataShard dataShard = new DataShard(dataBaseName, tableName);
+                            DataShard dataShard = new DataShard(dataBase, this);
                             // get ID
                             String shardID = dataShard.getShardID();
                             // add to pool
@@ -429,7 +494,7 @@ public class DataTable {
                                     indexPool.put(dataSet1.getIdentifier(), shardID);
                                     dataShard.insertDataSet(dataSet1);
                                 }catch (DataStorageException e){
-                                    logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") An Error Occurred While Rebuilding Index & Shards. DataSet Will Be Deleted", e);
+                                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") An Error Occurred While Rebuilding Index & Shards. DataSet Will Be Deleted", e);
                                     indexPool.remove(dataSet1.getIdentifier());
                                 }
                             }
@@ -441,7 +506,7 @@ public class DataTable {
                     }
                     // clean up
                     dataSets.clear();
-                    logger.info("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Data Consistency Restored");
+                    logger.info("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Data Consistency Restored");
                     dataInconsistency.set(false);
                     break;
                 default:
@@ -451,6 +516,18 @@ public class DataTable {
             lock.writeLock().unlock();
         }
     }
+
+    /*
+
+        public void fixDefault(){
+
+        // future feature:
+        //
+        // used to normalize all datassets to match default preset
+
+    }
+
+     */ // fixDefault() -> placeholder for upcoming feature
 
     /*
     public void optimize(){
@@ -477,12 +554,12 @@ public class DataTable {
     private void setup() throws DataStorageException {
         if(!ready.get() && !shutdown.get()){
             // build index & prepare shards
-            logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Loading Data");
+            logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Loading Data");
             try{
                 // read from file
-                File d = new File("./jstorage/data/db/"+dataBaseName);
+                File d = new File("./jstorage/data/db/"+dataBase.getIdentifier());
                 if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/db/"+dataBaseName+"/"+tableName+"_index");
+                File f = new File("./jstorage/data/db/"+dataBase.getIdentifier()+"/"+identifier+"_index");
                 if(!f.exists()){ f.createNewFile(); }
                 else{
                     // read
@@ -491,8 +568,9 @@ public class DataTable {
                         JSONObject jsonObject = new JSONObject(content);
                         String dbn = jsonObject.getString("database").toLowerCase();
                         String tbn = jsonObject.getString("table").toLowerCase();
+                        defaultStructure = jsonObject.getJSONObject("defaultStructure");
                         adaptiveLoad.set(jsonObject.getBoolean("adaptiveLoad"));
-                        if(dataBaseName.equals(dbn) && tableName.equals(tbn)){
+                        if(dataBase.getIdentifier().equals(dbn) && identifier.equals(tbn)){
                             JSONArray shards = jsonObject.getJSONArray("shards");
                             for(int i = 0; i < shards.length(); i++){
                                 JSONObject shard = shards.getJSONObject(i);
@@ -500,7 +578,7 @@ public class DataTable {
                                 JSONArray index = shard.getJSONArray("dataSets");
                                 if(!index.isEmpty()){
                                     // create shard
-                                    DataShard dataShard = new DataShard(dataBaseName, tableName, shardID);
+                                    DataShard dataShard = new DataShard(dataBase, this, shardID);
                                     shardPool.put(dataShard.getShardID(), dataShard);
                                     // fill index
                                     for(int o = 0; o < index.length(); o++){
@@ -514,8 +592,8 @@ public class DataTable {
                     }
                 }
             }catch (Exception e){
-                logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Loading Data Failed. Data May Be Lost", e);
-                throw new DataStorageException(101, "DataTable: "+dataBaseName+">"+tableName+": Loading Data Failed, Data May Be Lost: "+e.getMessage());
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Loading Data Failed. Data May Be Lost", e);
+                throw new DataStorageException(101, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Loading Data Failed, Data May Be Lost: "+e.getMessage());
             }
             // start scheduled worker
             sESUnloadTask = sES.scheduleAtFixedRate(new Runnable() {
@@ -552,14 +630,15 @@ public class DataTable {
         if(ready.get()){
             shutdown.set(true);
             ready.set(false);
-            logger.debug("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Shutdown");
+            logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shutdown");
             // write index & shard data to file
             try{
                 // build json object
                 JSONObject jsonObject = new JSONObject()
-                        .put("database", dataBaseName)
-                        .put("table", tableName)
-                        .put("adaptiveLoad", adaptiveLoad.get());
+                        .put("database", dataBase.getIdentifier())
+                        .put("table", identifier)
+                        .put("adaptiveLoad", adaptiveLoad.get())
+                        .put("defaultStructure", defaultStructure);
                 JSONArray shards = new JSONArray();
                 shardPool.forEach((key, value) -> {
                     JSONObject shard = new JSONObject()
@@ -573,9 +652,9 @@ public class DataTable {
                 });
                 jsonObject.put("shards", shards);
                 // write to file
-                File d = new File("./jstorage/data/db/"+dataBaseName);
+                File d = new File("./jstorage/data/db/"+dataBase.getIdentifier());
                 if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/db/"+dataBaseName+"/"+tableName+"_index");
+                File f = new File("./jstorage/data/db/"+dataBase.getIdentifier()+"/"+identifier+"_index");
                 BufferedWriter writer = new BufferedWriter(new FileWriter(f));
                 writer.write(jsonObject.toString());
                 writer.newLine();
@@ -593,8 +672,8 @@ public class DataTable {
                 shardPool.clear();
                 indexPool.clear();
             }catch (Exception e){
-                logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Shutdown Failed. Data May Be Lost", e);
-                throw new DataStorageException(102, "DataTable: "+dataBaseName+">"+tableName+": Unloading Data Failed, Data May Be Lost: "+e.getMessage());
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shutdown Failed. Data May Be Lost", e);
+                throw new DataStorageException(102, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unloading Data Failed, Data May Be Lost: "+e.getMessage());
             }
             // dont reset shutdown atomic. this object should not be used further
         }
@@ -621,12 +700,12 @@ public class DataTable {
         indexPool.clear();
         // delete files
         try{
-            File d = new File("./jstorage/data/db/"+dataBaseName+"/"+tableName);
+            File d = new File("./jstorage/data/db/"+dataBase.getIdentifier()+"/"+identifier);
             FileUtils.deleteDirectory(d);
-            File f = new File("./jstorage/data/db/"+dataBaseName+"/"+tableName+"_index");
+            File f = new File("./jstorage/data/db/"+dataBase.getIdentifier()+"/"+identifier+"_index");
             if(f.exists()){ f.delete(); }
         }catch (Exception e){
-            logger.error("Table ( Chain "+this.dataBaseName+", "+this.tableName+"; Hash "+hashCode()+") Deleting Files Failed. Manual Actions May Be Required.", e);
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Deleting Files Failed. Manual Actions May Be Required.", e);
         }
         // dont reset shutdown atomic. this object should not be used further
     }

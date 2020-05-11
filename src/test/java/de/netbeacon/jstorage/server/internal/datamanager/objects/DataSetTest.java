@@ -21,7 +21,9 @@ class DataSetTest {
                 .put("testdatatype", new JSONObject().put("data", "somedata"))
                 .put("testdatatype2", new JSONObject().put("data", "otherdata"));
         try{
-            dataSet = new DataSet("testdb", "testtable", "testid", jsonObject);
+            DataBase dataBase = new DataBase("testdb");
+            dataBase.insertTable(new DataTable(dataBase, "testtable"));
+            dataSet = new DataSet(dataBase, dataBase.getTable("testtable"), "testid", jsonObject);
         }catch (DataStorageException e){
             fail();
         }

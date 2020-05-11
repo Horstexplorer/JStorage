@@ -99,11 +99,11 @@ public class DataAction_DataBaseInfo implements ProcessingAction{
         if(args.containsKey("identifier")){
             DataBase d = DataManager.getDataBase(args.get("identifier"));
             JSONArray jsonArray = new JSONArray();
-            d.getDataPool().values().forEach(v ->jsonArray.put(v.getTableName()));
-            jsonObject.put("database", d.getDataBaseName()).put("tables", jsonArray);
+            d.getDataPool().values().forEach(v ->jsonArray.put(v.getIdentifier()));
+            jsonObject.put("database", d.getIdentifier()).put("tables", jsonArray);
         }else{
             JSONArray jsonArray = new JSONArray();
-            DataManager.getDataPool().values().forEach(v->jsonArray.put(v.getDataBaseName()));
+            DataManager.getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));
             jsonObject.put("databases", jsonArray);
         }
         result.addResult(jsonObject);

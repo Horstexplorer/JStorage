@@ -107,9 +107,14 @@ public class DataAction_CreateDataSet implements ProcessingAction{
         DataSet ds;
         if(data == null){
             // create empty
-            ds = new DataSet(t.getDatabaseName(), t.getTableName(), args.get("identifier"));
+            if(t.fixedStructure()){
+                // create with default structure
+                ds = new DataSet(d, t, args.get("identifier"), t.getDefaultStructure().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("identifier", args.get("identifier").toLowerCase()));
+            }else{
+                ds = new DataSet(d, t, args.get("identifier"));
+            }
         }else{
-            ds = new DataSet(t.getDatabaseName(), t.getTableName(), args.get("identifier"), data);
+            ds = new DataSet(d, t, args.get("identifier"), data);
         }
         t.insertDataSet(ds); // as this might throw, leaving an increased dataset count but no actual dataset, the DataManager corrects the count from time to time
         // return ds

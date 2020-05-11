@@ -1,10 +1,9 @@
 # JStorage
 ###### JSON based data storage & cache system with web api access
-> Version: 1.0.2_3 R
+> Version: 1.0.3_4 R
 
 
 ## Table of Content
-- [Docs](https://horstexplorer.github.io/JStorage/)
 - [Setup](#setup)
 - [Usage](#usage)
 - [Actions](./ACTIONS.MD)
