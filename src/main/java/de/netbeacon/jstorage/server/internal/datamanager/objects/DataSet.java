@@ -18,6 +18,7 @@ package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
+import de.netbeacon.jstorage.server.tools.jsonmatcher.JSONMatcher;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,8 +76,8 @@ public class DataSet{
      * <p>
      * Every String type input will be converted to lowercase only to simplify handling.
      *
-     * @param database   the name of the superordinate DataBase {@link DataBase} object
-     * @param table      the name of the parent DataTable {@link DataTable} object
+     * @param database   the superordinate DataBase {@link DataBase} object
+     * @param table      the parent DataTable {@link DataTable} object
      * @param identifier the identifier of the current DataSet, this may be unique inside each DataTable
      */
     public DataSet(DataBase database, DataTable table, String identifier) {
@@ -335,13 +336,20 @@ public class DataSet{
             updatePermissions.get(dataType).getScheduledFuture().cancel(true);
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
-                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": Modification Of Critical Types");
                 return false;
             }
             // check if data may be valid
             if(!data.getString("identifier").equals(this.identifier) || !data.getString("table").equals(this.table.getIdentifier()) || !data.getString("database").equals(this.database.getIdentifier()) || !data.has(dataType)){
-                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType+": Data Does Not Match Specifications");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": Data Does Not Match Specifications");
                 return false;
+            }
+            // check if structure matches
+            if(table.fixedStructure()){
+                if(!JSONMatcher.structureMatch(table.getDefaultStructure().getJSONObject(dataType), data.getJSONObject(dataType))){
+                    logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": DataType Not Contain Required Structure");
+                    return false;
+                }
             }
             // lock
             lock.writeLock().lock();
@@ -381,6 +389,11 @@ public class DataSet{
             // check if data doesnt already contain this type of data
             if(this.data.has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Already Existing");
+                return false;
+            }
+            // check if required / allowed by structure
+            if(table.fixedStructure() && !table.getDefaultStructure().has(dataType)){
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Required By Default Structure");
                 return false;
             }
             // lock
@@ -428,6 +441,18 @@ public class DataSet{
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Data Does Not Meet Requirements");
                 return false;
             }
+            // check if required / allowed by structure
+            if(table.fixedStructure()){
+                if(!table.getDefaultStructure().has(dataType)){
+                    logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Required By Default Structure");
+                    return false;
+                }else{
+                    if(!JSONMatcher.structureMatch(table.getDefaultStructure().getJSONObject(dataType), data.getJSONObject(dataType))){ // check if both match the same structure; we can only do this because of out default structure having only jsonObjects at layer 0
+                        logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Contain Required Structure");
+                        return false;
+                    }
+                }
+            }
             // lock
             lock.writeLock().lock();
             // insert
@@ -468,6 +493,11 @@ public class DataSet{
             // check if not locked by any updates
             if(updatePermissions.containsKey(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Still In Use");
+                return false;
+            }
+            // check if not required by structure
+            if(table.fixedStructure() && table.getDefaultStructure().has(dataType)){
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Required By Default Structure");
                 return false;
             }
             // lock
