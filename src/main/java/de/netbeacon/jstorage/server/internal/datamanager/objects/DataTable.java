@@ -250,9 +250,14 @@ public class DataTable {
             if(!dataInconsistency.get()){
                 try{
                     // check if the dataset fits to this
-                    if(dataBase.getIdentifier().equals(dataSet.getDataBase().getIdentifier()) && identifier.equals(dataSet.getTable().getIdentifier()) && matchesDefaultStructure(dataSet)){
+                    if(dataBase.getIdentifier().equals(dataSet.getDataBase().getIdentifier()) && identifier.equals(dataSet.getTable().getIdentifier())){
                         // check if we dont have an object with the current id
                         if(!indexPool.containsKey(dataSet.getIdentifier())){
+                            // check if the object matches a specific structure
+                            if(fixedStructure() && !JSONMatcher.structureMatch(defaultStructure.put("identifier", "").put("table", "").put("database", ""), dataSet.getFullData())){
+                                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
+                                throw new DataStorageException(221, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
+                            }
                             // try to put this object in some shard
                             String validShardID = null;
                             // check if we have a shard ready which is active & has enough space
