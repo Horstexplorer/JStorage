@@ -54,7 +54,9 @@ public class DataStorageException extends Exception{
                     4 - DataBase
                     5 - CachedData
                     6 - Cache
-                20 - Database/Table/Cache mismatch
+                2x - Mismatch
+                    0 - Default (Database/Table/Cache)
+                    1 - Structure
                 3x - Object Not Ready
                     1 - Not Ready
                     2 - Shutdown Running
@@ -64,10 +66,11 @@ public class DataStorageException extends Exception{
                     2 - Not Expired
 
              300 Data Inconsistency Lock
+             400 Unable To Modify
 
      */
 
-    private int type;
+    private final int type;
     private String additional = "";
 
     /**

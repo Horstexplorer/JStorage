@@ -40,7 +40,7 @@ package de.netbeacon.jstorage.server.tools.exceptions;
  */
 public class GenericObjectException extends Exception {
 
-    private int type;
+    private final int type;
 
     /**
      * Instantiates a new Generic object exception.
