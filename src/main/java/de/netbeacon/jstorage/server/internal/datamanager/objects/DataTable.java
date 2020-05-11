@@ -17,6 +17,7 @@
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
+import de.netbeacon.jstorage.server.tools.jsonmatcher.JSONMatcher;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -42,6 +43,7 @@ public class DataTable {
 
     private final String dataBaseName;
     private final String tableName;
+    private JSONObject defaultStructure = new JSONObject();
     private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
     private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
 
@@ -120,6 +122,64 @@ public class DataTable {
      */
     public boolean isShutdown(){ return shutdown.get(); }
 
+
+    /**
+     * Sets the target default structure for all objects in this table
+     * <p>
+     * this does not influence already existing objects
+     * will only set the jsonobject as structure if it matches the correct specifications for a dataset (only jsonObjects at layer 0; except id keys (they will be ignored))
+     * @param jsonObject representing target and or default structure
+     */
+    public void setDefaultStructure(JSONObject jsonObject){
+        // make sure this structure has the right dataset format
+        for(String s : jsonObject.keySet()){
+            if(!(s.equals("identifier") || s.equals("table") || s.equals("database"))){ // ignore default dataset keys
+                if(jsonObject.get(s).getClass() != JSONObject.class){
+                    return;
+                }
+            }
+        }
+        // has the right format, make sure all level 0 keys are lowercase
+        JSONObject defaultSNorm = new JSONObject();
+        for(String s: jsonObject.keySet()){
+            if(!(s.equals("identifier") || s.equals("table") || s.equals("database"))){ // remove default dataset keys (as they are not needed and will be set for checking anyway)
+                defaultSNorm.put(s.toLowerCase(), jsonObject.get(s));
+            }
+        }
+        this.defaultStructure = defaultSNorm;
+    }
+
+    /**
+     * Returns a serialized copy of the default structure
+     *
+     * @return JSONObject
+     */
+    public JSONObject getDefaultStructure(){
+        return new JSONObject(defaultStructure.toString());
+    }
+
+    /**
+     * Used to check whether a given dataset meets the requirements of the table
+     *
+     * @param dataSet DataSet
+     * @return boolean
+     */
+    private boolean matchesDefaultStructure(DataSet dataSet){
+        if(!defaultStructure.isEmpty()){
+            return JSONMatcher.structureMatch(defaultStructure.put("database", "").put("table", "").put("identifier", ""), dataSet.getFullData());
+        }
+        return true;
+    }
+
+    /**
+     * Used to determine if this table requires a specific structure;
+     *
+     * @return boolean
+     */
+    public boolean fixedStructure(){
+        return !defaultStructure.isEmpty();
+    }
+
     /*                  ACCESS                  */
 
     /**
@@ -190,7 +250,7 @@ public class DataTable {
             if(!dataInconsistency.get()){
                 try{
                     // check if the dataset fits to this
-                    if(dataBaseName.equals(dataSet.getDataBaseName()) && tableName.equals(dataSet.getTableName())){
+                    if(dataBaseName.equals(dataSet.getDataBaseName()) && tableName.equals(dataSet.getTableName()) && matchesDefaultStructure(dataSet)){
                         // check if we dont have an object with the current id
                         if(!indexPool.containsKey(dataSet.getIdentifier())){
                             // try to put this object in some shard
@@ -453,6 +513,18 @@ public class DataTable {
     }
 
     /*
+
+        public void fixDefault(){
+
+        // future feature:
+        //
+        // used to normalize all datassets to match default preset
+
+    }
+
+     */ // fixDefault() -> placeholder for upcoming feature
+
+    /*
     public void optimize(){
 
         // future feature:
@@ -491,6 +563,7 @@ public class DataTable {
                         JSONObject jsonObject = new JSONObject(content);
                         String dbn = jsonObject.getString("database").toLowerCase();
                         String tbn = jsonObject.getString("table").toLowerCase();
+                        defaultStructure = jsonObject.getJSONObject("defaultStructure");
                         adaptiveLoad.set(jsonObject.getBoolean("adaptiveLoad"));
                         if(dataBaseName.equals(dbn) && tableName.equals(tbn)){
                             JSONArray shards = jsonObject.getJSONArray("shards");
@@ -559,7 +632,8 @@ public class DataTable {
                 JSONObject jsonObject = new JSONObject()
                         .put("database", dataBaseName)
                         .put("table", tableName)
-                        .put("adaptiveLoad", adaptiveLoad.get());
+                        .put("adaptiveLoad", adaptiveLoad.get())
+                        .put("defaultStructure", defaultStructure);
                 JSONArray shards = new JSONArray();
                 shardPool.forEach((key, value) -> {
                     JSONObject shard = new JSONObject()

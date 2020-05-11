@@ -107,7 +107,12 @@ public class DataAction_CreateDataSet implements ProcessingAction{
         DataSet ds;
         if(data == null){
             // create empty
-            ds = new DataSet(t.getDatabaseName(), t.getTableName(), args.get("identifier"));
+            if(t.fixedStructure()){
+                // create with default structure
+                ds = new DataSet(t.getDatabaseName(), t.getTableName(), args.get("identifier"), t.getDefaultStructure().put("database", t.getDatabaseName()).put("table", t.getTableName()).put("identifier", args.get("identifier").toLowerCase()));
+            }else{
+                ds = new DataSet(t.getDatabaseName(), t.getTableName(), args.get("identifier"));
+            }
         }else{
             ds = new DataSet(t.getDatabaseName(), t.getTableName(), args.get("identifier"), data);
         }
