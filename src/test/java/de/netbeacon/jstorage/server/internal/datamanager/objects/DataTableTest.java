@@ -1,6 +1,7 @@
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
+import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +68,23 @@ class DataTableTest {
     void containsDataSet() {
         assertTrue(dataTable.containsDataSet("testdataset"));
         assertFalse(dataTable.containsDataSet("missing"));
+    }
+
+    @Test
+    void fixedStructure(){
+        JSONObject fstructure = new JSONObject().put("ida", new JSONObject().put("key", "value")).put("idb", new JSONObject().put("key", 120));
+        assertTrue(dataTable.getDefaultStructure().isEmpty());
+        dataTable.setDefaultStructure(fstructure);
+        assertFalse(dataTable.getDefaultStructure().isEmpty());
+        // create new Dataset
+        DataSet bad = new DataSet(dataTable.getDataBase(), dataTable,"bad"); // does not match expected structure
+        try{dataTable.insertDataSet(bad); fail();}catch (DataStorageException e){ assertEquals(221, e.getType());}
+        DataSet good = null;
+        try{good = new DataSet(dataTable.getDataBase(), dataTable, "good", fstructure.put("database", dataTable.getDataBase().getIdentifier()).put("table", dataTable.getIdentifier()).put("identifier", "good"));}catch (Exception e){fail();}
+        try{dataTable.insertDataSet(good); }catch (Exception e){ e.printStackTrace(); fail(); }
+        DataSet good2 = null;
+        try{good2 = new DataSet(dataTable.getDataBase(), dataTable, "good2", fstructure.put("ida", new JSONObject().put("key", "othervalue")).put("database", dataTable.getDataBase().getIdentifier()).put("table", dataTable.getIdentifier()).put("identifier", "good2"));}catch (Exception e){fail();}
+        try{dataTable.insertDataSet(good2); }catch (Exception e){ e.printStackTrace(); fail(); }
     }
 
 }
