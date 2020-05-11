@@ -94,9 +94,9 @@ public class DataAction_CreateDataTable implements ProcessingAction{
 
     @Override
     public void process() throws DataStorageException, GenericObjectException {
-        DataBase b = DataManager.getDataBase(args.get("database"));
-        DataTable t = new DataTable(b.getDataBaseName(), args.get("identifier"));
-        b.insertTable(t);
+        DataBase d = DataManager.getDataBase(args.get("database"));
+        DataTable t = new DataTable(d, args.get("identifier"));
+        d.insertTable(t);
 
         if(args.containsKey("adaptiveLoad")){
             try{
@@ -107,6 +107,6 @@ public class DataAction_CreateDataTable implements ProcessingAction{
             }
         }
 
-        result.addResult(new JSONObject().put("database", t.getDatabaseName()).put("table", t.getTableName()));
+        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()));
     }
 }

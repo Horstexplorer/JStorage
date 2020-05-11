@@ -17,7 +17,7 @@ class DataBaseTest {
     @BeforeEach
     void setUp() {
         try{dataBase = new DataBase("testdatabase");
-            dataTable = new DataTable("testdatabase", "testtable");
+            dataTable = new DataTable(dataBase, "testtable");
             dataBase.insertTable(dataTable);}catch (Exception e){
             e.printStackTrace();
             fail();}
@@ -31,25 +31,25 @@ class DataBaseTest {
 
     @Test
     void getTable() {
-        try{assertEquals("testtable", dataBase.getTable("testtable").getTableName());}catch (Exception e){fail();}
+        try{assertEquals("testtable", dataBase.getTable("testtable").getIdentifier());}catch (Exception e){fail();}
         try{dataBase.getTable("missingtable");} catch (DataStorageException e){assertEquals(203, e.getType());}
     }
 
     @Test
     void insertTable() {
         try{dataBase.insertTable(dataTable);}catch (DataStorageException e){assertEquals(213, e.getType());}
-        try{dataBase.insertTable(new DataTable("wrongdatabase", "testtable"));}catch (DataStorageException e){assertEquals(220, e.getType());}
+        try{dataBase.insertTable(new DataTable(new DataBase("wrongdb"), "testtable"));}catch (DataStorageException e){assertEquals(220, e.getType());}
     }
 
     @Test
     void deleteTable() {
-        try{dataBase.deleteTable(dataTable.getTableName());}catch (DataStorageException e){fail();}
-        try{dataBase.deleteTable(dataTable.getTableName()); fail();}catch (DataStorageException e){assertEquals(203, e.getType());}
+        try{dataBase.deleteTable(dataTable.getIdentifier());}catch (DataStorageException e){fail();}
+        try{dataBase.deleteTable(dataTable.getIdentifier()); fail();}catch (DataStorageException e){assertEquals(203, e.getType());}
     }
 
     @Test
     void containsDataTable() {
-        assertTrue(dataBase.containsDataTable(dataTable.getTableName()));
+        assertTrue(dataBase.containsDataTable(dataTable.getIdentifier()));
         assertFalse(dataBase.containsDataTable("notexisting"));
     }
 }

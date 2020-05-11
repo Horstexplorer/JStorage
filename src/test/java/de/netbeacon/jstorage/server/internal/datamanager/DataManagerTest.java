@@ -34,7 +34,7 @@ class DataManagerTest {
 
     @Test
     void getDataBase() {
-        try{assertEquals("testdatabase", DataManager.getDataBase("testdatabase").getDataBaseName());}catch (Exception e){fail();}
+        try{assertEquals("testdatabase", DataManager.getDataBase("testdatabase").getIdentifier());}catch (Exception e){fail();}
         try{DataManager.getDataBase("notexisting");}catch (DataStorageException e){assertEquals(204, e.getType());}
     }
 

@@ -104,11 +104,11 @@ public class DataAction_DataTableInfo implements ProcessingAction{
             DataTable t = d.getTable(args.get("identifier"));
             JSONArray jsonArray = new JSONArray();
             t.getIndexPool().forEach((k,v)->jsonArray.put(k));
-            jsonObject.put("database", t.getDatabaseName()).put("table", t.getTableName()).put("adaptiveLoading", t.isAdaptive()).put("datasets", jsonArray).put("shards", t.getDataPool().size());
+            jsonObject.put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("adaptiveLoading", t.isAdaptive()).put("datasets", jsonArray).put("shards", t.getDataPool().size());
         }else{
             JSONArray jsonArray = new JSONArray();
-            d.getDataPool().values().forEach(v->jsonArray.put(v.getTableName()));
-            jsonObject.put("database", d.getDataBaseName()).put("tables", jsonArray);
+            d.getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));
+            jsonObject.put("database", d.getIdentifier()).put("tables", jsonArray);
         }
         result.addResult(jsonObject);
     }
