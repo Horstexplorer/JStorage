@@ -55,8 +55,8 @@ public class DataSet{
 
     // data
     private final String identifier;
-    private final String table;
-    private final String database;
+    private final DataTable table;
+    private final DataBase database;
     private final JSONObject data;
     // access management
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -79,12 +79,12 @@ public class DataSet{
      * @param table      the name of the parent DataTable {@link DataTable} object
      * @param identifier the identifier of the current DataSet, this may be unique inside each DataTable
      */
-    public DataSet(String database, String table, String identifier) {
+    public DataSet(DataBase database, DataTable table, String identifier) {
         // actual object
         this.identifier = identifier.toLowerCase();
-        this.table = table.toLowerCase();
-        this.database = database.toLowerCase();
-        this.data = new JSONObject().put("database", this.database).put("table", this.table).put("identifier", this.identifier);
+        this.table = table;
+        this.database = database;
+        this.data = new JSONObject().put("database", this.database.getIdentifier()).put("table", this.table.getIdentifier()).put("identifier", this.identifier);
 
         // update scheduledThreadPoolExecutor
         dataSets.getAndIncrement();
@@ -93,7 +93,7 @@ public class DataSet{
             scheduledThreadPoolExecutor.setCorePoolSize((int) Math.min(Math.max((dataSets.get()/dataSetsPerThread.get()),1),maxSTPEThreads.get()));
         }
 
-        logger.debug("Created New DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" )");
+        logger.debug("Created New DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" )");
     }
 
     /**
@@ -108,13 +108,13 @@ public class DataSet{
      * @param data       JSONObject containing the data. See {@link DataSet} for the expected format.
      * @throws DataStorageException if the data doesnt match the given database, table or identifier parameter {@link SetupException}
      */
-    public DataSet(String database, String table, String identifier, JSONObject data) throws DataStorageException {
+    public DataSet(DataBase database, DataTable table, String identifier, JSONObject data) throws DataStorageException {
         // actual object
         this.identifier = identifier.toLowerCase();
-        this.table = table.toLowerCase();
-        this.database = database.toLowerCase();
-        if(!this.identifier.equals(data.getString("identifier")) || !this.table.equals(data.getString("table")) || !this.database.equals(data.getString("database"))){
-            if(this.identifier.equals(data.getString("identifier").toLowerCase()) && this.table.equals(data.getString("table").toLowerCase()) && this.database.equals(data.getString("database").toLowerCase())){
+        this.table = table;
+        this.database = database;
+        if(!this.identifier.equals(data.getString("identifier")) || !this.table.getIdentifier().equals(data.getString("table")) || !this.database.getIdentifier().equals(data.getString("database"))){
+            if(this.identifier.equals(data.getString("identifier").toLowerCase()) && this.table.getIdentifier().equals(data.getString("table").toLowerCase()) && this.database.getIdentifier().equals(data.getString("database").toLowerCase())){
                 // just convert to lower case
                 data.put("identifier", data.getString("identifier").toLowerCase())
                         .put("table", data.getString("table").toLowerCase())
@@ -142,7 +142,7 @@ public class DataSet{
             scheduledThreadPoolExecutor.setCorePoolSize((int) Math.min(Math.max((dataSets.get()/dataSetsPerThread.get()),1),maxSTPEThreads.get()));
         }
 
-        logger.debug("Created New DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" )");
+        logger.debug("Created New DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" )");
     }
 
     /*                  STATIC                    */
@@ -234,16 +234,16 @@ public class DataSet{
     /**
      * Returns the name of the  of the parent DataTable {@link DataTable} object
      *
-     * @return String string
+     * @return DataTable string
      */
-    public String getTableName(){ return this.table; }
+    public DataTable getTable(){ return this.table; }
 
     /**
      * Returns the name of the  of the parent DataTable {@link DataBase} object
      *
-     * @return String data base name
+     * @return DataBase data base name
      */
-    public String getDataBaseName() { return this.database; }
+    public DataBase getDataBase() { return this.database; }
 
 
     /*                  DATA                    */
@@ -308,7 +308,7 @@ public class DataSet{
             // response
             return responseData;
         }catch (Exception e){
-            logger.error("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType, e);
+            logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType, e);
             return null;
         }
     }
@@ -335,12 +335,12 @@ public class DataSet{
             updatePermissions.get(dataType).getScheduledFuture().cancel(true);
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType+": Modification Of Critical Types");
                 return false;
             }
             // check if data may be valid
-            if(!data.getString("identifier").equals(this.identifier) || !data.getString("table").equals(this.table) || !data.getString("database").equals(this.database) || !data.has(dataType)){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType+": Data Does Not Match Specifications");
+            if(!data.getString("identifier").equals(this.identifier) || !data.getString("table").equals(this.table.getIdentifier()) || !data.getString("database").equals(this.database.getIdentifier()) || !data.has(dataType)){
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Get Operation Failed for DataType "+dataType+": Data Does Not Match Specifications");
                 return false;
             }
             // lock
@@ -356,7 +356,7 @@ public class DataSet{
             // unlock
             lock.writeLock().unlock();
             // return
-            logger.error("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType, e);
+            logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType, e);
             return false;
         }
     }
@@ -375,12 +375,12 @@ public class DataSet{
         try{
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Modification Of Critical Types");
                 return null;
             }
             // check if data doesnt already contain this type of data
             if(this.data.has(dataType)){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Already Existing");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Already Existing");
                 return false;
             }
             // lock
@@ -395,7 +395,7 @@ public class DataSet{
             // unlock
             lock.writeLock().unlock();
             // return
-            logger.error("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType, e);
+            logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType, e);
             return false;
         }
     }
@@ -415,17 +415,17 @@ public class DataSet{
         try{
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Modification Of Critical Types");
                 return false;
             }
             // check if data doesnt already contain this type of data
             if(this.data.has(dataType)){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Already Existing");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Already Existing");
                 return null;
             }
             // check if the data is valid
-            if(!data.getString("identifier").equals(this.identifier) || !data.getString("table").equals(this.table) || !data.getString("database").equals(this.database) || !data.has(dataType)){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Data Does Not Meet Requirements");
+            if(!data.getString("identifier").equals(this.identifier) || !data.getString("table").equals(this.table.getIdentifier()) || !data.getString("database").equals(this.database.getIdentifier()) || !data.has(dataType)){
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Data Does Not Meet Requirements");
                 return false;
             }
             // lock
@@ -440,7 +440,7 @@ public class DataSet{
             // unlock
             lock.writeLock().unlock();
             // return
-            logger.error("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+" + Data", e);
+            logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+" + Data", e);
             return false;
         }
     }
@@ -457,17 +457,17 @@ public class DataSet{
         dataType = dataType.toLowerCase();
         try{
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType+": Modification Of Critical Types");
                 return null;
             }
             // check if data contains this dataType
             if(!data.has(dataType)){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType+": DataType Not Existing");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType+": DataType Not Existing");
                 return false;
             }
             // check if not locked by any updates
             if(updatePermissions.containsKey(dataType)){
-                logger.debug("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Still In Use");
+                logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Still In Use");
                 return false;
             }
             // lock
@@ -482,7 +482,7 @@ public class DataSet{
             // unlock
             lock.writeLock().unlock();
             // return
-            logger.error("DataSet ( Chain "+this.database+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType, e);
+            logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType, e);
             return true;
         }
     }

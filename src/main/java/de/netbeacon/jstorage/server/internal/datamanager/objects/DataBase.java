@@ -42,7 +42,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class DataBase {
 
-    private final String dataBaseName;
+    private final String identifier;
     private final ConcurrentHashMap<String, DataTable> dataTablePool = new ConcurrentHashMap<>(); // huehuehue :D
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -56,15 +56,15 @@ public class DataBase {
      * <p>
      * Every String type input will be converted to lowercase only to simplify handling.
      *
-     * @param dataBase the identifier of this object
+     * @param identifier the identifier of this object
      * @throws DataStorageException when running setup() fails.
      */
-    public DataBase(String dataBase) throws DataStorageException{
-        this.dataBaseName = dataBase.toLowerCase();
+    public DataBase(String identifier) throws DataStorageException{
+        this.identifier = identifier.toLowerCase();
         setup();
         ready.set(true);
 
-        logger.debug("Created New DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" )");
+        logger.debug("Created New DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" )");
     }
 
     /*                  OBJECT                  */
@@ -74,7 +74,7 @@ public class DataBase {
      *
      * @return String string
      */
-    public String getDataBaseName(){ return dataBaseName; }
+    public String getIdentifier(){ return identifier; }
 
     /**
      * Returns is this object is ready to be used
@@ -111,19 +111,19 @@ public class DataBase {
                     lock.readLock().unlock();
                     return dataTable;
                 }
-                logger.debug("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
-                throw new DataStorageException(203, "DataBase: "+dataBaseName+": DataTable "+identifier+" Not Found.");
+                logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
+                throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.readLock().unlock();
                 throw e;
             }catch (Exception e){
                 lock.readLock().unlock();
-                logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
-                throw new DataStorageException(0, "DataBase: "+dataBaseName+": Unknown Error: "+e.getMessage());
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
+                throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
-        logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Not Ready Yet");
-        throw new DataStorageException(231, "DataBase: "+dataBaseName+": Object Not Ready");
+        logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
+        throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
     }
 
     /**
@@ -136,28 +136,28 @@ public class DataBase {
         if(ready.get()){
             lock.writeLock().lock();
             try{
-                if(dataBaseName.equals(table.getDatabaseName())){
-                    if(!dataTablePool.containsKey(table.getTableName())){
-                        dataTablePool.put(table.getTableName(), table);
+                if(identifier.equals(table.getDataBase().getIdentifier())){
+                    if(!dataTablePool.containsKey(table.getIdentifier())){
+                        dataTablePool.put(table.getIdentifier(), table);
                         lock.writeLock().unlock();
                         return;
                     }
-                    logger.debug("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) DataTable "+table.getTableName()+" Already Existing");
-                    throw new DataStorageException(213, "DataBase: "+dataBaseName+": DataTable "+table.getTableName()+" Already Exists.");
+                    logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+table.getIdentifier()+" Already Existing");
+                    throw new DataStorageException(213, "DataBase: "+identifier+": DataTable "+table.getIdentifier()+" Already Exists.");
                 }
-                logger.debug("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) DataTable "+table.getTableName()+" Does Not Fit Here");
-                throw new DataStorageException(220, "DataBase: "+dataBaseName+": DataTable "+table.getTableName()+" ("+table.getDatabaseName()+">"+table.getTableName()+") Does Not Fit Here.");
+                logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+table.getIdentifier()+" Does Not Fit Here");
+                throw new DataStorageException(220, "DataBase: "+identifier+": DataTable "+table.getIdentifier()+" ("+table.getDataBase().identifier+">"+table.getIdentifier()+") Does Not Fit Here.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
-                logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Unknown Error Inserting "+table.getTableName(), e);
-                throw new DataStorageException(0, "DataBase: "+dataBaseName+": Unknown Error: "+e.getMessage());
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Inserting "+table.getIdentifier(), e);
+                throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
-        logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Not Ready Yet");
-        throw new DataStorageException(231, "DataBase: "+dataBaseName+": Object Not Ready");
+        logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
+        throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
     }
 
     /**
@@ -179,19 +179,19 @@ public class DataBase {
                     lock.writeLock().unlock();
                     return;
                 }
-                logger.debug("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
-                throw new DataStorageException(203, "DataBase: "+dataBaseName+": DataTable "+identifier+" Not Found.");
+                logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
+                throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
-                logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Unknown Error Deleting "+identifier, e);
-                throw new DataStorageException(0, "DataBase: "+dataBaseName+": Unknown Error: "+e.getMessage());
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Deleting "+identifier, e);
+                throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
-        logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Not Ready Yet");
-        throw new DataStorageException(231, "DataBase: "+dataBaseName+": Object Not Ready");
+        logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
+        throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
     }
 
     /**
@@ -224,9 +224,9 @@ public class DataBase {
         if(!ready.get() && !shutdown.get()){
             try{
                 // read from file
-                File d = new File("./jstorage/data/db/"+dataBaseName);
+                File d = new File("./jstorage/data/db/"+identifier);
                 if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/db/"+dataBaseName+"/"+dataBaseName+"_settings");
+                File f = new File("./jstorage/data/db/"+identifier+"/"+identifier+"_settings");
                 if(!f.exists()){ f.createNewFile(); }
                 else{
                     // read
@@ -236,14 +236,14 @@ public class DataBase {
                         String dbn = jsonObject.getString("database").toLowerCase();
                         JSONArray tbns = jsonObject.getJSONArray("tables");
                         // might contain other settings in the future
-                        if(dataBaseName.equals(dbn)){
+                        if(identifier.equals(dbn)){
                             // create tables
                             for(int i = 0; i < tbns.length(); i++){
                                 String tableName = tbns.getString(i).toLowerCase();
                                 if(!dataTablePool.containsKey(tableName)){
                                     // try to create a new object; we dont try to catch an exception as we dont want to loose whole tables of data
-                                    DataTable dataTable = new DataTable(dataBaseName, tableName);
-                                    dataTablePool.put(dataTable.getTableName(), dataTable);
+                                    DataTable dataTable = new DataTable(this, tableName);
+                                    dataTablePool.put(dataTable.getIdentifier(), dataTable);
                                 }
                             }
                         }else{
@@ -252,8 +252,8 @@ public class DataBase {
                     }
                 }
             }catch (Exception e){
-                logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Loading Data Failed", e);
-                throw new DataStorageException(101, "DataBase: "+dataBaseName+": Loading Data Failed: "+e.getMessage());
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Loading Data Failed", e);
+                throw new DataStorageException(101, "DataBase: "+identifier+": Loading Data Failed: "+e.getMessage());
             }
         }
     }
@@ -277,22 +277,22 @@ public class DataBase {
             try{
                 // build json
                 JSONObject jsonObject = new JSONObject()
-                        .put("database", dataBaseName);
+                        .put("database", identifier);
                 JSONArray jsonArray = new JSONArray();
-                dataTablePool.forEach((k, v)->{ jsonArray.put(v.getTableName()); });
+                dataTablePool.forEach((k, v)->{ jsonArray.put(v.getIdentifier()); });
                 jsonObject.put("tables", jsonArray);
                 // write to file
-                File d = new File("./jstorage/data/db/"+dataBaseName);
+                File d = new File("./jstorage/data/db/"+identifier);
                 if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/db/"+dataBaseName+"/"+dataBaseName+"_settings");
+                File f = new File("./jstorage/data/db/"+identifier+"/"+identifier+"_settings");
                 BufferedWriter writer = new BufferedWriter(new FileWriter(f));
                 writer.write(jsonObject.toString());
                 writer.newLine();
                 writer.flush();
                 writer.close();
             }catch (Exception e){
-                logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Unloading Data Failed", e);
-                throw new DataStorageException(102, "DataBase: "+dataBaseName+": Failed To Write Configuration File, Data May Be Lost: "+e.getMessage());
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unloading Data Failed", e);
+                throw new DataStorageException(102, "DataBase: "+identifier+": Failed To Write Configuration File, Data May Be Lost: "+e.getMessage());
             }
             // clear
             dataTablePool.clear();
@@ -315,11 +315,11 @@ public class DataBase {
         dataTablePool.clear();
         // delete files
         try{
-            File d = new File("./jstorage/data/"+dataBaseName);
+            File d = new File("./jstorage/data/"+identifier);
             FileUtils.deleteDirectory(d);
         }catch (Exception e){
-            logger.error("DataBase ( Chain "+this.dataBaseName+"; Hash "+hashCode()+" ) Deleting Files Failed. Manual Actions May Be Required", e);
-            System.err.println("DataTable: "+dataBaseName+": Deleting Files Failed. Manual Actions May Be Required. "+e.getMessage());
+            logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Deleting Files Failed. Manual Actions May Be Required", e);
+            System.err.println("DataTable: "+identifier+": Deleting Files Failed. Manual Actions May Be Required. "+e.getMessage());
         }
         // dont reset shutdown atomic. this object should not be used further
     }
