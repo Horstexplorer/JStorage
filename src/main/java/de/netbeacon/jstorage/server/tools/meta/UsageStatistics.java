@@ -19,12 +19,12 @@ package de.netbeacon.jstorage.server.tools.meta;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Represents the usage statistics of a specific dataset object
+ * Represents the usage statistics of a specific object
  */
-public class DataSetMetaStatistics {
+public class UsageStatistics {
 
-    private final ConcurrentHashMap<Long, DSMSEnum> access = new ConcurrentHashMap<>();
-    public enum DSMSEnum{any, get_success, insert_success, update_success, delete_success, acquire_success, get_failure, insert_failure, update_failure, delete_failure, acquire_failure};
+    private final ConcurrentHashMap<Long, Usage> access = new ConcurrentHashMap<>();
+    public enum Usage{any, get_success, insert_success, update_success, delete_success, acquire_success, get_failure, insert_failure, update_failure, delete_failure, acquire_failure};
 
     /**
      * Returns the number of 'uses' for a specific type within the last 10 minutes
@@ -32,10 +32,10 @@ public class DataSetMetaStatistics {
      * @param e DSMSEnum
      * @return long
      */
-    public long getCountFor(DSMSEnum e){
+    public long getCountFor(Usage e){
         long oldest = System.nanoTime()-600000000000L;
         access.entrySet().stream().filter(x-> (x.getKey() <= oldest)).forEach(x->access.remove(x.getKey()));
-        return access.entrySet().stream().filter(x -> (x.getKey() >= oldest && (x.getValue() == e || e == DSMSEnum.any))).count();
+        return access.entrySet().stream().filter(x -> (x.getKey() >= oldest && (x.getValue() == e || e == Usage.any))).count();
     }
 
     /**
@@ -43,7 +43,7 @@ public class DataSetMetaStatistics {
      *
      * @param e DSMSEnum
      */
-    public void add(DSMSEnum e){
+    public void add(Usage e){
         long current = System.nanoTime();
         access.put(current, e);
         // delete older datasets

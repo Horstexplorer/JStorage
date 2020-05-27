@@ -18,7 +18,7 @@ package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.jsonmatcher.JSONMatcher;
-import de.netbeacon.jstorage.server.tools.meta.DataSetMetaStatistics;
+import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -51,7 +51,7 @@ public class DataTable {
     private final String identifier;
     private JSONObject defaultStructure = new JSONObject();
     private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
-    private final ConcurrentHashMap<String, DataSetMetaStatistics> statisticsPool = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, UsageStatistics> statisticsPool = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
 
     private final AtomicBoolean adaptiveLoad = new AtomicBoolean(false);
@@ -335,7 +335,7 @@ public class DataTable {
                             // write to index
                             indexPool.put(dataSet.getIdentifier(), dataShard.getShardID());
                             // add statistics
-                            statisticsPool.put(dataSet.getIdentifier(), new DataSetMetaStatistics());
+                            statisticsPool.put(dataSet.getIdentifier(), new UsageStatistics());
                             // unlock
                             lock.writeLock().unlock();
                             return;
@@ -451,7 +451,7 @@ public class DataTable {
      * @param identifier of the dataset
      * @return DataSetMetaStatistics
      */
-    protected DataSetMetaStatistics getStatisticsFor(String identifier){
+    protected UsageStatistics getStatisticsFor(String identifier){
         if(statisticsPool.containsKey(identifier.toLowerCase())){
             return statisticsPool.get(identifier.toLowerCase());
         }
@@ -614,7 +614,7 @@ public class DataTable {
             logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - This May Result In Data Loss");
             // create hashmap with <datasetkey, long>
             HashMap<String, Long> unsorted = new HashMap<>();
-            statisticsPool.forEach((key, value) -> unsorted.put(key, value.getCountFor(DataSetMetaStatistics.DSMSEnum.any)));
+            statisticsPool.forEach((key, value) -> unsorted.put(key, value.getCountFor(UsageStatistics.Usage.any)));
             // sort
             HashMap<String, Long> sorted = unsorted.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue())).collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
             // check if both the index size & sorted list match in size
@@ -902,9 +902,9 @@ public class DataTable {
     /**
      * Returns the statistics of all datasets inside this table
      *
-     * @return ConcurrentHashMap<String, DataSetMetaStatistics> concurrent hash map
+     * @return ConcurrentHashMap<String, UsageStatistics> concurrent hash map
      */
-    public ConcurrentHashMap<String, DataSetMetaStatistics> getStatisticsPool() {
+    public ConcurrentHashMap<String, UsageStatistics> getStatisticsPool() {
         return statisticsPool;
     }
 }
