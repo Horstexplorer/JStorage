@@ -1,12 +1,14 @@
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
+import de.netbeacon.jstorage.server.tools.meta.DataSetMetaStatistics;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.lang.instrument.Instrumentation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -87,4 +89,48 @@ class DataTableTest {
         try{dataTable.insertDataSet(good2); }catch (Exception e){ e.printStackTrace(); fail(); }
     }
 
+    @Test
+    void optimize(){
+        // settings
+        DataShard.setMaxDataSets(2);
+        try{
+            DataBase db = dataTable.getDataBase(); // we just reuse the db, nothing else
+            DataTable table = new DataTable(db, "unoptimizedtable");
+            db.insertTable(table);
+            // create 4 datasets
+            DataSet a = new DataSet(db, table, "a");
+            DataSet b = new DataSet(db, table, "b");
+            DataSet c = new DataSet(db, table, "c");
+            DataSet d = new DataSet(db, table, "d");
+            // insert them
+            table.insertDataSet(a);
+            table.insertDataSet(b);
+            table.insertDataSet(c);
+            table.insertDataSet(d);
+            // check if they are correctly placed
+            assertEquals(2, table.getDataPool().size());
+            assertEquals(4, table.getIndexPool().size());
+            // a & c should be on individual shards
+            assertNotEquals(table.getIndexPool().get("a"), table.getIndexPool().get("c"));
+            // fake statistics a & c
+            DataSetMetaStatistics ad = table.getStatisticsFor("a");
+            DataSetMetaStatistics cd = table.getStatisticsFor("c");
+            ad.add(DataSetMetaStatistics.DSMSEnum.acquire_success);
+            cd.add(DataSetMetaStatistics.DSMSEnum.acquire_success);
+            // test stats
+            assertEquals(1, ad.getCountFor(DataSetMetaStatistics.DSMSEnum.any));
+            assertEquals(1, cd.getCountFor(DataSetMetaStatistics.DSMSEnum.any));
+            // optimize
+            table.optimize();
+            // check if nothing exploded
+            assertEquals(2, table.getDataPool().size());
+            assertEquals(4, table.getIndexPool().size());
+            // a & c should be on the same shard now
+            assertEquals(table.getIndexPool().get("a"), table.getIndexPool().get("c"));
+        }catch (Exception e){
+            fail();
+        }
+        // reset settings just in case
+        DataShard.setMaxDataSets(0);
+    }
 }

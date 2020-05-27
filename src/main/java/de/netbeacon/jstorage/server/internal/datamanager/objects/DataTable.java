@@ -18,6 +18,7 @@ package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.jsonmatcher.JSONMatcher;
+import de.netbeacon.jstorage.server.tools.meta.DataSetMetaStatistics;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,6 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static java.util.stream.Collectors.toMap;
+
 /**
  * This class represents an object within a database
  * <p>
@@ -45,6 +48,7 @@ public class DataTable {
     private final String identifier;
     private JSONObject defaultStructure = new JSONObject();
     private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
+    private final ConcurrentHashMap<String, DataSetMetaStatistics> statisticsPool = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
 
     private final AtomicBoolean adaptiveLoad = new AtomicBoolean(false);
@@ -284,6 +288,8 @@ public class DataTable {
                             dataShard.insertDataSet(dataSet);
                             // write to index
                             indexPool.put(dataSet.getIdentifier(), dataShard.getShardID());
+                            // add statistics
+                            statisticsPool.put(dataSet.getIdentifier(), new DataSetMetaStatistics());
                             // unlock
                             lock.writeLock().unlock();
                             return;
@@ -332,6 +338,8 @@ public class DataTable {
                             dataShard.deleteDataSet(identifier);
                             // remove from index
                             indexPool.remove(identifier);
+                            // remove statistics
+                            statisticsPool.remove(identifier);
                             // check if shard is empty, then we just remove it
                             if(dataShard.getCurrentDataSetCount() == 0){
                                 dataShard.unloadData(false, false, false);
@@ -386,6 +394,22 @@ public class DataTable {
         boolean contains = indexPool.containsKey(identifier);
         lock.readLock().unlock();
         return contains;
+    }
+
+    /*                  Statistics                   */
+
+    /**
+     * Used to get the statistics for the selected dataset
+     *
+     * This function should only be used as loopback from datasets within this datatable
+     * @param identifier of the dataset
+     * @return DataSetMetaStatistics
+     */
+    protected DataSetMetaStatistics getStatisticsFor(String identifier){
+        if(statisticsPool.containsKey(identifier.toLowerCase())){
+            return statisticsPool.get(identifier.toLowerCase());
+        }
+        return null;
     }
 
     /*                  DATA_OPERATIONS                   */
@@ -472,7 +496,10 @@ public class DataTable {
                     }
                     // unload all shards by deletion & clear & delete index
                     indexPool.clear();
-                    shardPool.forEach((key, value) -> value.unloadDataAsync(false, false, true));
+                    shardPool.forEach((key, value) -> {
+                        value.getDataPool().clear(); // clear cuz we want to use the datasets later again
+                        value.unloadDataAsync(false, false, true); // this would otherwise call unload on them
+                    });
                     shardPool.clear();
                     new File("./jstorage/data/"+dataBase.getIdentifier()+"/"+identifier+"_index").delete();
                     // rebuild index & shards
@@ -541,6 +568,105 @@ public class DataTable {
 
     }
     */ // optimize() -> placeholder for upcoming feature
+    public void optimize(){
+        // enable lock
+        lock.writeLock().lock();
+        try{
+            logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - This May Result In Data Loss");
+            // create hashmap with <datasetkey, long>
+            HashMap<String, Long> unsorted = new HashMap<>();
+            statisticsPool.forEach((key, value) -> unsorted.put(key, value.getCountFor(DataSetMetaStatistics.DSMSEnum.any)));
+            // sort
+            HashMap<String, Long> sorted = unsorted.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue())).collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
+            // check if both the index size & sorted list match in size
+            if(!(sorted.keySet().containsAll(Collections.list(indexPool.keys())) && sorted.size() == indexPool.size())){
+                throw new Exception("Meta Data Does Not Match Objects From Index");
+            }
+            // load all datasets (this is scary)
+            HashMap<String, DataSet> datasetTransferCache = new HashMap<>();
+            for(String key : sorted.keySet()){ // we do not get the dataset pool from each shard as they may not be loaded
+                // load dataset
+                DataShard ds = shardPool.get(indexPool.get(key));
+                if(ds == null){
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Optimizing Shards - DataShard "+indexPool.get(key)+" Not Found For "+key+", Dropping DataSet");
+                    continue;
+                }
+                DataSet dataSet = ds.getDataSet(key);
+                if(dataSet == null){
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Optimizing Shards - DataShard "+indexPool.get(key)+" Does Not Contain"+key+", Dropping DataSet");
+                    continue;
+                }
+                datasetTransferCache.put(key, dataSet);
+            }
+            // clear all references
+            logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Clearing All DataShards & Index");
+            shardPool.forEach((k,v)->{
+                try {
+                    v.getDataPool().clear(); // we clear it here so that those objects dont know they get moved
+                    v.unloadData(false, false, true); // as this would signal them that they got unloaded
+                } catch (DataStorageException e) {
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Failed To Delete Shard "+v.getShardID());
+                }
+            });
+            shardPool.clear();
+            indexPool.clear();
+            logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Rebuilding Index & Restoring DataSets");
+            int processed = 0;
+            int dsc = DataShard.getMaxDataSetCountStatic();
+            DataShard dataShard = null;
+            for(String selection : sorted.keySet()){
+                processed++;
+                if(dataShard == null || (processed % (dsc+1) == 0)){
+                    dataShard = new DataShard(dataBase, this);
+                    shardPool.put(dataShard.getShardID(), dataShard);
+                }
+                // get the dataset
+                DataSet dataSet = datasetTransferCache.get(selection);
+                if(dataSet == null){
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Failed To Get DataSet From Transfer Cache ");
+                    continue;
+                }
+                // remove it from the transfer cache
+                datasetTransferCache.remove(selection);
+                // insert it into the new DataShard
+                try{
+                    dataShard.insertDataSet(dataSet);
+                    // add to index
+                    indexPool.put(dataSet.getIdentifier(), dataShard.getShardID());
+                }catch (DataStorageException e){
+                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Failed To Insert DataSet Into New Shard, Dropping DataSet");
+                }
+            }
+            // check if we have any datasets left over (we shouldn't as we checked before)
+            if(datasetTransferCache.size() > 0){
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Not All DataSet Have Been Inserted, Trying To Insert Them");
+                for(Map.Entry<String, DataSet> entry : datasetTransferCache.entrySet()){
+                    processed++;
+                    if(dataShard == null || (processed % (dsc+1) == 0)){
+                        dataShard = new DataShard(dataBase, this);
+                        shardPool.put(dataShard.getShardID(), dataShard);
+                    }
+                    try{
+                        dataShard.insertDataSet(entry.getValue());
+                        indexPool.put(entry.getValue().getIdentifier(), dataShard.getShardID());
+                    }catch (DataStorageException e){
+                        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Failed To Insert DataSet Into New Shard, Dropping DataSet");
+                    }
+                }
+            }
+            // clean up
+            datasetTransferCache.clear();
+            unsorted.clear();
+            sorted.clear();
+            logger.info("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - Finished");
+        }catch (DataStorageException e){
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Optimizing Shards", e);
+        }catch (Exception e){
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Optimizing Shards", e);
+        }
+        // unlock
+        lock.writeLock().unlock();
+    }
 
     /*                    SETUP                   */
 
@@ -671,6 +797,7 @@ public class DataTable {
                 });
                 shardPool.clear();
                 indexPool.clear();
+                statisticsPool.clear();
             }catch (Exception e){
                 logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shutdown Failed. Data May Be Lost", e);
                 throw new DataStorageException(102, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unloading Data Failed, Data May Be Lost: "+e.getMessage());
@@ -698,6 +825,7 @@ public class DataTable {
         });
         shardPool.clear();
         indexPool.clear();
+        statisticsPool.clear();
         // delete files
         try{
             File d = new File("./jstorage/data/db/"+dataBase.getIdentifier()+"/"+identifier);
@@ -730,4 +858,12 @@ public class DataTable {
         return indexPool;
     }
 
+    /**
+     * Returns the statistics of all datasets inside this table
+     *
+     * @return ConcurrentHashMap<String, DataSetMetaStatistics> concurrent hash map
+     */
+    public ConcurrentHashMap<String, DataSetMetaStatistics> getStatisticsPool() {
+        return statisticsPool;
+    }
 }

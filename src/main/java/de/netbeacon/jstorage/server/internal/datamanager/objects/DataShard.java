@@ -446,20 +446,21 @@ public class DataShard {
      *
      * @param unload      if the data should be removed from the object
      * @param saveToFile  if the data should be saved to a file
-     * @param deleteTable if the data should be deleted
+     * @param delete if the data should be deleted
      * @throws DataStorageException if data failed to unload for any reasons. Data may be lost
      */
-    protected void unloadData(boolean unload, boolean saveToFile, boolean deleteTable) throws DataStorageException {
+    protected void unloadData(boolean unload, boolean saveToFile, boolean delete) throws DataStorageException {
         try{
             lock.writeLock().lock();
             if(status.get() == 3){
                 status.set(1); // set unloading
-                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloading Data With Params: u="+unload+" s="+saveToFile+" d="+deleteTable);
+                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloading Data With Params: u="+unload+" s="+saveToFile+" d="+delete);
                 // check for delete - ignore others
-                if(deleteTable){
+                if(delete){
                     // clear content
                     dataSetPool.forEach((key, value) -> {value.onUnload();});
                     dataSetPool.clear();
+                    occupiedIDs.remove(this.shardID);
                     // remove file if exists
                     File f = new File("./jstorage/data/db/"+dataBase.getIdentifier()+"/"+table.getIdentifier()+"/"+dataBase.getIdentifier()+"_"+shardID);
                     f.delete();
@@ -489,17 +490,18 @@ public class DataShard {
                         dataSetPool.clear();
                     }
                 }
-                if(!unload && !saveToFile && !deleteTable){
+                if(!unload && !saveToFile && !delete){
                     status.set(3); // set back as no changes have been made
                 }else{
                     status.set(0);
                 }
-            }else if(status.get() <= 0 && deleteTable){// table can be deleted even if not loaded
+            }else if(status.get() <= 0 && delete){// table can be deleted even if not loaded
                 status.set(1); // set unloading
-                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloading Data With Params: u="+unload+" s="+saveToFile+" d="+deleteTable);
+                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloading Data With Params: u="+unload+" s="+saveToFile+" d="+delete);
                 // clear content
                 dataSetPool.forEach((key, value) -> {value.onUnload();});
                 dataSetPool.clear();
+                occupiedIDs.remove(this.shardID);
                 // remove file if exists
                 File f = new File("./jstorage/data/db/"+dataBase.getIdentifier()+"/"+table.getIdentifier()+"/"+dataBase.getIdentifier()+"_"+shardID);
                 f.delete();

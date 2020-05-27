@@ -1,6 +1,6 @@
 # JStorage
 ###### JSON based data storage & cache system with web api access
-> Version: 1.0.3_4 R
+> Version: 1.0.4_5 R
 
 
 ## Table of Content
@@ -50,7 +50,6 @@ Currently, there are no known issues. This list might not be updated yet, so ple
 Future releases might contain following features:
 - Mode: Node - let multiple storages act like one through a proxy
 - DB: Update lock for data types might contain subtypes
-- DB: Feature to optimize load unload behaviour by grouping more often used data sets together
 - DB: Advanced Searching Features
 - User: more secure way of building login tokens
 - User: better permissions
