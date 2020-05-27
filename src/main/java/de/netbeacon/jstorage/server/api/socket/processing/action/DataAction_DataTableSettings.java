@@ -39,7 +39,7 @@ import java.util.List;
  * Tries to change settings for a specific datatable within a database <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Info <br>
+ * database, table, settings <br>
  * --- Requirements --- <br>
  * action: datatablesettings <br>
  * http_method: put <br>
@@ -140,8 +140,8 @@ public class DataAction_DataTableSettings implements ProcessingAction{
         }
 
         // return info
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.put(new JSONObject().put("adaptiveLoading", t.isAdaptive()));
-        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("settings", jsonArray).put("defaultStructure", t.getDefaultStructure()).put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode()).put("autoOptimize", t.autoOptimizationEnabled()));
+        JSONObject settings = new JSONObject();
+        settings.put("adaptiveLoading", t.isAdaptive()).put("defaultStructure", t.getDefaultStructure()).put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode()).put("autoOptimize", t.autoOptimizationEnabled());
+        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("settings", settings));
     }
 }
