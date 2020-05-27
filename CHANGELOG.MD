@@ -8,7 +8,10 @@ Types which may be used:
 - D - Development
 - T - Testing
 - R - Release
-    
+
+## v1.0.4_5 R
+- added feature to optimize sharding
+- minor improvements
 ## v1.0.3_4 R
 - improved linkage between objects
 - added support to limit objects to s given structure within the same table
