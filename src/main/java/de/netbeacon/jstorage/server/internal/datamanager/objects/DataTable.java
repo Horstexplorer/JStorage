@@ -27,9 +27,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -52,11 +55,14 @@ public class DataTable {
     private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
 
     private final AtomicBoolean adaptiveLoad = new AtomicBoolean(false);
+    private final AtomicBoolean autoOptimization = new AtomicBoolean(false);
+    private final AtomicInteger autoResolveDataInconsistency = new AtomicInteger(-1);
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AtomicBoolean dataInconsistency = new AtomicBoolean(false);
     private final ScheduledExecutorService sES = Executors.newScheduledThreadPool(1);
     private Future<?> sESUnloadTask;
     private Future<?> sESSnapshotTask;
+    private Future<?> sESBackgroundTask;
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
@@ -125,6 +131,46 @@ public class DataTable {
      * @return boolean boolean
      */
     public boolean isShutdown(){ return shutdown.get(); }
+
+
+    /**
+     * Used to enable or disable auto optimization
+     *
+     * @param value value
+     */
+    public void setAutoOptimization(boolean value){
+        autoOptimization.set(true);
+    }
+
+    /**
+     * Returns if this object is optimizing itself
+     *
+     * @return boolean
+     */
+    public boolean autoOptimizationEnabled(){
+        return autoOptimization.get();
+    }
+
+    /**
+     * Used to set the mode for automatically repairing data inconsistencies
+     * <p>
+     * Set to -1 to disable; See {@link DataTable#resolveDataInconsistency(int)} for other modes
+     * @param mode int
+     */
+    public void setAutoResolveDataInconsistency(int mode){
+        autoResolveDataInconsistency.set( (-1 <= mode && mode < 4) ? mode : -1);
+    }
+
+    /**
+     * Returns the mode this object uses to repair data inconsistencies on its own (each 24h)
+     * <p>
+     * Returns -1 if disabled
+     *
+     * @return int
+     */
+    public int autoResolveDataInconsistencyMode(){
+        return autoResolveDataInconsistency.get();
+    }
 
 
     /**
@@ -556,18 +602,11 @@ public class DataTable {
 
      */ // fixDefault() -> placeholder for upcoming feature
 
-    /*
-    public void optimize(){
-
-        // future feature:
-        //
-        // used to optimize adaptive loading by sorting often used data sets in the same shard
-        // - required for this to work:
-        //    something counting how often an object is used
-        //    some magic
-
-    }
-    */ // optimize() -> placeholder for upcoming feature
+    /**
+     * Optimizes utilisation of shards by grouping frequently used data sets
+     * <p>
+     * ! Using this function may result in data loss. Manual correction recommended.
+     */
     public void optimize(){
         // enable lock
         lock.writeLock().lock();
@@ -696,6 +735,9 @@ public class DataTable {
                         String tbn = jsonObject.getString("table").toLowerCase();
                         defaultStructure = jsonObject.getJSONObject("defaultStructure");
                         adaptiveLoad.set(jsonObject.getBoolean("adaptiveLoad"));
+                        autoOptimization.set(jsonObject.getBoolean("autoOptimize"));
+                        int a = jsonObject.getInt("autoResolveDataInconsistency");
+                        autoResolveDataInconsistency.set( (-1 <= a && a < 4) ? a : -1);
                         if(dataBase.getIdentifier().equals(dbn) && identifier.equals(tbn)){
                             JSONArray shards = jsonObject.getJSONArray("shards");
                             for(int i = 0; i < shards.length(); i++){
@@ -722,20 +764,16 @@ public class DataTable {
                 throw new DataStorageException(101, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Loading Data Failed, Data May Be Lost: "+e.getMessage());
             }
             // start scheduled worker
-            sESUnloadTask = sES.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    if(adaptiveLoad.get()){
-                        shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+900000) < System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(true, true, false));
-                    }
+            sESUnloadTask = sES.scheduleAtFixedRate(() -> {
+                if(adaptiveLoad.get()){
+                    shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+900000) < System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(true, true, false));
                 }
             }, 5, 5, TimeUnit.SECONDS);
-            sESSnapshotTask = sES.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+850000) > System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(false, true, false));
-                }
-            }, 30, 30, TimeUnit.MINUTES);
+            sESSnapshotTask = sES.scheduleAtFixedRate(() -> shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+850000) > System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(false, true, false)), 30, 30, TimeUnit.MINUTES);
+            sESBackgroundTask = sES.scheduleAtFixedRate(() -> {
+                if(autoOptimization.get()){ optimize(); }
+                if(autoResolveDataInconsistency.get() >= 0 && dataInconsistency.get()){ resolveDataInconsistency(autoResolveDataInconsistency.get()); }
+            }, Duration.between(LocalDateTime.now(), LocalDateTime.now().plusDays(1).toLocalDate().atStartOfDay()).toMinutes(),24*60, TimeUnit.MINUTES);
             // initialize content if necessary
             if(!adaptiveLoad.get()){
                 for(Map.Entry<String, DataShard> entry : shardPool.entrySet()){
@@ -764,7 +802,9 @@ public class DataTable {
                         .put("database", dataBase.getIdentifier())
                         .put("table", identifier)
                         .put("adaptiveLoad", adaptiveLoad.get())
-                        .put("defaultStructure", defaultStructure);
+                        .put("defaultStructure", defaultStructure)
+                        .put("autoOptimize", autoOptimization.get())
+                        .put("autoResolveDataInconsistency", autoResolveDataInconsistency.get());
                 JSONArray shards = new JSONArray();
                 shardPool.forEach((key, value) -> {
                     JSONObject shard = new JSONObject()
@@ -789,6 +829,7 @@ public class DataTable {
                 // shutdown & clear everything
                 sESUnloadTask.cancel(true);
                 sESSnapshotTask.cancel(true);
+                sESBackgroundTask.cancel(true);
                 sES.shutdown();
                 shardPool.forEach((k, v)-> {
                     try{
