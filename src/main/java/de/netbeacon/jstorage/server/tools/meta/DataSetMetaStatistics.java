@@ -18,17 +18,31 @@ package de.netbeacon.jstorage.server.tools.meta;
 
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Represents the usage statistics of a specific dataset object
+ */
 public class DataSetMetaStatistics {
 
     private final ConcurrentHashMap<Long, DSMSEnum> access = new ConcurrentHashMap<>();
     public enum DSMSEnum{any, get_success, insert_success, update_success, delete_success, acquire_success, get_failure, insert_failure, update_failure, delete_failure, acquire_failure};
 
+    /**
+     * Returns the number of 'uses' for a specific type within the last 10 minutes
+     *
+     * @param e DSMSEnum
+     * @return long
+     */
     public long getCountFor(DSMSEnum e){
         long oldest = System.nanoTime()-600000000000L;
         access.entrySet().stream().filter(x-> (x.getKey() <= oldest)).forEach(x->access.remove(x.getKey()));
         return access.entrySet().stream().filter(x -> (x.getKey() >= oldest && (x.getValue() == e || e == DSMSEnum.any))).count();
     }
 
+    /**
+     * Adds a 'use' for a specific type
+     *
+     * @param e DSMSEnum
+     */
     public void add(DSMSEnum e){
         long current = System.nanoTime();
         access.put(current, e);
