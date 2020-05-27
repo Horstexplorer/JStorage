@@ -19,6 +19,7 @@ package de.netbeacon.jstorage.server.internal.datamanager.objects;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.jsonmatcher.JSONMatcher;
+import de.netbeacon.jstorage.server.tools.meta.DataSetMetaStatistics;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
 
 /**
  * Instances of this class can be used to store data in JSON format. It also provides a save environment to perform changes to the data
@@ -68,7 +70,18 @@ public class DataSet{
     private final static AtomicInteger dataSetsPerThread = new AtomicInteger(7500);
     private final static AtomicLong dataSets = new AtomicLong(0);
     private final static AtomicInteger maxSTPEThreads = new AtomicInteger(256);
-
+    // statistics
+    private final Consumer<DataSetMetaStatistics.DSMSEnum> statistics = new Consumer<DataSetMetaStatistics.DSMSEnum>() {
+        @Override
+        public void accept(DataSetMetaStatistics.DSMSEnum dsmsEnum) {
+            DataSetMetaStatistics dsms = table.getStatisticsFor(identifier);
+            if(dsms != null){
+                dsms.add(dsmsEnum);
+            }else{
+                logger.debug("DataSet ( Chain "+database.getIdentifier()+", "+table.getIdentifier()+", "+identifier+"; Hash "+hashCode()+" ) - Access To Table Statistics Failed. This Object Might Not Be Part Of The Table Yet / Anymore");
+            }
+        }
+    };
     private final Logger logger = LoggerFactory.getLogger(DataSet.class);
 
     /**
@@ -261,6 +274,8 @@ public class DataSet{
         JSONObject dataCopy = new JSONObject(this.data.toString());
         // unlock
         lock.readLock().unlock();
+        // stats
+        statistics.accept(DataSetMetaStatistics.DSMSEnum.get_success);
         // return
         return dataCopy;
     } // suitable for getting the data for storage
@@ -288,6 +303,9 @@ public class DataSet{
             lock.readLock().lock();
             if(this.data.has(dataType) && !updatePermissions.containsKey(dataType)){
                 responseData.put(dataType, new JSONObject(this.data.getJSONObject(dataType).toString()));
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.get_success);
+            }else{
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.get_failure);
             }
             lock.readLock().unlock();
             // check acquire
@@ -303,6 +321,9 @@ public class DataSet{
                         }
                     }, 11, TimeUnit.SECONDS)));
                     responseData.put("utoken", uToken);
+                    statistics.accept(DataSetMetaStatistics.DSMSEnum.acquire_success);
+                }else{
+                    statistics.accept(DataSetMetaStatistics.DSMSEnum.acquire_failure);
                 }
                 updatePermissionLock.unlock();
             }
@@ -330,6 +351,7 @@ public class DataSet{
         try{
             // check if dataType & uToken is valid & data already has this type of data stored & token matches the token within the object
             if(!updatePermissions.containsKey(dataType) || !updatePermissions.get(dataType).getuToken().equals(data.getString("utoken")) || !this.data.has(dataType)){
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.update_failure);
                 return null;
             }
             // remove scheduled task
@@ -337,17 +359,20 @@ public class DataSet{
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.update_failure);
                 return false;
             }
             // check if data may be valid
             if(!data.getString("identifier").equals(this.identifier) || !data.getString("table").equals(this.table.getIdentifier()) || !data.getString("database").equals(this.database.getIdentifier()) || !data.has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": Data Does Not Match Specifications");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.update_failure);
                 return false;
             }
             // check if structure matches
             if(table.fixedStructure()){
                 if(!JSONMatcher.structureMatch(table.getDefaultStructure().getJSONObject(dataType), data.getJSONObject(dataType))){
                     logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": DataType Not Contain Required Structure");
+                    statistics.accept(DataSetMetaStatistics.DSMSEnum.update_failure);
                     return false;
                 }
             }
@@ -358,11 +383,15 @@ public class DataSet{
             // unlock & remove uToken
             lock.writeLock().lock();
             updatePermissions.remove(dataType);
+            // stats
+            statistics.accept(DataSetMetaStatistics.DSMSEnum.update_success);
             // return
             return true;
         }catch (Exception e){
             // unlock
             lock.writeLock().unlock();
+            // stats
+            statistics.accept(DataSetMetaStatistics.DSMSEnum.update_failure);
             // return
             logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType, e);
             return false;
@@ -384,16 +413,19 @@ public class DataSet{
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                 return null;
             }
             // check if data doesnt already contain this type of data
             if(this.data.has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Already Existing");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                 return false;
             }
             // check if required / allowed by structure
             if(table.fixedStructure() && !table.getDefaultStructure().has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Required By Default Structure");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                 return false;
             }
             // lock
@@ -407,6 +439,8 @@ public class DataSet{
         }catch (Exception e){
             // unlock
             lock.writeLock().unlock();
+            // stats
+            statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_success);
             // return
             logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType, e);
             return false;
@@ -429,26 +463,31 @@ public class DataSet{
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                 return false;
             }
             // check if data doesnt already contain this type of data
             if(this.data.has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Already Existing");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                 return null;
             }
             // check if the data is valid
             if(!data.getString("identifier").equals(this.identifier) || !data.getString("table").equals(this.table.getIdentifier()) || !data.getString("database").equals(this.database.getIdentifier()) || !data.has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": Data Does Not Meet Requirements");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                 return false;
             }
             // check if required / allowed by structure
             if(table.fixedStructure()){
                 if(!table.getDefaultStructure().has(dataType)){
                     logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Required By Default Structure");
+                    statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                     return false;
                 }else{
                     if(!JSONMatcher.structureMatch(table.getDefaultStructure().getJSONObject(dataType), data.getJSONObject(dataType))){ // check if both match the same structure; we can only do this because of out default structure having only jsonObjects at layer 0
                         logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Contain Required Structure");
+                        statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_failure);
                         return false;
                     }
                 }
@@ -459,6 +498,8 @@ public class DataSet{
             this.data.put(dataType, new JSONObject(data.getJSONObject(dataType).toString()));
             // unlock
             lock.writeLock().unlock();
+            // stats
+            statistics.accept(DataSetMetaStatistics.DSMSEnum.insert_success);
             // return
             return true;
         }catch (Exception e){
@@ -483,21 +524,25 @@ public class DataSet{
         try{
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType+": Modification Of Critical Types");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.delete_failure);
                 return null;
             }
             // check if data contains this dataType
             if(!data.has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType+": DataType Not Existing");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.delete_failure);
                 return false;
             }
             // check if not locked by any updates
             if(updatePermissions.containsKey(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Still In Use");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.delete_failure);
                 return false;
             }
             // check if not required by structure
             if(table.fixedStructure() && table.getDefaultStructure().has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Required By Default Structure");
+                statistics.accept(DataSetMetaStatistics.DSMSEnum.delete_failure);
                 return false;
             }
             // lock
@@ -511,6 +556,8 @@ public class DataSet{
         }catch (Exception e){
             // unlock
             lock.writeLock().unlock();
+            // stats
+            statistics.accept(DataSetMetaStatistics.DSMSEnum.delete_success);
             // return
             logger.error("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Delete Operation Failed for DataType "+dataType, e);
             return true;
