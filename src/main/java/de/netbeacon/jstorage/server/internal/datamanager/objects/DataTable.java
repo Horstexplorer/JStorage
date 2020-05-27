@@ -49,22 +49,26 @@ public class DataTable {
 
     private final DataBase dataBase;
     private final String identifier;
-    private JSONObject defaultStructure = new JSONObject();
-    private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
-    private final ConcurrentHashMap<String, UsageStatistics> statisticsPool = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
 
+    private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
+    private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
+    private final ConcurrentHashMap<String, UsageStatistics> statisticsPool = new ConcurrentHashMap<>();
+
+    private JSONObject defaultStructure = new JSONObject();
     private final AtomicBoolean adaptiveLoad = new AtomicBoolean(false);
     private final AtomicBoolean autoOptimization = new AtomicBoolean(false);
     private final AtomicInteger autoResolveDataInconsistency = new AtomicInteger(-1);
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final AtomicBoolean dataInconsistency = new AtomicBoolean(false);
+    private final UsageStatistics usageStatistic = new UsageStatistics();
+
+    private final AtomicBoolean ready = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final ScheduledExecutorService sES = Executors.newScheduledThreadPool(1);
     private Future<?> sESUnloadTask;
     private Future<?> sESSnapshotTask;
     private Future<?> sESBackgroundTask;
-    private final AtomicBoolean ready = new AtomicBoolean(false);
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     private final Logger logger = LoggerFactory.getLogger(DataTable.class);
 
@@ -132,7 +136,6 @@ public class DataTable {
      */
     public boolean isShutdown(){ return shutdown.get(); }
 
-
     /**
      * Used to enable or disable auto optimization
      *
@@ -170,6 +173,18 @@ public class DataTable {
      */
     public int autoResolveDataInconsistencyMode(){
         return autoResolveDataInconsistency.get();
+    }
+
+    /**
+     * Returns the number of uses for a specific type
+     * <p>
+     * Use -any- to get all uses
+     *
+     * @param usage type
+     * @return long count
+     */
+    public long getUsageStatisticFor(UsageStatistics.Usage usage){
+        return usageStatistic.getCountFor(usage);
     }
 
 
@@ -254,6 +269,7 @@ public class DataTable {
                         try{
                             DataSet dataSet = dataShard.getDataSet(identifier);
                             lock.readLock().unlock();
+                            usageStatistic.add(UsageStatistics.Usage.get_success);
                             return dataSet;
                         }catch (DataStorageException e){
                             switch(e.getType()){
@@ -277,10 +293,12 @@ public class DataTable {
                 throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.readLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw e;
             }catch (Exception e){
                 lock.readLock().unlock();
                 logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -338,6 +356,7 @@ public class DataTable {
                             statisticsPool.put(dataSet.getIdentifier(), new UsageStatistics());
                             // unlock
                             lock.writeLock().unlock();
+                            usageStatistic.add(UsageStatistics.Usage.insert_success);
                             return;
                         }
                         logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Already Existing");
@@ -347,10 +366,12 @@ public class DataTable {
                     throw new DataStorageException(220, "DataTable: "+dataBase.getIdentifier()+">"+identifier+">: DataSet "+dataSet.getIdentifier()+" ("+dataSet.getDataBase().getIdentifier()+">"+dataSet.getTable().getIdentifier()+") Does Not Fit Here.");
                 }catch (DataStorageException e){
                     lock.writeLock().unlock();
+                    usageStatistic.add(UsageStatistics.Usage.insert_failure);
                     throw e;
                 }catch (Exception e){
                     lock.writeLock().unlock();
                     logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                    usageStatistic.add(UsageStatistics.Usage.insert_failure);
                     throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
                 }
             }
@@ -393,6 +414,7 @@ public class DataTable {
                             }
                             // unlock
                             lock.writeLock().unlock();
+                            usageStatistic.add(UsageStatistics.Usage.delete_success);
                             return;
                         }catch (DataStorageException e){
                             switch(e.getType()){
@@ -415,10 +437,12 @@ public class DataTable {
                 throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
                 logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
         }

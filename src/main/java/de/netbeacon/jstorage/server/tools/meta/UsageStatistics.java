@@ -24,7 +24,14 @@ import java.util.concurrent.ConcurrentHashMap;
 public class UsageStatistics {
 
     private final ConcurrentHashMap<Long, Usage> access = new ConcurrentHashMap<>();
-    public enum Usage{any, get_success, insert_success, update_success, delete_success, acquire_success, get_failure, insert_failure, update_failure, delete_failure, acquire_failure};
+    public enum Usage{
+        any,
+        get_success, get_failure,
+        insert_success, insert_failure,
+        update_success, update_failure,
+        delete_success, delete_failure,
+        acquire_success, acquire_failure
+    };
 
     /**
      * Returns the number of 'uses' for a specific type within the last 10 minutes

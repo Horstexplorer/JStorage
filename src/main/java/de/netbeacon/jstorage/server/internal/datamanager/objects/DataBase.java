@@ -17,6 +17,7 @@
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
+import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,6 +49,8 @@ public class DataBase {
 
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
+    private final UsageStatistics usageStatistic = new UsageStatistics();
 
     private final Logger logger = LoggerFactory.getLogger(DataBase.class);
 
@@ -90,6 +93,18 @@ public class DataBase {
      */
     public boolean isShutdown(){ return shutdown.get(); }
 
+    /**
+     * Returns the number of uses for a specific type
+     * <p>
+     * Use -any- to get all uses
+     *
+     * @param usage type
+     * @return long count
+     */
+    public long getUsageStatisticFor(UsageStatistics.Usage usage){
+        return usageStatistic.getCountFor(usage);
+    }
+
     /*                  ACCESS                  */
 
     /**
@@ -109,16 +124,19 @@ public class DataBase {
                 if(dataTablePool.containsKey(identifier)){
                     DataTable dataTable = dataTablePool.get(identifier);
                     lock.readLock().unlock();
+                    usageStatistic.add(UsageStatistics.Usage.get_success);
                     return dataTable;
                 }
                 logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
                 throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.readLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw e;
             }catch (Exception e){
                 lock.readLock().unlock();
                 logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -140,6 +158,7 @@ public class DataBase {
                     if(!dataTablePool.containsKey(table.getIdentifier())){
                         dataTablePool.put(table.getIdentifier(), table);
                         lock.writeLock().unlock();
+                        usageStatistic.add(UsageStatistics.Usage.insert_success);
                         return;
                     }
                     logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+table.getIdentifier()+" Already Existing");
@@ -149,10 +168,12 @@ public class DataBase {
                 throw new DataStorageException(220, "DataBase: "+identifier+": DataTable "+table.getIdentifier()+" ("+table.getDataBase().identifier+">"+table.getIdentifier()+") Does Not Fit Here.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.insert_failure);
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
                 logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Inserting "+table.getIdentifier(), e);
+                usageStatistic.add(UsageStatistics.Usage.insert_failure);
                 throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -177,16 +198,19 @@ public class DataBase {
                     dataTablePool.get(identifier).delete();
                     dataTablePool.remove(identifier);
                     lock.writeLock().unlock();
+                    usageStatistic.add(UsageStatistics.Usage.delete_success);
                     return;
                 }
                 logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
                 throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
                 logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Deleting "+identifier, e);
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
