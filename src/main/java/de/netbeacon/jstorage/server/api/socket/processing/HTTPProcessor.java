@@ -259,6 +259,7 @@ public class HTTPProcessor {
             register.accept(new UserAction_UserGetNewLoginToken());
             // other
             register.accept(new InfoAction_BasicInfo());
+            register.accept(new InfoAction_Statistics());
         }
     }
 
