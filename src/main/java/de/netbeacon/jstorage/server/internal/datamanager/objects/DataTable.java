@@ -176,19 +176,6 @@ public class DataTable {
     }
 
     /**
-     * Returns the number of uses for a specific type
-     * <p>
-     * Use -any- to get all uses
-     *
-     * @param usage type
-     * @return long count
-     */
-    public long getUsageStatisticFor(UsageStatistics.Usage usage){
-        return usageStatistic.getCountFor(usage);
-    }
-
-
-    /**
      * Sets the target default structure for all objects in this table
      * <p>
      * this does not influence already existing objects
@@ -469,13 +456,22 @@ public class DataTable {
     /*                  Statistics                   */
 
     /**
+     * Returns the usage statistics for this object
+     *
+     * @return UsageStatistics
+     */
+    public UsageStatistics getStatistics(){
+        return usageStatistic;
+    }
+
+    /**
      * Used to get the statistics for the selected dataset
      *
      * This function should only be used as loopback from datasets within this datatable
      * @param identifier of the dataset
      * @return DataSetMetaStatistics
      */
-    protected UsageStatistics getStatisticsFor(String identifier){
+    public UsageStatistics getStatisticsFor(String identifier){
         if(statisticsPool.containsKey(identifier.toLowerCase())){
             return statisticsPool.get(identifier.toLowerCase());
         }

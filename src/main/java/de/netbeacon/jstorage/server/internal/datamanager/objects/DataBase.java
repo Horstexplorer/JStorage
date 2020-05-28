@@ -94,15 +94,12 @@ public class DataBase {
     public boolean isShutdown(){ return shutdown.get(); }
 
     /**
-     * Returns the number of uses for a specific type
-     * <p>
-     * Use -any- to get all uses
+     * Returns the usage statistics for this object
      *
-     * @param usage type
-     * @return long count
+     * @return UsageStatistics
      */
-    public long getUsageStatisticFor(UsageStatistics.Usage usage){
-        return usageStatistic.getCountFor(usage);
+    public UsageStatistics getStatistics(){
+        return usageStatistic;
     }
 
     /*                  ACCESS                  */
