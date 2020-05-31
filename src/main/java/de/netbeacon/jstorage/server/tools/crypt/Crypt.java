@@ -29,12 +29,34 @@ import org.bouncycastle.crypto.params.ParametersWithIV;
 
 import java.security.SecureRandom;
 
+/**
+ * Used to en/decrypt bytes
+ */
 public class Crypt {
 
+    /**
+     * Used to encrypt the input with a given password.
+     *
+     * <p>
+     * This calls {@link Crypt#encrypt(byte[], String, byte[])} with {@link Crypt#nullSalt()} as salt
+     * @param bytes input bytes
+     * @param password password
+     * @return encrypted bytes
+     * @throws InvalidCipherTextException on exception
+     */
     public static byte[] encrypt(byte[] bytes, String password) throws InvalidCipherTextException {
         return encrypt(bytes, password, nullSalt());
     }
 
+    /**
+     * Used to encrypt the input with a given password and salt
+     *
+     * @param bytes input bytes
+     * @param password password
+     * @param salt salt
+     * @return encrypted bytes
+     * @throws InvalidCipherTextException on exception
+     */
     public static byte[] encrypt(byte[] bytes, String password, byte[] salt) throws InvalidCipherTextException {
         ParametersWithIV key = (ParametersWithIV) getAESPassKey(password.toCharArray(), salt);
         BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
@@ -45,10 +67,28 @@ public class Crypt {
         return result;
     }
 
+    /**
+     * Used to decrypt the input with a given password.
+     * <p>
+     * This calls {@link Crypt#decrypt(byte[], String, byte[])} with {@link Crypt#nullSalt()} as salt
+     * @param bytes input bytes
+     * @param password password
+     * @return encrypted bytes
+     * @throws InvalidCipherTextException on exception
+     */
     public static byte[] decrypt(byte[] bytes, String password) throws InvalidCipherTextException {
         return decrypt(bytes, password, nullSalt());
     }
 
+    /**
+     * Used to decrypt the input with a given password.
+     *
+     * @param bytes input bytes
+     * @param password password
+     * @param salt salt
+     * @return encrypted bytes
+     * @throws InvalidCipherTextException on exception
+     */
     public static byte[] decrypt(byte[] bytes, String password, byte[] salt) throws InvalidCipherTextException {
         ParametersWithIV key = (ParametersWithIV) getAESPassKey(password.toCharArray(), salt);
         BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
@@ -59,6 +99,12 @@ public class Crypt {
         return result;
     }
 
+    /**
+     * Returns CipherParameters for the given input
+     * @param passwd password (char array)
+     * @param salt salt (byte array)
+     * @return CipherParameters
+     */
     private static CipherParameters getAESPassKey(char[] passwd, byte[] salt){
         PBEParametersGenerator generator = new PKCS12ParametersGenerator(new SHA512Digest());
         generator.init(
@@ -67,10 +113,18 @@ public class Crypt {
         return generator.generateDerivedParameters(128, 128);
     }
 
+    /**
+     * Provides default/empty salt
+     * @return salt
+     */
     private static byte[] nullSalt(){
         return new byte[16];
     }
 
+    /**
+     * Provides a random 16 byte salt
+     * @return salt
+     */
     public static byte[] genSalt(){
         byte[] bytes = new byte[16];
         new SecureRandom().nextBytes(bytes);
