@@ -2,6 +2,7 @@ package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
+import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,10 +28,12 @@ class DataTableTest {
 
     @AfterEach
     void tearDown() {
-        File d = new File("./jstorage/data/testdatabase/testtable");
-        if(d.exists()){ d.delete(); }
-        File e = new File("./jstorage/data/testdatabase/testtable_index");
-        if(e.exists()){ e.delete(); }
+        try{
+            File d = new File("./jstorage/data/db/");
+            FileUtils.deleteDirectory(d);
+        }catch (Exception e){
+            fail();
+        }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
+import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,14 +20,17 @@ class DataBaseTest {
         try{dataBase = new DataBase("testdatabase");
             dataTable = new DataTable(dataBase, "testtable");
             dataBase.insertTable(dataTable);}catch (Exception e){
-            e.printStackTrace();
             fail();}
     }
 
     @AfterEach
     void tearDown() {
-        File d = new File("./jstorage/data/testdatabase");
-        if(d.exists()){ d.delete(); }
+        try{
+            File d = new File("./jstorage/data/db/");
+            FileUtils.deleteDirectory(d);
+        }catch (Exception e){
+            fail();
+        }
     }
 
     @Test
