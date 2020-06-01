@@ -16,7 +16,6 @@
 
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
-import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
@@ -125,13 +124,6 @@ public class DataBase {
      * @throws CryptException on exception such as the CryptTool not being set up
      */
     public void setEncryption(boolean value) throws CryptException {
-        try{
-            if(!DataManager.getCryptTool().isReady()){
-                throw new Exception();
-            }
-        }catch (Exception e){
-            throw new CryptException(0, "Tool Not Ready");
-        }
         encrypted.set(value);
     }
 
