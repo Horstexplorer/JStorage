@@ -16,6 +16,8 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.1.0_7 D
+- supports database encryption
 ## v1.0.5_6 D
 - added usage statistics
 - some improvements
