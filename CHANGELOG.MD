@@ -16,6 +16,10 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.1.1_8 R
+- fixed null byte padding of encryption
+- fixed api permissions
+- some other fixes
 ## v1.1.0_7 D
 - supports database encryption
 ## v1.0.5_6 D
