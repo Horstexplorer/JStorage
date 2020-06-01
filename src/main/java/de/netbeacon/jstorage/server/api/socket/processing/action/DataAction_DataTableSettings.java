@@ -25,7 +25,6 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -100,7 +99,7 @@ public class DataAction_DataTableSettings implements ProcessingAction{
         return
                 user.hasGlobalPermission(GlobalPermission.Admin) ||
                 user.hasGlobalPermission(GlobalPermission.DBAdmin) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.CacheAdmin_Creator));
+                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_Creator));
     }
 
     @Override
