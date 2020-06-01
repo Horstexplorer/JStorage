@@ -18,6 +18,7 @@ package de.netbeacon.jstorage.server.internal.datamanager;
 
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
+import de.netbeacon.jstorage.server.tools.crypt.JS2CryptTool;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
@@ -52,6 +53,7 @@ public class DataManager {
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
     private static ScheduledExecutorService ses;
     private static Future<?> counterTask; // the fix has been planted
+    private static JS2CryptTool cryptTool;
 
     private static final Logger logger = LoggerFactory.getLogger(DataManager.class);
 
@@ -65,6 +67,17 @@ public class DataManager {
             setup();
             ready.set(true);
         }
+    }
+
+    /*                  OBJECT                  */
+
+    /**
+     * Used to get the crypt tool
+     * @return CryptTool
+     * @throws DataStorageException on exception
+     */
+    public static JS2CryptTool getCryptTool(){
+        return cryptTool;
     }
 
     /*                  DATA                    */

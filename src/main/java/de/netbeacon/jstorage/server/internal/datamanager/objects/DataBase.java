@@ -16,6 +16,8 @@
 
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
+import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +53,7 @@ public class DataBase {
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     private final UsageStatistics usageStatistic = new UsageStatistics();
+    private final AtomicBoolean encrypted = new AtomicBoolean(false);
 
     private final Logger logger = LoggerFactory.getLogger(DataBase.class);
 
@@ -100,6 +103,36 @@ public class DataBase {
      */
     public UsageStatistics getStatistics(){
         return usageStatistic;
+    }
+
+    /**
+     * Returns if this database is supposed to be encrypted or not
+     *
+     * @return boolean
+     */
+    public boolean encrypted(){
+        return encrypted.get();
+    }
+
+    /**
+     * Used to enable or disable encryption for this database
+     * <p>
+     * Changes will only take effect on shards the next time they are loaded
+     * This will only encrypt the data storage files itself, not the table/shard index
+     * ! If this is enabled encryption will use the global encryption password - if this is not set or wrong data may be lost during en or decryption tries
+     *
+     * @param value enable/disable boolean
+     * @throws CryptException on exception such as the CryptTool not being set up
+     */
+    public void setEncryption(boolean value) throws CryptException {
+        try{
+            if(!DataManager.getCryptTool().isReady()){
+                throw new Exception();
+            }
+        }catch (Exception e){
+            throw new CryptException(0, "Tool Not Ready");
+        }
+        encrypted.set(value);
     }
 
     /*                  ACCESS                  */
@@ -256,6 +289,7 @@ public class DataBase {
                         JSONObject jsonObject = new JSONObject(content);
                         String dbn = jsonObject.getString("database").toLowerCase();
                         JSONArray tbns = jsonObject.getJSONArray("tables");
+                        encrypted.set(jsonObject.getBoolean("encrypted"));
                         // might contain other settings in the future
                         if(identifier.equals(dbn)){
                             // create tables
@@ -301,7 +335,7 @@ public class DataBase {
                         .put("database", identifier);
                 JSONArray jsonArray = new JSONArray();
                 dataTablePool.forEach((k, v)->{ jsonArray.put(v.getIdentifier()); });
-                jsonObject.put("tables", jsonArray);
+                jsonObject.put("tables", jsonArray).put("encrypted", encrypted.get());
                 // write to file
                 File d = new File("./jstorage/data/db/"+identifier);
                 if(!d.exists()){ d.mkdirs(); }
