@@ -403,6 +403,7 @@ public class DataShard {
                                 }catch (Exception ignore){}
                             }
                         }
+                        br.close();
                     }
                 }
                 // set loaded
