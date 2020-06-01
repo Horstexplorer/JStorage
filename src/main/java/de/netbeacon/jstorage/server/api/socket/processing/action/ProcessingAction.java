@@ -19,6 +19,7 @@ package de.netbeacon.jstorage.server.api.socket.processing.action;
 
 import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONObject;
@@ -113,7 +114,8 @@ public interface ProcessingAction {
      *
      * @throws DataStorageException   the data storage exception
      * @throws GenericObjectException the generic object exception
+     * @throws CryptException exception related to encryption
      */
-    void process() throws DataStorageException, GenericObjectException;
+    void process() throws DataStorageException, GenericObjectException, CryptException;
 
 }

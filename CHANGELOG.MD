@@ -4,11 +4,27 @@ This list contains most of the changes which have been made such as bug fixes, n
 ##### Versioning:
 > major.minor.patch_counter type
 
+```
+major - a lot of breaking changes  
+minor - might break things a little  
+patch - should not break things; might add new features  
+counter - shows the number of total changes
+```
+
 Types which may be used:
 - D - Development
 - T - Testing
 - R - Release
 
+## v1.1.1_8 R
+- fixed null byte padding of encryption
+- fixed api permissions
+- some other fixes
+## v1.1.0_7 D
+- supports database encryption
+## v1.0.5_6 D
+- added usage statistics
+- some improvements
 ## v1.0.4_5 R
 - added feature to optimize sharding
 - minor improvements

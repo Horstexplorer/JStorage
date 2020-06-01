@@ -20,16 +20,19 @@ class DataManagerTest {
             FileUtils.deleteDirectory(f);
             new DataManager();
             DataManager.createDataBase("testdatabase");
-        }catch (Exception e){fail();}
+        }catch (Exception e){
+            fail();}
     }
 
     @AfterEach
     void tearDown() {
         try{
             DataManager.shutdown();
-            File f = new File("./jstorage/data/db/");
-            FileUtils.deleteDirectory(f);
-        }catch (Exception e){fail();}
+            File d = new File("./jstorage/data/db/");
+            FileUtils.deleteDirectory(d);
+        }catch (Exception e){
+            fail();
+        }
     }
 
     @Test

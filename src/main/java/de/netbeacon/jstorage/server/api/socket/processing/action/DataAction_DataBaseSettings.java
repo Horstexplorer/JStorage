@@ -19,51 +19,52 @@ package de.netbeacon.jstorage.server.api.socket.processing.action;
 import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
-import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
-import de.netbeacon.jstorage.server.internal.datamanager.objects.DataTable;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import org.json.JSONObject;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 /**
- * Data Action - Delete Data Type
+ * Data Action - Data Base Settings
  * <p>
  * --- Does --- <br>
- * Tries to delete a specific datatype within the selected dataset <br>
+ * Tries to change settings for a specific database<br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Nothing <br>
+ * database, settings <br>
  * --- Requirements --- <br>
- * action: deletedatatype <br>
- * http_method: delete <br>
+ * action: databasesettings <br>
+ * http_method: put <br>
  * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), dataset(String, datasetIdentifier), identifier(String, dataType) <br>
+ * payload: yes - optional: encryption(boolean) <br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator <br>
+ * required_arguments: identifier(String, databaseIdentifier) <br>
  * optional_arguments: <br>
  *
  * @author horstexplorer
  */
-public class DataAction_DeleteDataType implements ProcessingAction{
+public class DataAction_DataBaseSettings implements ProcessingAction{
 
     private HTTPProcessorResult result;
     private HashMap<String, String> args;
     private User user;
+    private JSONObject data;
 
     @Override
     public ProcessingAction createNewInstance() {
-        return new DataAction_DeleteDataType();
+        return new DataAction_DataBaseSettings();
     }
 
     @Override
     public String getAction() {
-        return "deletedatatype";
+        return "databasesettings";
     }
 
     @Override
@@ -74,13 +75,23 @@ public class DataAction_DeleteDataType implements ProcessingAction{
     }
 
     @Override
+    public void setPayload(JSONObject payload) {
+        this.data = payload;
+    }
+
+    @Override
     public boolean supportedHTTPMethod(String method) {
-        return "delete".equalsIgnoreCase(method);
+        return "put".equalsIgnoreCase(method);
     }
 
     @Override
     public List<String> requiredArguments() {
-        return Arrays.asList("database", "table", "dataset", "identifier");
+        return Collections.singletonList("identifier");
+    }
+
+    @Override
+    public boolean requiresData() {
+        return true;
     }
 
     @Override
@@ -88,16 +99,18 @@ public class DataAction_DeleteDataType implements ProcessingAction{
         return
                 user.hasGlobalPermission(GlobalPermission.Admin) ||
                 user.hasGlobalPermission(GlobalPermission.DBAdmin) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_Creator)) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_User)) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAccess_Modify));
+                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_Creator));
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException {
         DataBase d = DataManager.getDataBase(args.get("database"));
-        DataTable t = d.getTable(args.get("table"));
-        DataSet ds = t.getDataSet(args.get("dataset"));
-        ds.delete(args.get("identifier"));
+
+        if(data.has("encryption")){
+            d.setEncryption(data.getBoolean("encryption"));
+        }
+
+        JSONObject jsonObject = new JSONObject().put("database", d.getIdentifier()).put("settings", new JSONObject().put("encryption", d.encrypted()));
+        result.addResult(jsonObject);
     }
 }

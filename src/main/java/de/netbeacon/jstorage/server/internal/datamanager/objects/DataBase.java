@@ -16,7 +16,10 @@
 
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
+import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
+import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -48,6 +51,9 @@ public class DataBase {
 
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
+    private final UsageStatistics usageStatistic = new UsageStatistics();
+    private final AtomicBoolean encrypted = new AtomicBoolean(false);
 
     private final Logger logger = LoggerFactory.getLogger(DataBase.class);
 
@@ -90,6 +96,41 @@ public class DataBase {
      */
     public boolean isShutdown(){ return shutdown.get(); }
 
+    /**
+     * Returns the usage statistics for this object
+     *
+     * @return UsageStatistics
+     */
+    public UsageStatistics getStatistics(){
+        return usageStatistic;
+    }
+
+    /**
+     * Returns if this database is supposed to be encrypted or not
+     *
+     * @return boolean
+     */
+    public boolean encrypted(){
+        return encrypted.get();
+    }
+
+    /**
+     * Used to enable or disable encryption for this database
+     * <p>
+     * Changes will only take effect on shards the next time they are loaded
+     * This will only encrypt the data storage files itself, not the table/shard index
+     * ! If this is enabled encryption will use the global encryption password - if this is not set or wrong data may be lost during en or decryption tries
+     *
+     * @param value enable/disable boolean
+     * @throws CryptException on exception such as the CryptTool not being set up
+     */
+    public void setEncryption(boolean value) throws CryptException {
+        if(!DataManager.getJs2CryptTool().isReady()){
+            throw new CryptException(1, "Cant Modify Encryption While The Tool Being Not Set Up");
+        }
+        encrypted.set(value);
+    }
+
     /*                  ACCESS                  */
 
     /**
@@ -109,16 +150,19 @@ public class DataBase {
                 if(dataTablePool.containsKey(identifier)){
                     DataTable dataTable = dataTablePool.get(identifier);
                     lock.readLock().unlock();
+                    usageStatistic.add(UsageStatistics.Usage.get_success);
                     return dataTable;
                 }
                 logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
                 throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.readLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw e;
             }catch (Exception e){
                 lock.readLock().unlock();
                 logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -140,6 +184,7 @@ public class DataBase {
                     if(!dataTablePool.containsKey(table.getIdentifier())){
                         dataTablePool.put(table.getIdentifier(), table);
                         lock.writeLock().unlock();
+                        usageStatistic.add(UsageStatistics.Usage.insert_success);
                         return;
                     }
                     logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+table.getIdentifier()+" Already Existing");
@@ -149,10 +194,12 @@ public class DataBase {
                 throw new DataStorageException(220, "DataBase: "+identifier+": DataTable "+table.getIdentifier()+" ("+table.getDataBase().identifier+">"+table.getIdentifier()+") Does Not Fit Here.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.insert_failure);
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
                 logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Inserting "+table.getIdentifier(), e);
+                usageStatistic.add(UsageStatistics.Usage.insert_failure);
                 throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -177,16 +224,19 @@ public class DataBase {
                     dataTablePool.get(identifier).delete();
                     dataTablePool.remove(identifier);
                     lock.writeLock().unlock();
+                    usageStatistic.add(UsageStatistics.Usage.delete_success);
                     return;
                 }
                 logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
                 throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
                 logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Deleting "+identifier, e);
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -235,6 +285,7 @@ public class DataBase {
                         JSONObject jsonObject = new JSONObject(content);
                         String dbn = jsonObject.getString("database").toLowerCase();
                         JSONArray tbns = jsonObject.getJSONArray("tables");
+                        encrypted.set(jsonObject.getBoolean("encrypted"));
                         // might contain other settings in the future
                         if(identifier.equals(dbn)){
                             // create tables
@@ -280,7 +331,7 @@ public class DataBase {
                         .put("database", identifier);
                 JSONArray jsonArray = new JSONArray();
                 dataTablePool.forEach((k, v)->{ jsonArray.put(v.getIdentifier()); });
-                jsonObject.put("tables", jsonArray);
+                jsonObject.put("tables", jsonArray).put("encrypted", encrypted.get());
                 // write to file
                 File d = new File("./jstorage/data/db/"+identifier);
                 if(!d.exists()){ d.mkdirs(); }

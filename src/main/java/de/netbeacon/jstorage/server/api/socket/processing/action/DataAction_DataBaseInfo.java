@@ -89,8 +89,8 @@ public class DataAction_DataBaseInfo implements ProcessingAction{
         return
                 user.hasGlobalPermission(GlobalPermission.Admin) ||
                 user.hasGlobalPermission(GlobalPermission.DBAdmin) ||
-                (args.containsKey("identifier") && user.hasDependentPermission(args.get("identifier"), DependentPermission.CacheAdmin_Creator)) ||
-                (args.containsKey("identifier") && user.hasDependentPermission(args.get("identifier"), DependentPermission.CacheAdmin_User));
+                (args.containsKey("identifier") && user.hasDependentPermission(args.get("identifier"), DependentPermission.DBAdmin_Creator)) ||
+                (args.containsKey("identifier") && user.hasDependentPermission(args.get("identifier"), DependentPermission.DBAdmin_User));
     }
 
     @Override

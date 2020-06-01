@@ -26,33 +26,32 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
 import org.json.JSONObject;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 /**
- * Data Action - Get Data Type
+ * Info Action - Statistics
  * <p>
  * --- Does --- <br>
- * Tries to get the data from a specific datatype within the selected dataset <br>
- * Allows the type to be acquired for updating its content <br>
- * Exceptions catched by superordinate processing handler <br>
+ * Provides statistics about selected types <br>
  * --- Returns --- <br>
- * dataset basics, datatype data <br>
+ * basic information <br>
  * --- Requirements --- <br>
- * action: getdatatype <br>
- * http_method: delete <br>
+ * action: statistics <br>
+ * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), dataset(String, datasetIdentifier), identifier(String, dataType) <br>
- * optional_arguments: acquire(Boolean, boolean) <br>
+ * permissions: none <br>
+ * required_arguments: <br>
+ * optional_arguments: database, table, dataset <br>
  *
  * @author horstexplorer
  */
-public class DataAction_GetDataType implements ProcessingAction{
+public class InfoAction_Statistics implements ProcessingAction{
 
     private HTTPProcessorResult result;
     private HashMap<String, String> args;
@@ -60,12 +59,12 @@ public class DataAction_GetDataType implements ProcessingAction{
 
     @Override
     public ProcessingAction createNewInstance() {
-        return new DataAction_GetDataType();
+        return new InfoAction_Statistics();
     }
 
     @Override
     public String getAction() {
-        return null;
+        return "statistics";
     }
 
     @Override
@@ -82,31 +81,44 @@ public class DataAction_GetDataType implements ProcessingAction{
 
     @Override
     public List<String> requiredArguments() {
-        return Arrays.asList("database", "table", "dataset", "identifier");
+        return Collections.singletonList("database");
     }
 
     @Override
     public boolean userHasPermission() {
-        return
-                user.hasGlobalPermission(GlobalPermission.Admin) ||
+        return  user.hasGlobalPermission(GlobalPermission.Admin) ||
                 user.hasGlobalPermission(GlobalPermission.DBAdmin) ||
                 (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_Creator)) ||
                 (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_User)) ||
                 (user.hasDependentPermission(args.get("database"), DependentPermission.DBAccess_Modify)) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAccess_Modify) && (!args.containsKey("acquire") || !Boolean.parseBoolean(args.get("acquire")) ));
+                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAccess_Read));
     }
 
     @Override
     public void process() throws DataStorageException, GenericObjectException {
-        DataBase d = DataManager.getDataBase(args.get("database"));
-        DataTable t = d.getTable(args.get("table"));
-        DataSet ds = t.getDataSet(args.get("dataset"));
-        JSONObject data;
-        if(args.containsKey("acquire")){
-            data = ds.get(args.get("identifier"), Boolean.parseBoolean(args.get("acquire")));
-        }else{
-            data = ds.get(args.get("identifier"), false);
+        UsageStatistics usageStatistics = null;
+        JSONObject statistics = new JSONObject();
+        DataBase dataBase = DataManager.getDataBase(args.get("database"));
+        statistics.put("database", dataBase.getIdentifier());
+        if (args.containsKey("table")) {
+            DataTable dataTable = dataBase.getTable(args.get("table"));
+            statistics.put("table", dataTable.getIdentifier());
+            if (args.containsKey("dataset")) {
+                DataSet dataSet = dataTable.getDataSet(args.get("dataset"));
+                statistics.put("dataset", dataTable.getIdentifier());
+                usageStatistics = dataTable.getStatisticsFor(dataSet.getIdentifier()); // reuse the exception if not found
+            } else {
+                usageStatistics = dataTable.getStatistics();
+            }
+        } else {
+            usageStatistics = dataBase.getStatistics();
         }
-        result.addResult(data);
+        JSONObject values = new JSONObject()
+                .put("all", usageStatistics.getCountFor(UsageStatistics.Usage.any))
+                .put("success", new JSONObject().put("get", usageStatistics.getCountFor(UsageStatistics.Usage.get_success)).put("insert", usageStatistics.getCountFor(UsageStatistics.Usage.insert_success)).put("update", usageStatistics.getCountFor(UsageStatistics.Usage.update_success)).put("delete", usageStatistics.getCountFor(UsageStatistics.Usage.delete_success)))
+                .put("failure", new JSONObject().put("get", usageStatistics.getCountFor(UsageStatistics.Usage.get_failure)).put("insert", usageStatistics.getCountFor(UsageStatistics.Usage.insert_failure)).put("update", usageStatistics.getCountFor(UsageStatistics.Usage.update_failure)).put("delete", usageStatistics.getCountFor(UsageStatistics.Usage.delete_failure)));
+        statistics.put("statistics", values);
+        result.setHTTPStatusCode(200);
+        result.addResult(values);
     }
 }

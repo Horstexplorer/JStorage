@@ -25,7 +25,6 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.Arrays;
@@ -39,15 +38,15 @@ import java.util.List;
  * Tries to change settings for a specific datatable within a database <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Info <br>
+ * database, table, settings <br>
  * --- Requirements --- <br>
  * action: datatablesettings <br>
  * http_method: put <br>
  * login-mode: token <br>
- * payload: yes - optional: adaptiveLoading(boolean) <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, <br>
+ * payload: yes - optional: adaptiveLoading(boolean), defaultStructure(JSONObject), autoOptimize(Boolean), autoResolveDataInconsistency(Integer in range -1 to 3) <br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator <br>
  * required_arguments: database(String, databaseIdentifier), identifier(String, tableIdentifier) <br>
- * optional_arguments: <br>
+ * optional_arguments: optimize(Boolean), resolveDataInconsistency(Integer in range -1 to 3) <br>
  *
  * @author horstexplorer
  */
@@ -100,7 +99,7 @@ public class DataAction_DataTableSettings implements ProcessingAction{
         return
                 user.hasGlobalPermission(GlobalPermission.Admin) ||
                 user.hasGlobalPermission(GlobalPermission.DBAdmin) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.CacheAdmin_Creator));
+                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_Creator));
     }
 
     @Override
@@ -121,9 +120,27 @@ public class DataAction_DataTableSettings implements ProcessingAction{
             t.setDefaultStructure(data.getJSONObject("defaultStructure"));
         }
 
+        if(data.has("autoOptimize")){
+            t.setAutoOptimization(data.getBoolean("autoOptimize"));
+        }
+
+        if(data.has("autoResolveDataInconsistency")){
+            t.setAutoResolveDataInconsistency(data.getInt("autoResolveDataInconsistency"));
+        }
+
+        if(args.containsKey("optimize") && Boolean.parseBoolean(args.get("optimize"))){
+            // optimize table now
+            t.optimize();
+        }
+
+        if(args.containsKey("resolveDataInconsistency")){
+            // resolve data inconsistency
+            t.resolveDataInconsistency(Integer.parseInt(args.get("resolveDataInconsistency")));
+        }
+
         // return info
-        JSONArray jsonArray = new JSONArray();
-        jsonArray.put(new JSONObject().put("adaptiveLoading", t.isAdaptive()));
-        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("settings", jsonArray).put("defaultStructure", t.getDefaultStructure()));
+        JSONObject settings = new JSONObject();
+        settings.put("adaptiveLoading", t.isAdaptive()).put("defaultStructure", t.getDefaultStructure()).put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode()).put("autoOptimize", t.autoOptimizationEnabled());
+        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("settings", settings));
     }
 }

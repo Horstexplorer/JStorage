@@ -18,7 +18,7 @@ package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.jsonmatcher.JSONMatcher;
-import de.netbeacon.jstorage.server.tools.meta.DataSetMetaStatistics;
+import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
 import org.apache.commons.io.FileUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,9 +27,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -46,19 +49,26 @@ public class DataTable {
 
     private final DataBase dataBase;
     private final String identifier;
-    private JSONObject defaultStructure = new JSONObject();
-    private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
-    private final ConcurrentHashMap<String, DataSetMetaStatistics> statisticsPool = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
 
+    private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
+    private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
+    private final ConcurrentHashMap<String, UsageStatistics> statisticsPool = new ConcurrentHashMap<>();
+
+    private JSONObject defaultStructure = new JSONObject();
     private final AtomicBoolean adaptiveLoad = new AtomicBoolean(false);
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final AtomicBoolean autoOptimization = new AtomicBoolean(false);
+    private final AtomicInteger autoResolveDataInconsistency = new AtomicInteger(-1);
     private final AtomicBoolean dataInconsistency = new AtomicBoolean(false);
+    private final UsageStatistics usageStatistic = new UsageStatistics();
+
+    private final AtomicBoolean ready = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final ScheduledExecutorService sES = Executors.newScheduledThreadPool(1);
     private Future<?> sESUnloadTask;
     private Future<?> sESSnapshotTask;
-    private final AtomicBoolean ready = new AtomicBoolean(false);
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private Future<?> sESBackgroundTask;
 
     private final Logger logger = LoggerFactory.getLogger(DataTable.class);
 
@@ -126,6 +136,44 @@ public class DataTable {
      */
     public boolean isShutdown(){ return shutdown.get(); }
 
+    /**
+     * Used to enable or disable auto optimization
+     *
+     * @param value value
+     */
+    public void setAutoOptimization(boolean value){
+        autoOptimization.set(true);
+    }
+
+    /**
+     * Returns if this object is optimizing itself
+     *
+     * @return boolean
+     */
+    public boolean autoOptimizationEnabled(){
+        return autoOptimization.get();
+    }
+
+    /**
+     * Used to set the mode for automatically repairing data inconsistencies
+     * <p>
+     * Set to -1 to disable; See {@link DataTable#resolveDataInconsistency(int)} for other modes
+     * @param mode int
+     */
+    public void setAutoResolveDataInconsistency(int mode){
+        autoResolveDataInconsistency.set( (-1 <= mode && mode < 4) ? mode : -1);
+    }
+
+    /**
+     * Returns the mode this object uses to repair data inconsistencies on its own (each 24h)
+     * <p>
+     * Returns -1 if disabled
+     *
+     * @return int
+     */
+    public int autoResolveDataInconsistencyMode(){
+        return autoResolveDataInconsistency.get();
+    }
 
     /**
      * Sets the target default structure for all objects in this table
@@ -208,6 +256,7 @@ public class DataTable {
                         try{
                             DataSet dataSet = dataShard.getDataSet(identifier);
                             lock.readLock().unlock();
+                            usageStatistic.add(UsageStatistics.Usage.get_success);
                             return dataSet;
                         }catch (DataStorageException e){
                             switch(e.getType()){
@@ -231,10 +280,12 @@ public class DataTable {
                 throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.readLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw e;
             }catch (Exception e){
                 lock.readLock().unlock();
                 logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                usageStatistic.add(UsageStatistics.Usage.get_failure);
                 throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -289,9 +340,10 @@ public class DataTable {
                             // write to index
                             indexPool.put(dataSet.getIdentifier(), dataShard.getShardID());
                             // add statistics
-                            statisticsPool.put(dataSet.getIdentifier(), new DataSetMetaStatistics());
+                            statisticsPool.put(dataSet.getIdentifier(), new UsageStatistics());
                             // unlock
                             lock.writeLock().unlock();
+                            usageStatistic.add(UsageStatistics.Usage.insert_success);
                             return;
                         }
                         logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Already Existing");
@@ -301,10 +353,12 @@ public class DataTable {
                     throw new DataStorageException(220, "DataTable: "+dataBase.getIdentifier()+">"+identifier+">: DataSet "+dataSet.getIdentifier()+" ("+dataSet.getDataBase().getIdentifier()+">"+dataSet.getTable().getIdentifier()+") Does Not Fit Here.");
                 }catch (DataStorageException e){
                     lock.writeLock().unlock();
+                    usageStatistic.add(UsageStatistics.Usage.insert_failure);
                     throw e;
                 }catch (Exception e){
                     lock.writeLock().unlock();
                     logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                    usageStatistic.add(UsageStatistics.Usage.insert_failure);
                     throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
                 }
             }
@@ -347,6 +401,7 @@ public class DataTable {
                             }
                             // unlock
                             lock.writeLock().unlock();
+                            usageStatistic.add(UsageStatistics.Usage.delete_success);
                             return;
                         }catch (DataStorageException e){
                             switch(e.getType()){
@@ -369,10 +424,12 @@ public class DataTable {
                 throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
             }catch (DataStorageException e){
                 lock.writeLock().unlock();
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw e;
             }catch (Exception e){
                 lock.writeLock().unlock();
                 logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+                usageStatistic.add(UsageStatistics.Usage.delete_failure);
                 throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
         }
@@ -399,13 +456,22 @@ public class DataTable {
     /*                  Statistics                   */
 
     /**
+     * Returns the usage statistics for this object
+     *
+     * @return UsageStatistics
+     */
+    public UsageStatistics getStatistics(){
+        return usageStatistic;
+    }
+
+    /**
      * Used to get the statistics for the selected dataset
      *
      * This function should only be used as loopback from datasets within this datatable
      * @param identifier of the dataset
      * @return DataSetMetaStatistics
      */
-    protected DataSetMetaStatistics getStatisticsFor(String identifier){
+    public UsageStatistics getStatisticsFor(String identifier){
         if(statisticsPool.containsKey(identifier.toLowerCase())){
             return statisticsPool.get(identifier.toLowerCase());
         }
@@ -556,18 +622,11 @@ public class DataTable {
 
      */ // fixDefault() -> placeholder for upcoming feature
 
-    /*
-    public void optimize(){
-
-        // future feature:
-        //
-        // used to optimize adaptive loading by sorting often used data sets in the same shard
-        // - required for this to work:
-        //    something counting how often an object is used
-        //    some magic
-
-    }
-    */ // optimize() -> placeholder for upcoming feature
+    /**
+     * Optimizes utilisation of shards by grouping frequently used data sets
+     * <p>
+     * ! Using this function may result in data loss. Manual correction recommended.
+     */
     public void optimize(){
         // enable lock
         lock.writeLock().lock();
@@ -575,7 +634,7 @@ public class DataTable {
             logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Optimizing Shards - This May Result In Data Loss");
             // create hashmap with <datasetkey, long>
             HashMap<String, Long> unsorted = new HashMap<>();
-            statisticsPool.forEach((key, value) -> unsorted.put(key, value.getCountFor(DataSetMetaStatistics.DSMSEnum.any)));
+            statisticsPool.forEach((key, value) -> unsorted.put(key, value.getCountFor(UsageStatistics.Usage.any)));
             // sort
             HashMap<String, Long> sorted = unsorted.entrySet().stream().sorted(Collections.reverseOrder(Map.Entry.comparingByValue())).collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
             // check if both the index size & sorted list match in size
@@ -696,6 +755,9 @@ public class DataTable {
                         String tbn = jsonObject.getString("table").toLowerCase();
                         defaultStructure = jsonObject.getJSONObject("defaultStructure");
                         adaptiveLoad.set(jsonObject.getBoolean("adaptiveLoad"));
+                        autoOptimization.set(jsonObject.getBoolean("autoOptimize"));
+                        int a = jsonObject.getInt("autoResolveDataInconsistency");
+                        autoResolveDataInconsistency.set( (-1 <= a && a < 4) ? a : -1);
                         if(dataBase.getIdentifier().equals(dbn) && identifier.equals(tbn)){
                             JSONArray shards = jsonObject.getJSONArray("shards");
                             for(int i = 0; i < shards.length(); i++){
@@ -722,20 +784,16 @@ public class DataTable {
                 throw new DataStorageException(101, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Loading Data Failed, Data May Be Lost: "+e.getMessage());
             }
             // start scheduled worker
-            sESUnloadTask = sES.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    if(adaptiveLoad.get()){
-                        shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+900000) < System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(true, true, false));
-                    }
+            sESUnloadTask = sES.scheduleAtFixedRate(() -> {
+                if(adaptiveLoad.get()){
+                    shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+900000) < System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(true, true, false));
                 }
             }, 5, 5, TimeUnit.SECONDS);
-            sESSnapshotTask = sES.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+850000) > System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(false, true, false));
-                }
-            }, 30, 30, TimeUnit.MINUTES);
+            sESSnapshotTask = sES.scheduleAtFixedRate(() -> shardPool.entrySet().stream().filter(e->(((e.getValue().getLastAccess()+850000) > System.currentTimeMillis()) && (e.getValue().getStatus() == 3))).forEach(e->e.getValue().unloadDataAsync(false, true, false)), 30, 30, TimeUnit.MINUTES);
+            sESBackgroundTask = sES.scheduleAtFixedRate(() -> {
+                if(autoOptimization.get()){ optimize(); }
+                if(autoResolveDataInconsistency.get() >= 0 && dataInconsistency.get()){ resolveDataInconsistency(autoResolveDataInconsistency.get()); }
+            }, Duration.between(LocalDateTime.now(), LocalDateTime.now().plusDays(1).toLocalDate().atStartOfDay()).toMinutes(),24*60, TimeUnit.MINUTES);
             // initialize content if necessary
             if(!adaptiveLoad.get()){
                 for(Map.Entry<String, DataShard> entry : shardPool.entrySet()){
@@ -764,7 +822,9 @@ public class DataTable {
                         .put("database", dataBase.getIdentifier())
                         .put("table", identifier)
                         .put("adaptiveLoad", adaptiveLoad.get())
-                        .put("defaultStructure", defaultStructure);
+                        .put("defaultStructure", defaultStructure)
+                        .put("autoOptimize", autoOptimization.get())
+                        .put("autoResolveDataInconsistency", autoResolveDataInconsistency.get());
                 JSONArray shards = new JSONArray();
                 shardPool.forEach((key, value) -> {
                     JSONObject shard = new JSONObject()
@@ -789,6 +849,7 @@ public class DataTable {
                 // shutdown & clear everything
                 sESUnloadTask.cancel(true);
                 sESSnapshotTask.cancel(true);
+                sESBackgroundTask.cancel(true);
                 sES.shutdown();
                 shardPool.forEach((k, v)-> {
                     try{
@@ -861,9 +922,9 @@ public class DataTable {
     /**
      * Returns the statistics of all datasets inside this table
      *
-     * @return ConcurrentHashMap<String, DataSetMetaStatistics> concurrent hash map
+     * @return ConcurrentHashMap<String, UsageStatistics> concurrent hash map
      */
-    public ConcurrentHashMap<String, DataSetMetaStatistics> getStatisticsPool() {
+    public ConcurrentHashMap<String, UsageStatistics> getStatisticsPool() {
         return statisticsPool;
     }
 }

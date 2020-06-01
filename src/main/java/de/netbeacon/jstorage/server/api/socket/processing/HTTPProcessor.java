@@ -19,6 +19,7 @@ package de.netbeacon.jstorage.server.api.socket.processing;
 
 import de.netbeacon.jstorage.server.api.socket.processing.action.*;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.httpprocessing.HTTPProcessorHelper;
@@ -187,6 +188,9 @@ public class HTTPProcessor {
                                 result.setHTTPStatusCode(500);
                                 break;
                         }
+                    }catch (CryptException e){
+                        result.setInternalStatus("CryptException "+e.getType()+" "+e.getMessage());
+                        result.setHTTPStatusCode(500);
                     }
                 }else{
                     result.setHTTPStatusCode(400);
@@ -237,6 +241,7 @@ public class HTTPProcessor {
             register.accept(new DataAction_DataBaseInfo());
             register.accept(new DataAction_DataTableInfo());
             register.accept(new DataAction_DataSetInfo());
+            register.accept(new DataAction_DataBaseSettings());
             register.accept(new DataAction_DataTableSettings());
             register.accept(new DataAction_DataSetSettings());
             register.accept(new DataAction_GetDataSet());
@@ -259,6 +264,7 @@ public class HTTPProcessor {
             register.accept(new UserAction_UserGetNewLoginToken());
             // other
             register.accept(new InfoAction_BasicInfo());
+            register.accept(new InfoAction_Statistics());
         }
     }
 

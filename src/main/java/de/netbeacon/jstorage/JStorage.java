@@ -76,8 +76,13 @@ public class JStorage {
                 System.exit(-1);
             }
         }
+        // check if encryption should be set up
+        boolean runEncryptSetup = false;
+        if(arguments.containsKey("encryptSetup")){
+            runEncryptSetup = Boolean.parseBoolean(arguments.get("encryptSetup"));
+        }
         // should print out version and build
-
+        System.out.println("Version: "+Info.VERSION);
         // select mode
         String mode = "";
         if(arguments.containsKey("mode")){
@@ -87,15 +92,15 @@ public class JStorage {
         switch(mode){
             default:
                 System.out.println("Mode...Default");
-                modeDefault();
+                modeDefault(runEncryptSetup);
                 break;
         }
     }
 
-    private static void modeDefault(){
+    private static void modeDefault(boolean runEncryptSetup){
         try{
             try{ System.out.print("ShutdownHook..."); new ShutdownHook(); System.out.println("ok"); }catch (Exception e){System.out.println("error"); throw e;} // should not throw
-            try{ System.out.print("DataManager..."); new DataManager(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
+            try{ System.out.print("DataManager..."); new DataManager(runEncryptSetup); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
             try{ System.out.print("CacheManager..."); new CacheManager(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
             try{ System.out.print("UserManager..."); new UserManager(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
             APISocket.start();

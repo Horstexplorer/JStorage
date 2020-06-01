@@ -1,14 +1,14 @@
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
-import de.netbeacon.jstorage.server.tools.meta.DataSetMetaStatistics;
+import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
+import org.apache.commons.io.FileUtils;
 import org.json.JSONObject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.lang.instrument.Instrumentation;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,10 +28,12 @@ class DataTableTest {
 
     @AfterEach
     void tearDown() {
-        File d = new File("./jstorage/data/testdatabase/testtable");
-        if(d.exists()){ d.delete(); }
-        File e = new File("./jstorage/data/testdatabase/testtable_index");
-        if(e.exists()){ e.delete(); }
+        try{
+            File d = new File("./jstorage/data/db/");
+            FileUtils.deleteDirectory(d);
+        }catch (Exception e){
+            fail();
+        }
     }
 
     @Test
@@ -113,13 +115,13 @@ class DataTableTest {
             // a & c should be on individual shards
             assertNotEquals(table.getIndexPool().get("a"), table.getIndexPool().get("c"));
             // fake statistics a & c
-            DataSetMetaStatistics ad = table.getStatisticsFor("a");
-            DataSetMetaStatistics cd = table.getStatisticsFor("c");
-            ad.add(DataSetMetaStatistics.DSMSEnum.acquire_success);
-            cd.add(DataSetMetaStatistics.DSMSEnum.acquire_success);
+            UsageStatistics ad = table.getStatisticsFor("a");
+            UsageStatistics cd = table.getStatisticsFor("c");
+            ad.add(UsageStatistics.Usage.acquire_success);
+            cd.add(UsageStatistics.Usage.acquire_success);
             // test stats
-            assertEquals(1, ad.getCountFor(DataSetMetaStatistics.DSMSEnum.any));
-            assertEquals(1, cd.getCountFor(DataSetMetaStatistics.DSMSEnum.any));
+            assertEquals(1, ad.getCountFor(UsageStatistics.Usage.any));
+            assertEquals(1, cd.getCountFor(UsageStatistics.Usage.any));
             // optimize
             table.optimize();
             // check if nothing exploded

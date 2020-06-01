@@ -90,8 +90,8 @@ public class DataAction_DataTableInfo implements ProcessingAction{
         return
                 user.hasGlobalPermission(GlobalPermission.Admin) ||
                 user.hasGlobalPermission(GlobalPermission.DBAdmin) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.CacheAdmin_Creator)) ||
-                (user.hasDependentPermission(args.get("database"), DependentPermission.CacheAdmin_User)) ||
+                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_Creator)) ||
+                (user.hasDependentPermission(args.get("database"), DependentPermission.DBAdmin_User)) ||
                 (user.hasDependentPermission(args.get("database"), DependentPermission.DBAccess_Modify)) ||
                 (user.hasDependentPermission(args.get("database"), DependentPermission.DBAccess_Read));
     }

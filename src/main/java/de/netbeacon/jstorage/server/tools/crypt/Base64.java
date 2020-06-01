@@ -14,15 +14,28 @@
  * limitations under the License.
  */
 
-package de.netbeacon.jstorage.server.tools.info;
+package de.netbeacon.jstorage.server.tools.crypt;
 
 /**
- * This class contains basic information
- *
- * @author horstexplorer
+ * Simple QOL wrap for base64 en/decoding
  */
-public class Info {
+public class Base64 {
 
-    public static final String VERSION = "1.1.1_8";
+    /**
+     * Used to encode bytes as base64
+     * @param bytes input
+     * @return base64 encoded output
+     */
+    public static byte[] encode(byte[] bytes){
+        return java.util.Base64.getEncoder().encode(bytes);
+    }
 
+    /**
+     * Used to decode base64 encoded bytes
+     * @param bytes base64 encoded input
+     * @return decoded output
+     */
+    public static byte[] decode(byte[] bytes){
+        return java.util.Base64.getDecoder().decode(bytes);
+    }
 }

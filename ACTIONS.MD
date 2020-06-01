@@ -55,3 +55,4 @@ Get Login Token |  Tries to create a new login token for the current or selected
 | Action | Description |
 --- | ---
 Basic Info | Provides basic information about this JStorage installation |
+Statistics | Provides usage statistics (from the last 10 minutes) of the selected object
