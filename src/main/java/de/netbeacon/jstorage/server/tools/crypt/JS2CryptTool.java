@@ -88,11 +88,11 @@ public class JS2CryptTool {
      * @param password password
      * @throws CryptException on exceptions such as the tool already being ready or the password being invalid
      */
-    private void js2encryptionPassword(String password) throws CryptException {
+    public void js2encryptionPassword(String password) throws CryptException {
         if(!ready.get()){
             if(passwordHash == null || passwordHash.isEmpty()){
                 // set new password
-                passwordHash = BCrypt.hashpw(password, BCrypt.gensalt(32));
+                passwordHash = BCrypt.hashpw(password, BCrypt.gensalt(16));
                 logger.info("JS2Crypt Password Set");
             }else{
                 // check password
@@ -104,6 +104,8 @@ public class JS2CryptTool {
                 logger.info("JS2Crypt Password Accepted");
             }
             this.decryptionPassword = password;
+            // ready only if the correct password has been inserted
+            ready.set(true);
         }else{
             throw new CryptException(0, "Password Cant Be Changed In This State");
         }
@@ -237,8 +239,6 @@ public class JS2CryptTool {
             if(i > 3){
                 throw new CryptException(2, "Failed To Set Up Password");
             }
-            // ready only if password has been inserted
-            ready.set(true);
         }
     }
 

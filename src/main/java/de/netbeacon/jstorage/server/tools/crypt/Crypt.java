@@ -58,13 +58,7 @@ public class Crypt {
      * @throws InvalidCipherTextException on exception
      */
     public static byte[] encrypt(byte[] bytes, String password, byte[] salt) throws InvalidCipherTextException {
-        ParametersWithIV key = (ParametersWithIV) getAESPassKey(password.toCharArray(), salt);
-        BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
-        cipher.init(true, key);
-        byte[] result = new byte[cipher.getOutputSize(bytes.length)];
-        int len = cipher.processBytes(bytes, 0, bytes.length, result, 0);
-        cipher.doFinal(result, len);
-        return result;
+        return crypt(bytes, password, salt, true);
     }
 
     /**
@@ -90,13 +84,44 @@ public class Crypt {
      * @throws InvalidCipherTextException on exception
      */
     public static byte[] decrypt(byte[] bytes, String password, byte[] salt) throws InvalidCipherTextException {
+        return crypt(bytes, password, salt, false);
+    }
+
+    /**
+     * This does the actual en- and decryption
+     *
+     * @param bytes input bytes
+     * @param password for en-/decryption
+     * @param salt from the password
+     * @param mode boolean for encryption
+     * @return byte[] en-/decrypted data
+     * @throws InvalidCipherTextException on exception
+     */
+    private static byte[] crypt(byte[] bytes, String password, byte[] salt, boolean mode) throws InvalidCipherTextException{
         ParametersWithIV key = (ParametersWithIV) getAESPassKey(password.toCharArray(), salt);
         BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
-        cipher.init(false, key);
+        cipher.init(mode, key);
         byte[] result = new byte[cipher.getOutputSize(bytes.length)];
-        int len = cipher.processBytes(bytes, 0, bytes.length, result, 0);
-        cipher.doFinal(result, len);
-        return result;
+
+        int outputLength = 0;
+        int bytesProcessed = 0;
+
+        bytesProcessed = cipher.processBytes(bytes, 0, bytes.length, result, 0);
+        outputLength += bytesProcessed;
+        bytesProcessed = cipher.doFinal(result, bytesProcessed);
+        outputLength += bytesProcessed;
+        if (outputLength == result.length) {
+            return result;
+        } else {
+            // remove null padding
+            byte[] truncatedOutput = new byte[outputLength];
+            System.arraycopy(
+                    result, 0,
+                    truncatedOutput, 0,
+                    outputLength
+            );
+            return truncatedOutput;
+        }
     }
 
     /**
