@@ -18,6 +18,8 @@ package de.netbeacon.jstorage.server.internal.datamanager;
 
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
+import de.netbeacon.jstorage.server.tools.crypt.JS2CryptTool;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
@@ -52,16 +54,32 @@ public class DataManager {
     private static final ReadWriteLock lock = new ReentrantReadWriteLock();
     private static ScheduledExecutorService ses;
     private static Future<?> counterTask; // the fix has been planted
+    private static JS2CryptTool js2CryptTool;
 
     private static final Logger logger = LoggerFactory.getLogger(DataManager.class);
 
     /**
      * Used to set up all DataBase objects
      *
-     * @throws SetupException on setup() throwing an error
+     * @throws SetupException on setup() or the js2crypt tool throwing an error
      */
-    public DataManager() throws SetupException {
+    public DataManager() throws SetupException, CryptException {
         if(!ready.get() && !shutdown.get()){
+            js2CryptTool = new JS2CryptTool("./jstorage/config/js2crypt");
+            setup();
+            ready.set(true);
+        }
+    }
+
+    /**
+     * Used to set up all DataBase objects
+     *
+     * @param setupEncryptionNow used to tell the crypt manager that it should run the initial setup now
+     * @throws SetupException on setup() or the js2crypt tool throwing an error
+     */
+    public DataManager(boolean setupEncryptionNow) throws SetupException {
+        if(!ready.get() && !shutdown.get()){
+            js2CryptTool = new JS2CryptTool("./jstorage/config/js2crypt", setupEncryptionNow);
             setup();
             ready.set(true);
         }
@@ -205,6 +223,15 @@ public class DataManager {
         }
     }
 
+    /**
+     * Used to get the crypt tool
+     *
+     * @return JS2CryptTool
+     */
+    public static JS2CryptTool getJs2CryptTool(){
+        return js2CryptTool;
+    }
+
     /*                  MISC                    */
 
     /**
@@ -308,6 +335,8 @@ public class DataManager {
             writer.close();
             // clear
             dataBasePool.clear();
+            // shutdown js2
+            js2CryptTool.shutdown();
         }catch (Exception e){
             logger.error("Shutdown Failed. Data May Be Lost", e);
             throw new ShutdownException("DataManager: Shutdown Failed. Data May Be Lost: "+e.getMessage());

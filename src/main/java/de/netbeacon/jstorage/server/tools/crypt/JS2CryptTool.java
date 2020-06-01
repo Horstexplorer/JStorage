@@ -17,12 +17,20 @@
 package de.netbeacon.jstorage.server.tools.crypt;
 
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
+import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
+import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
+import org.json.JSONObject;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.file.Files;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 /**
@@ -32,17 +40,42 @@ public class JS2CryptTool {
 
     // <base64 encoded salt>.<base64 encoded & encrypted data>
     private static final Pattern js2encryptionpattern = Pattern.compile("^(?:[a-zA-Z0-9+\\/]{4})*(?:|(?:[a-zA-Z0-9+\\/]{3}=)|(?:[a-zA-Z0-9+\\/]{2}==)|(?:[a-zA-Z0-9+\\/]{1}===))\\.(?:[a-zA-Z0-9+\\/]{4})*(?:|(?:[a-zA-Z0-9+\\/]{3}=)|(?:[a-zA-Z0-9+\\/]{2}==)|(?:[a-zA-Z0-9+\\/]{1}===))$");
-    private final AtomicInteger status = new AtomicInteger(-1); // -1 - shut down, 0 - ready, 1 not ready - awaiting password
+    private final AtomicBoolean ready = new AtomicBoolean(false);
     private String passwordHash;
     private String decryptionPassword;
+    private final String configPath;
 
     private final Logger logger = LoggerFactory.getLogger(JS2CryptTool.class);
 
     /**
-     * Sets up a new tool
+     * Sets up a new tool with the given config file
+     *
+     * @param configPath path to the config file; if this file does not have to exist (will be created)
+     * @throws SetupException on setup throwing an exception
      */
-    public JS2CryptTool(String configPath){
-        setup(configPath);
+    public JS2CryptTool(String configPath) throws SetupException {
+        this.configPath = configPath;
+        try{
+            setup(configPath, false);
+        }catch (CryptException e){
+            throw new SetupException("Failed To Set Up JS2CryptTool: "+e.getMessage());
+        }
+    }
+
+    /**
+     * Sets up a new tool with the given config file
+     *
+     * @param setUpNow used to run initial setup; this only works if the config file is not empty
+     * @param configPath path to the config file; if this file does not have to exist (will be created)
+     * @throws SetupException on setup throwing an exception
+     */
+    public JS2CryptTool(String configPath, boolean setUpNow) throws SetupException{
+        this.configPath = configPath;
+        try{
+            setup(configPath, setUpNow);
+        }catch (CryptException e){
+            throw new SetupException("Failed To Set Up JS2CryptTool: "+e.getMessage());
+        }
     }
 
 
@@ -55,8 +88,8 @@ public class JS2CryptTool {
      * @param password password
      * @throws CryptException on exceptions such as the tool already being ready or the password being invalid
      */
-    public void js2encryptionPassword(String password) throws CryptException {
-        if(status.get() == -1 || status.get() == 1){
+    private void js2encryptionPassword(String password) throws CryptException {
+        if(!ready.get()){
             if(passwordHash == null || passwordHash.isEmpty()){
                 // set new password
                 passwordHash = BCrypt.hashpw(password, BCrypt.gensalt(32));
@@ -71,21 +104,9 @@ public class JS2CryptTool {
                 logger.info("JS2Crypt Password Accepted");
             }
             this.decryptionPassword = password;
-            status.set(0);
         }else{
             throw new CryptException(0, "Password Cant Be Changed In This State");
         }
-    }
-
-    /**
-     * Used to get the current status of the tool
-     * -1 - shut down
-     *  0 - ready
-     *  1 - not ready - awaiting password
-     * @return int
-     */
-    public int getStatus(){
-        return status.get();
     }
 
     /**
@@ -93,7 +114,7 @@ public class JS2CryptTool {
      * @return boolean
      */
     public boolean isReady(){
-        return status.get() == 0;
+        return ready.get();
     }
 
     /*                      TEST                        */
@@ -120,7 +141,7 @@ public class JS2CryptTool {
      * @throws CryptException on exceptions
      */
     public byte[] decode(String js2EncryptedData) throws CryptException{
-        if(status.get() != 0){
+        if(!ready.get()){
             throw new CryptException(0, "CryptTool Is Not Ready");
         }
         if(!isJS2Encrypted(js2EncryptedData)){
@@ -151,7 +172,7 @@ public class JS2CryptTool {
      * @throws CryptException on exceptions
      */
     public String encode(byte[] data) throws CryptException{
-        if(status.get() != 0){
+        if(!ready.get()){
             throw new CryptException(0, "CryptTool Is Not Ready");
         }
         // generate a new salt
@@ -173,11 +194,72 @@ public class JS2CryptTool {
 
     /*                      Misc                        */
 
-    private void setup(String configPath){
-
+    private void setup(String configPath, boolean setupNow) throws CryptException{
+        boolean requiresPassword = setupNow;
+        try{
+            File d = new File(this.configPath.substring(0, this.configPath.lastIndexOf("/")));
+            if(!d.exists()){ d.mkdirs(); }
+            File f = new File(this.configPath);
+            if(!f.exists()){ f.createNewFile(); }
+            else{
+                // read
+                String content = new String(Files.readAllBytes(f.toPath()));
+                if(!content.isEmpty()){
+                    JSONObject jsonObject = new JSONObject(content);
+                    this.passwordHash = jsonObject.getString("passwordHash");
+                }
+                if(!this.passwordHash.isEmpty()){
+                    requiresPassword = true;
+                }
+            }
+        }catch (Exception e){
+            logger.error("An Error Occurred While Reading The Config File: "+configPath, e);
+            throw new CryptException(2, "An Error Occurred While Reading The Config File: "+configPath+" : "+e.getMessage());
+        }
+        if(requiresPassword){
+            // enable read from console
+            int i = 0;
+            Scanner sc = new Scanner(System.in);
+            while(true){
+                try{
+                    logger.info("Insert JS2Crypt Password:");
+                    js2encryptionPassword(sc.nextLine());
+                    break;
+                }catch (Exception e){
+                    i++;
+                    logger.error("Error Occurred While Inserting Password", e);
+                    if(i >= 3){
+                        break;
+                    }
+                }
+            }
+            sc.close();
+            if(i > 3){
+                throw new CryptException(2, "Failed To Set Up Password");
+            }
+            // ready only if password has been inserted
+            ready.set(true);
+        }
     }
 
-    public void shutdown(){
-
+    public void shutdown() throws ShutdownException {
+        ready.set(false);
+        try{
+            // build json
+            JSONObject jsonObject = new JSONObject()
+                    .put("passwordHash", (passwordHash != null)? passwordHash : "");
+            // write to file
+            File d = new File(this.configPath.substring(0, this.configPath.lastIndexOf("/")));
+            if(!d.exists()){ d.mkdirs(); }
+            File f = new File(this.configPath);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(f));
+            writer.write(jsonObject.toString());
+            writer.newLine();
+            writer.flush();
+            writer.close();
+        }catch (Exception e){
+            logger.error("Shutdown Failed. Data May Be Lost / Not Decipherable", e);
+            throw new ShutdownException("Shutdown Failed. Data May Be Lost / Not Decipherable: "+e.getMessage());
+        }
     }
 }

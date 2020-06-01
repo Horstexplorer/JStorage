@@ -27,6 +27,7 @@ public class CryptException extends Exception{
         Types:
         0   -   CryptTool Not Ready / Not Set Up/ Action Denied
         1   -   Invalid Password
+        2   -   Setup Failed
         1x      Encryption Error
          1  -
         2x      Decryption Error
