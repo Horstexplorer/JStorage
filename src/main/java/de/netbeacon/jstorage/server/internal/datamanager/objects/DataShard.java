@@ -16,6 +16,9 @@
 
 package de.netbeacon.jstorage.server.internal.datamanager.objects;
 
+import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
+import de.netbeacon.jstorage.server.tools.crypt.JS2CryptTool;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import org.json.JSONObject;
@@ -391,6 +394,22 @@ public class DataShard {
                         while((line = br.readLine()) != null) {
                             if (!line.isEmpty()) {
                                 try{
+                                    // see if the data is encrypted
+                                    if(JS2CryptTool.isJS2Encrypted(line)){
+                                        // make sure the tool is ready
+                                        if(!DataManager.getJs2CryptTool().isReady()){
+                                            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loaded DataSet Seems To Be Encrypted But JS2CryptTool Is Not Ready To Work With This Type Of Data. This Results In This Data Being Lost And The Table Being Inconsistent. Please Check What Is Wrong Here.");
+                                            continue;
+                                        }
+                                        // try decrypting
+                                        try{
+                                            line = new String(DataManager.getJs2CryptTool().decode(line));
+                                        }catch (CryptException e){
+                                            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Error Occurred While Decrypting A DataSet. This Results In This Data Being Lost And The Table Being Inconsistent. Please Check What Is Wrong Here.", e);
+                                            continue;
+                                        }
+                                    }
+                                    // process data
                                     JSONObject jsonObject = new JSONObject(line);
                                     // parse important values
                                     String gdb = jsonObject.getString("database").toLowerCase();
@@ -473,7 +492,17 @@ public class DataShard {
                     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
                     for(Map.Entry<String, DataSet> entry : dataSetPool.entrySet()){
                         if(entry.getKey().equals(entry.getValue().getIdentifier())){
-                            writer.write(entry.getValue().getFullData().toString());
+                            if(dataBase.encrypted()){
+                                try{
+                                    String encryptedData = DataManager.getJs2CryptTool().encode(entry.getValue().getFullData().toString().getBytes());
+                                    writer.write(encryptedData);
+                                }catch (CryptException e){
+                                    logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Failed To Encrypt Data, Storing It Unencrypted", e);
+                                    writer.write(entry.getValue().getFullData().toString());
+                                }
+                            }else{
+                                writer.write(entry.getValue().getFullData().toString());
+                            }
                             writer.newLine();
                         }
                     }
