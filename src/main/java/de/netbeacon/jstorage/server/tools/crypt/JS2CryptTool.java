@@ -93,7 +93,7 @@ public class JS2CryptTool {
             if(passwordHash == null || passwordHash.isEmpty()){
                 // set new password
                 passwordHash = BCrypt.hashpw(password, BCrypt.gensalt(16));
-                logger.info("JS2Crypt Password Set");
+                logger.debug("JS2Crypt Password Set");
             }else{
                 // check password
                 boolean accepted = BCrypt.checkpw(password, passwordHash);
@@ -101,7 +101,7 @@ public class JS2CryptTool {
                     logger.error("JS2Crypt Password Not Accepted");
                     throw new CryptException(1, "Password Not Accepted");
                 }
-                logger.info("JS2Crypt Password Accepted");
+                logger.debug("JS2Crypt Password Accepted");
             }
             this.decryptionPassword = password;
             // ready only if the correct password has been inserted
@@ -235,7 +235,6 @@ public class JS2CryptTool {
                     }
                 }
             }
-            sc.close();
             if(i > 3){
                 throw new CryptException(2, "Failed To Set Up Password");
             }

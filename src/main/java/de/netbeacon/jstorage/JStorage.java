@@ -78,11 +78,9 @@ public class JStorage {
         }
         // check if encryption should be set up
         boolean runEncryptSetup = false;
-        if(arguments.containsKey("encryptSetup")){
-            runEncryptSetup = Boolean.parseBoolean(arguments.get("encryptSetup"));
+        if(arguments.containsKey("encryptsetup")){
+            runEncryptSetup = Boolean.parseBoolean(arguments.get("encryptsetup"));
         }
-        // should print out version and build
-        System.out.println("Version: "+Info.VERSION);
         // select mode
         String mode = "";
         if(arguments.containsKey("mode")){
@@ -95,6 +93,15 @@ public class JStorage {
                 modeDefault(runEncryptSetup);
                 break;
         }
+
+        Scanner scanner = new Scanner(System.in);
+        while(true){
+            String line = scanner.nextLine();
+            if(line.toLowerCase().equals("exit")){
+                break;
+            }
+        }
+        System.exit(0);
     }
 
     private static void modeDefault(boolean runEncryptSetup){
@@ -108,18 +115,5 @@ public class JStorage {
             logger.error("Error Starting Components", e);
             System.exit(0);
         }
-        input();
     }
-
-    private static void input(){
-        Scanner scanner = new Scanner(System.in);
-        while(true){
-            String line = scanner.nextLine();
-            if(line.toLowerCase().equals("exit")){
-                break;
-            }
-        }
-        System.exit(0);
-    }
-
 }
