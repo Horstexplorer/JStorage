@@ -43,6 +43,24 @@ Actions requiring JSON payload/data
 - `Content-Length: `
 - `Content-Type: application/json`
 
+### Start Parameters
+Param | Description
+--- | ---
+-dircheck:disable | disables the check if the jar gets executed from the same directory it is in
+-encryptsetup:<true/false> | tries to set up encryption
+-mode:<default> | changes the mode of this instance
+
+### Setup Encryption
+Use the start parameter explained above to enable encryption.
+You will be prompted to enter a password which will be used to en-/decrypt the data. From now on this prompt will show up every time the software starts.
+After setting up the password you are able to activate encryption for each database individually.
+
+#### ! Notes !
+- Remember the password, there is no way to reset it
+- Choose a good password, as it cannot be changed later (that easily)
+- The data will not be encrypted right away - only shards which had been loaded and stored again will be
+- To disable encryption make sure to disable encryption for each database and make sure the data has been decrypted, then just delete the js2config file
+
 ## Known-Issues
 Currently, there are no known issues. This list might not be updated yet, so please check the issue tracker.
 

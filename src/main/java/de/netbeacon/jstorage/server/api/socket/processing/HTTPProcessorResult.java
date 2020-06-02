@@ -198,7 +198,7 @@ public class HTTPProcessorResult {
             case 431:
                 return "Request Header Fields Too Large";
             case 451:
-                return "\tUnavailable For Legal Reasons";
+                return "Unavailable For Legal Reasons";
             case 418:
                 return "I’m a teapot";
             case 425:
