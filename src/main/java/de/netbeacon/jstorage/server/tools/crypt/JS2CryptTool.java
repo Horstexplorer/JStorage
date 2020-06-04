@@ -210,7 +210,7 @@ public class JS2CryptTool {
                     JSONObject jsonObject = new JSONObject(content);
                     this.passwordHash = jsonObject.getString("passwordHash");
                 }
-                if(!this.passwordHash.isEmpty()){
+                if(this.passwordHash != null &&!this.passwordHash.isEmpty()){
                     requiresPassword = true;
                 }
             }
