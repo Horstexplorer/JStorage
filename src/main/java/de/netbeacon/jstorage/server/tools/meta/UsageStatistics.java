@@ -40,9 +40,10 @@ public class UsageStatistics {
      * @return long
      */
     public long getCountFor(Usage e){
-        long oldest = System.nanoTime()-600000000000L;
-        access.entrySet().stream().filter(x-> (x.getKey() <= oldest)).forEach(x->access.remove(x.getKey()));
-        return access.entrySet().stream().filter(x -> (x.getKey() >= oldest && (x.getValue() == e || e == Usage.any))).count();
+        //long oldest = System.nanoTime()-600000000000L;
+        //access.entrySet().stream().filter(x-> (x.getKey() <= oldest)).forEach(x->access.remove(x.getKey()));
+        //access.entrySet().stream().parallel().filter(x -> (x.getKey() >= oldest && (x.getValue() == e || e == Usage.any))).count();
+        return 1;
     }
 
     /**
@@ -51,11 +52,11 @@ public class UsageStatistics {
      * @param e DSMSEnum
      */
     public void add(Usage e){
-        long current = System.nanoTime();
-        access.put(current, e);
+        //long current = System.nanoTime();
+        //access.put(current, e);
         // delete older datasets
-        long finalCurrent = current-600000000000L;
-        access.entrySet().stream().filter(x-> (x.getKey() <= finalCurrent)).forEach(x->access.remove(x.getKey()));
+        //long finalCurrent = current-600000000000L;
+        //access.entrySet().stream().parallel().filter(x-> (x.getKey() <= finalCurrent)).forEach(x->access.remove(x.getKey()));
     }
 
 }

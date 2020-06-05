@@ -50,7 +50,7 @@ public class Benchmark {
         try{
             DataManager.shutdown();
             File d = new File("./jstorage/data/db/");
-            FileUtils.deleteDirectory(d);
+            //FileUtils.deleteDirectory(d);
         }catch (Exception e){
             fail();
         }
@@ -92,7 +92,6 @@ public class Benchmark {
             try{
                 dataTable.deleteDataSet("benchmark_"+i);
             }catch (Exception e){
-                e.printStackTrace();
                 fail();
             }
         }
@@ -103,12 +102,7 @@ public class Benchmark {
     @Order(4)
     void tenThousand_Insert(){
         assertEquals(0, dataTable.getIndexPool().size());
-        long start = System.currentTimeMillis();
         for(int i = 0; i < 10000; i++){
-            if(i%1000 == 0){
-                System.out.println(System.currentTimeMillis()-start);
-                start = System.currentTimeMillis();
-            }
             try{
                 dataTable.insertDataSet(new DataSet(dataTable.getDataBase(), dataTable, "benchmark_"+i));
             }catch (Exception e){
@@ -122,12 +116,7 @@ public class Benchmark {
     @Order(5)
     void tenThousand_Get(){
         assertEquals(10000, dataTable.getIndexPool().size());
-        long start = System.currentTimeMillis();
         for(int i = 0; i < 10000; i++){
-            if(i%1000 == 0){
-                System.out.println(System.currentTimeMillis()-start);
-                start = System.currentTimeMillis();
-            }
             try{
                 DataSet dataSet = dataTable.getDataSet("benchmark_"+i);
             }catch (Exception e){
@@ -141,16 +130,10 @@ public class Benchmark {
     @Order(6)
     void tenThousand_Delete(){
         assertEquals(10000, dataTable.getIndexPool().size());
-        long start = System.currentTimeMillis();
         for(int i = 0; i < 10000; i++){
-            if(i%1000 == 0){
-                System.out.println(System.currentTimeMillis()-start);
-                start = System.currentTimeMillis();
-            }
             try{
                 dataTable.deleteDataSet("benchmark_"+i);
             }catch (Exception e){
-                e.printStackTrace();
                 fail();
             }
         }
@@ -161,12 +144,7 @@ public class Benchmark {
     @Order(7)
     void fiftyThousand_Insert(){
         assertEquals(0, dataTable.getIndexPool().size());
-        long start = System.currentTimeMillis();
         for(int i = 0; i < 50000; i++){
-            if(i%1000 == 0){
-                System.out.println(System.currentTimeMillis()-start);
-                start = System.currentTimeMillis();
-            }
             try{
                 dataTable.insertDataSet(new DataSet(dataTable.getDataBase(), dataTable, "benchmark_"+i));
             }catch (Exception e){
@@ -180,12 +158,7 @@ public class Benchmark {
     @Order(8)
     void fiftyThousand_Get(){
         assertEquals(50000, dataTable.getIndexPool().size());
-        long start = System.currentTimeMillis();
         for(int i = 0; i < 50000; i++){
-            if(i%1000 == 0){
-                System.out.println(System.currentTimeMillis()-start);
-                start = System.currentTimeMillis();
-            }
             try{
                 DataSet dataSet = dataTable.getDataSet("benchmark_"+i);
             }catch (Exception e){
@@ -199,16 +172,52 @@ public class Benchmark {
     @Order(9)
     void fiftyThousand_Delete(){
         assertEquals(50000, dataTable.getIndexPool().size());
-        long start = System.currentTimeMillis();
         for(int i = 0; i < 50000; i++){
-            if(i%1000 == 0){
-                System.out.println(System.currentTimeMillis()-start);
-                start = System.currentTimeMillis();
-            }
             try{
                 dataTable.deleteDataSet("benchmark_"+i);
             }catch (Exception e){
-                e.printStackTrace();
+                fail();
+            }
+        }
+        assertEquals(0, dataTable.getIndexPool().size());
+    }
+
+    @Test
+    @Order(10)
+    void oneMillion_Insert(){
+        assertEquals(0, dataTable.getIndexPool().size());
+        for(int i = 0; i < 1000000; i++){
+            try{
+                dataTable.insertDataSet(new DataSet(dataTable.getDataBase(), dataTable, "benchmark_"+i));
+            }catch (Exception e){
+                fail();
+            }
+        }
+        assertEquals(1000000, dataTable.getIndexPool().size());
+    }
+
+    @Test
+    @Order(11)
+    void oneMillion_Get(){
+        assertEquals(1000000, dataTable.getIndexPool().size());
+        for(int i = 0; i < 1000000; i++){
+            try{
+                DataSet dataSet = dataTable.getDataSet("benchmark_"+i);
+            }catch (Exception e){
+                fail();
+            }
+        }
+        assertEquals(1000000, dataTable.getIndexPool().size());
+    }
+
+    @Test
+    @Order(12)
+    void oneMillion_Delete(){
+        assertEquals(1000000, dataTable.getIndexPool().size());
+        for(int i = 0; i < 1000000; i++){
+            try{
+                dataTable.deleteDataSet("benchmark_"+i);
+            }catch (Exception e){
                 fail();
             }
         }
