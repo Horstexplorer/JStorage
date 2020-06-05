@@ -32,7 +32,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -54,7 +53,7 @@ public class DataShard {
     private final AtomicLong lastAccess = new AtomicLong();
     // status
     private final AtomicInteger status = new AtomicInteger(0); // -2 - insufficient memory error | -1 - general_error | 0 - unloaded | 1 - unloading | 2 - loading | 3 - loaded/ready
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final static HashSet<String> occupiedIDs = new HashSet<>();
 
@@ -179,43 +178,46 @@ public class DataShard {
      * @throws DataStorageException on various errors such as the object not being found, loading issues and other
      */
     protected DataSet getDataSet(String identifier) throws DataStorageException {
-        lock.readLock().lock();
-        lastAccess.set(System.currentTimeMillis());
-        identifier = identifier.toLowerCase();
-        if(status.get() <= 0) { // -2, -1 or 0
-            lock.readLock().unlock();
-            int lastStatus = status.get();
-            loadData();
-            if(status.get() == 3){
-                // success, retry
-                return getDataSet(identifier);
-            }else{
-                // something went wrong
-                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loading Data Failed. Cant Get DataSet When Shard Is Unloaded. Last: "+lastStatus+" New: "+status.get());
-                throw new DataStorageException(101,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Loading Data Failed - Cant Get DataSet When Shard Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
-            }
-        }else if(status.get() < 3){ // 1 or 2
-            // this should not occur as we are using locks
-            lock.readLock().unlock();
-            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Data Has Not Finished Loading Yet. Something Major Broke");
-            throw new DataStorageException(110, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
-        }
-        // should be always true
-        if(status.get() == 3){
-            // the data is loaded
-            if(dataSetPool.containsKey(identifier)){
-                // get
-                DataSet dataSet = dataSetPool.get(identifier);
+        try{
+            lastAccess.set(System.currentTimeMillis());
+            identifier = identifier.toLowerCase();
+            if(status.get() <= 0) { // -2, -1 or 0
                 lock.readLock().unlock();
-                return dataSet;
+                int lastStatus = status.get();
+                loadData();
+                if(status.get() == 3){
+                    // success, retry
+                    return getDataSet(identifier);
+                }else{
+                    // something went wrong
+                    logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loading Data Failed. Cant Get DataSet When Shard Is Unloaded. Last: "+lastStatus+" New: "+status.get());
+                    throw new DataStorageException(101,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Loading Data Failed - Cant Get DataSet When Shard Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
+                }
+            }else if(status.get() < 3){ // 1 or 2
+                // this should not occur as we are using locks
+                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Data Has Not Finished Loading Yet. Something Major Broke");
+                throw new DataStorageException(110, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
             }
-            lock.readLock().unlock();
-            logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet "+identifier+" Not Found");
-            throw new DataStorageException(201, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": DataSet "+identifier+" Not Found.");
+            // should be always false
+            if(status.get() != 3) {
+                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between - Something Major Broke");
+                throw new DataStorageException(0, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
+            }
+            // the data is loaded
+            if(!dataSetPool.containsKey(identifier)) {
+                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet "+identifier+" Not Found");
+                throw new DataStorageException(201, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": DataSet "+identifier+" Not Found.");
+            }
+            // get
+            return dataSetPool.get(identifier);
+        }catch (DataStorageException e){
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Unknown Error Occurred Getting DataSet "+identifier, e);
+            throw new DataStorageException(0, "Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Unknown Error Occurred While Getting DataSet "+identifier+": "+e.getMessage());
+        }finally {
+            try{lock.readLock().unlock();}catch (Exception | Error ignore){} // this happens if the data had to be loaded (unlock before return to allow write lock for this thread)
         }
-        lock.readLock().unlock();
-        logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between - Something Major Broke");
-        throw new DataStorageException(0, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
     }
 
     /**
@@ -225,54 +227,58 @@ public class DataShard {
      * @throws DataStorageException on various errors such as an object already existing with the same identifier, loading issues and other
      */
     protected void insertDataSet(DataSet dataSet) throws DataStorageException{
-        lock.writeLock().lock();
-        lastAccess.set(System.currentTimeMillis());
-        if(status.get() <= 0) { // -2, -1 or 0
-            lock.writeLock().unlock();
-            int lastStatus = status.get();
-            loadData();
-            if(status.get() == 3){
-                // success, retry
-                insertDataSet(dataSet);
-                return;
-            }else{
-                // something went wrong
-                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loading Data Failed. Cant Insert DataSet When Shard Is Unloaded. Last: "+lastStatus+" New: "+status.get());
-                throw new DataStorageException(101,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Loading Data Failed - Cant Insert DataSet When Shard Is Unloaded.");
-            }
-        }else if(status.get() < 3){ // 1 or 2
-            // this should not occur as we are using locks
-            lock.writeLock().unlock();
-            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Data Has Not Finished Loading Yet. Something Major Broke");
-            throw new DataStorageException(110, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
-        }
-        // should be always true
-        if(status.get() == 3){
-            // the data is loaded
-            if(dataSetPool.size() < getMaxDataSetCount()){
-                if(dataBase.getIdentifier().equals(dataSet.getDataBase().getIdentifier()) && table.getIdentifier().equals(dataSet.getTable().getIdentifier())){
-                    if(!dataSetPool.containsKey(dataSet.getIdentifier())){
-                        // insert
-                        dataSetPool.put(dataSet.getIdentifier(), dataSet);
-                        lock.writeLock().unlock();
-                        return;
-                    }
-                    lock.writeLock().unlock();
-                    logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet "+dataSet.getIdentifier()+" Already Existing");
-                    throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
+        boolean lockedBefore = false;
+        try{
+            if(!lock.isWriteLockedByCurrentThread()){
+                lock.writeLock().lock();
+            }else{ lockedBefore = true; }
+            lastAccess.set(System.currentTimeMillis());
+            if(status.get() <= 0) { // -2, -1 or 0
+                int lastStatus = status.get();
+                loadData();
+                if(status.get() == 3){
+                    // success, retry
+                    insertDataSet(dataSet);
+                    return;
+                }else{
+                    // something went wrong
+                    logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loading Data Failed. Cant Insert DataSet When Shard Is Unloaded. Last: "+lastStatus+" New: "+status.get());
+                    throw new DataStorageException(101,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Loading Data Failed - Cant Insert DataSet When Shard Is Unloaded.");
                 }
-                lock.writeLock().unlock();
+            }else if(status.get() < 3){ // 1 or 2
+                // this should not occur as we are using locks
+                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Data Has Not Finished Loading Yet. Something Major Broke");
+                throw new DataStorageException(110, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
+            }
+            // should be always false
+            if(status.get() != 3){
+                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between - Something Major Broke");
+                throw new DataStorageException(0, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
+            }
+            if(dataSetPool.size() >= getMaxDataSetCount()){
+                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet Could Not Be Inserted, Shard Is Full");
+                throw new DataStorageException(220, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Shard Is Full");
+            }
+            if(!(dataBase.getIdentifier().equals(dataSet.getDataBase().getIdentifier()) && table.getIdentifier().equals(dataSet.getTable().getIdentifier()))){
                 logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet "+dataSet.getIdentifier()+" Does Not Fit Here");
                 throw new DataStorageException(220, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": DataSet "+dataSet.getIdentifier()+" ("+dataSet.getDataBase().getIdentifier()+">"+dataSet.getTable().getIdentifier()+") Does Not Fit Here.");
             }
-            lock.writeLock().unlock();
-            logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet Could Not Be Inserted, Shard Is Full");
-            throw new DataStorageException(220, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Shard Is Full");
+            if(dataSetPool.containsKey(dataSet.getIdentifier())){
+                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet "+dataSet.getIdentifier()+" Already Existing");
+                throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
+            }
+            // insert
+            dataSetPool.put(dataSet.getIdentifier(), dataSet);
+        }catch (DataStorageException e){
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Unknown Error Occurred While Inserting DataSet "+dataSet.getIdentifier(), e);
+            throw new DataStorageException(0, "Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Unknown Error Occurred While Inserting DataSet "+dataSet.getIdentifier()+": "+e.getMessage());
+        }finally {
+            if(!lockedBefore){
+                lock.writeLock().unlock();
+            }
         }
-        lock.writeLock().unlock();
-        logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between - Something Major Broke");
-        throw new DataStorageException(0, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
-
     }
 
     /**
@@ -284,46 +290,54 @@ public class DataShard {
      * @throws DataStorageException on various errors such as the object not being found, loading issues and other
      */
     protected void deleteDataSet(String identifier) throws DataStorageException {
-        lock.writeLock().lock();
-        lastAccess.set(System.currentTimeMillis());
-        identifier = identifier.toLowerCase();
-        // check status
-        if(status.get() <= 0) { // -2, -1 or 0
-            lock.writeLock().unlock();
-            int lastStatus = status.get();
-            loadData();
-            if(status.get() == 3){
-                // success, retry
-                deleteDataSet(identifier);
-                return;
-            }else{
-                // something went wrong
-                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loading Data Failed. Cant Delete DataSet When Shard Is Unloaded. Last: "+lastStatus+" New: "+status.get());
-                throw new DataStorageException(101,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Loading Data Failed - Cant Delete DataSet When Shard Is Unloaded.");
+        boolean lockedBefore = false;
+        try {
+            if (!lock.isWriteLockedByCurrentThread()) {
+                lock.writeLock().lock();
+            } else { lockedBefore = true; }
+            lastAccess.set(System.currentTimeMillis());
+            identifier = identifier.toLowerCase();
+
+            if(status.get() <= 0) { // -2, -1 or 0
+                int lastStatus = status.get();
+                loadData();
+                if(status.get() == 3){
+                    // success, retry
+                    deleteDataSet(identifier);
+                    return;
+                }else{
+                    // something went wrong
+                    logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loading Data Failed. Cant Delete DataSet When Shard Is Unloaded. Last: "+lastStatus+" New: "+status.get());
+                    throw new DataStorageException(101,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Loading Data Failed - Cant Delete DataSet When Shard Is Unloaded.");
+                }
+            }else if(status.get() < 3){ // 1 or 2
+                // this should not occur as we are using locks
+                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Data Has Not Finished Loading Yet. Something Major Broke");
+                throw new DataStorageException(110, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
             }
-        }else if(status.get() < 3){ // 1 or 2
-            // this should not occur as we are using locks
-            lock.writeLock().unlock();
-            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Data Has Not Finished Loading Yet. Something Major Broke");
-            throw new DataStorageException(110, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
-        }
-        // should be always true
-        if(status.get() == 3){
+            // should be always false
+            if(status.get() != 3) {
+                logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between - Something Major Broke");
+                throw new DataStorageException(0, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
+            }
             // the data is loaded
-            if(dataSetPool.containsKey(identifier)){
-                // get & remove
-                DataSet dataSet = dataSetPool.remove(identifier);
-                dataSet.onUnload();
-                lock.writeLock().unlock();
-                return;
+            if(!dataSetPool.containsKey(identifier)) {
+                logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet "+identifier+" Not Found");
+                throw new DataStorageException(201, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": DataSet "+identifier+" Not Found.");
             }
-            lock.writeLock().unlock();
-            logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) DataSet "+identifier+" Not Found");
-            throw new DataStorageException(201, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": DataSet "+identifier+" Not Found.");
+            // get & remove
+            DataSet dataSet = dataSetPool.remove(identifier);
+            dataSet.onUnload();
+        }catch (DataStorageException e){
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Unknown Error Occurred While Deleting DataSet "+identifier, e);
+            throw new DataStorageException(0, "Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Unknown Error Occurred While Deleting DataSet "+identifier+": "+e.getMessage());
+        }finally {
+            if(!lockedBefore){
+                lock.writeLock().unlock();
+            }
         }
-        lock.writeLock().unlock();
-        logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between - Something Major Broke");
-        throw new DataStorageException(0, "DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
     }
 
     /**
@@ -373,8 +387,11 @@ public class DataShard {
      * @throws DataStorageException if data failed to load for any reasons. Data may be lost
      */
     protected void loadData() throws DataStorageException {
+        boolean lockedBefore = false;
         try{
-            lock.writeLock().lock();
+            if(!lock.isWriteLockedByCurrentThread()){
+                lock.writeLock().lock();
+            }else{ lockedBefore = true; }
             if(status.get() <= 0){
                 status.set(2); // set loading
                 logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loading Data");
@@ -429,13 +446,14 @@ public class DataShard {
                 status.set(3);
                 logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loaded Data. New Status: "+status.get());
             }
-        }catch (Exception e){
+        }catch (Exception | Error e){
             status.set(-1);
-            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loaded Data. New Status: "+status.get());
-            lock.writeLock().unlock();
+            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loaded Data. New Status: "+status.get(), e);
             throw new DataStorageException(101,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Loading Data Failed: "+e.getMessage());
         }finally {
-            lock.writeLock().unlock();
+            if(!lockedBefore){
+                lock.writeLock().unlock();
+            }
         }
     }
 
@@ -470,8 +488,11 @@ public class DataShard {
      * @throws DataStorageException if data failed to unload for any reasons. Data may be lost
      */
     protected void unloadData(boolean unload, boolean saveToFile, boolean delete) throws DataStorageException {
+        boolean lockedBefore = false;
         try{
-            lock.writeLock().lock();
+            if(!lock.isWriteLockedByCurrentThread()){
+                lock.writeLock().lock();
+            }else{ lockedBefore = true; }
             if(status.get() == 3){
                 status.set(1); // set unloading
                 logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloading Data With Params: u="+unload+" s="+saveToFile+" d="+delete);
@@ -538,13 +559,14 @@ public class DataShard {
                 status.set(0);
             }
             logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloaded Data. New Status: "+status.get());
-        }catch (Exception e){
+        }catch (Exception | Error e){
             status.set(-1);
-            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloaded Data. New Status: "+status.get());
-            lock.writeLock().unlock();
+            logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloaded Data. New Status: "+status.get(), e);
             throw new DataStorageException(102,"DataShard: "+dataBase.getIdentifier()+">"+table.getIdentifier()+">"+shardID+": Unloading Data Failed, Data May Be Lost: "+e.getMessage());
         }finally {
-            lock.writeLock().unlock();
+            if(!lockedBefore){ // dont unlock is it has been locked before; the other part of the code might still be sensitive
+                lock.writeLock().unlock();
+            }
         }
     }
 
@@ -557,14 +579,11 @@ public class DataShard {
      */
     protected void unloadDataAsync(boolean unload, boolean saveToFile, boolean deleteTable){
         if(status.get() == 3){
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        unloadData(unload, saveToFile, deleteTable);
-                    } catch (DataStorageException e) {
-                        e.printStackTrace();
-                    }
+            Thread t = new Thread(() -> {
+                try {
+                    unloadData(unload, saveToFile, deleteTable);
+                } catch (DataStorageException e) {
+                    e.printStackTrace();
                 }
             });
             t.setDaemon(true);

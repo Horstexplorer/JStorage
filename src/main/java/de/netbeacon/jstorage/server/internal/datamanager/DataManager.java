@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -51,7 +50,7 @@ public class DataManager {
     private static final AtomicBoolean ready = new AtomicBoolean(false);
     private static final AtomicBoolean shutdown = new AtomicBoolean(false);
     private static final ConcurrentHashMap<String, DataBase> dataBasePool = new ConcurrentHashMap<>();
-    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private static ScheduledExecutorService ses;
     private static Future<?> counterTask; // the fix has been planted
     private static JS2CryptTool js2CryptTool;
@@ -98,22 +97,19 @@ public class DataManager {
      */
     public static DataBase getDataBase(String identifier) throws DataStorageException {
         try{
-            identifier = identifier.toLowerCase();
             lock.readLock().lock();
-            if(ready.get()){
-                if(dataBasePool.containsKey(identifier)){
-                    DataBase dataBase = dataBasePool.get(identifier);
-                    lock.readLock().unlock();
-                    return dataBase;
-                }
+            identifier = identifier.toLowerCase();
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(!dataBasePool.containsKey(identifier)){
                 logger.debug("DataBase "+identifier+" Not Found");
                 throw new DataStorageException(204, "DataManager: DataBase "+identifier+" Not Found.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
-        }catch (DataStorageException e){
+            return dataBasePool.get(identifier);
+        }finally {
             lock.readLock().unlock();
-            throw e;
         }
     }
 
@@ -128,23 +124,21 @@ public class DataManager {
      */
     public static DataBase createDataBase(String identifier) throws DataStorageException {
         try{
-            identifier = identifier.toLowerCase();
             lock.writeLock().lock();
-            if(ready.get()){
-                if(!dataBasePool.containsKey(identifier)){
-                    DataBase dataBase = new DataBase(identifier);
-                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
-                    lock.writeLock().unlock();
-                    return dataBase;
-                }
+            identifier = identifier.toLowerCase();
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(dataBasePool.containsKey(identifier)){
                 logger.debug("DataBase "+identifier+" Already Existing");
                 throw new DataStorageException(214, "DataManager: DataBase "+identifier+" Already Existing.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
-        }catch (DataStorageException e){
+            DataBase dataBase = new DataBase(identifier);
+            dataBasePool.put(dataBase.getIdentifier(), dataBase);
+            return dataBase;
+        }finally {
             lock.writeLock().unlock();
-            throw e;
         }
     }
 
@@ -158,24 +152,21 @@ public class DataManager {
      */
     public static void deleteDataBase(String identifier) throws DataStorageException {
         try{
-            identifier = identifier.toLowerCase();
             lock.writeLock().lock();
-            if(ready.get()){
-                if(dataBasePool.containsKey(identifier)){
-                    DataBase dataBase = dataBasePool.get(identifier);
-                    dataBase.delete();
-                    dataBasePool.remove(identifier);
-                    lock.writeLock().unlock();
-                    return;
-                }
+            identifier = identifier.toLowerCase();
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(!dataBasePool.containsKey(identifier)){
                 logger.debug("DataBase "+identifier+" Not Found");
                 throw new DataStorageException(204, "DataManager: DataBase "+identifier+" Not Found.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
-        }catch (DataStorageException e){
+            DataBase dataBase = dataBasePool.get(identifier);
+            dataBase.delete();
+            dataBasePool.remove(identifier);
+        }finally {
             lock.writeLock().unlock();
-            throw e;
         }
     }
 
@@ -206,17 +197,15 @@ public class DataManager {
     public static void insertDataBase(DataBase dataBase) throws DataStorageException {
         try{
             lock.writeLock().lock();
-            if(ready.get()){
-                if(!dataBasePool.containsKey(dataBase.getIdentifier())){
-                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
-                    lock.writeLock().unlock();
-                    return;
-                }
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(dataBasePool.containsKey(dataBase.getIdentifier())){
                 logger.debug("DataBase "+dataBase.getIdentifier()+" Already Existing");
                 throw new DataStorageException(214, "DataManager: DataBase "+dataBase.getIdentifier()+" Already Existing.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
+            dataBasePool.put(dataBase.getIdentifier(), dataBase);
         }catch (DataStorageException e){
             lock.writeLock().unlock();
             throw e;

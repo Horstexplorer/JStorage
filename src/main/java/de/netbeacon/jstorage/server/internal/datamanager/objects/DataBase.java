@@ -33,7 +33,6 @@ import java.nio.file.Files;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -47,7 +46,7 @@ public class DataBase {
 
     private final String identifier;
     private final ConcurrentHashMap<String, DataTable> dataTablePool = new ConcurrentHashMap<>(); // huehuehue :D
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
 
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
@@ -143,31 +142,30 @@ public class DataBase {
      * @throws DataStorageException on various errors such as the object not being found
      */
     public DataTable getTable(String identifier) throws DataStorageException {
-        if(ready.get()){
+        try{
             lock.readLock().lock();
+            if(!ready.get()){
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
+                throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
+            }
             identifier = identifier.toLowerCase();
-            try{
-                if(dataTablePool.containsKey(identifier)){
-                    DataTable dataTable = dataTablePool.get(identifier);
-                    lock.readLock().unlock();
-                    usageStatistic.add(UsageStatistics.Usage.get_success);
-                    return dataTable;
-                }
+            if(!dataTablePool.containsKey(identifier)){
                 logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
                 throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
-            }catch (DataStorageException e){
-                lock.readLock().unlock();
-                usageStatistic.add(UsageStatistics.Usage.get_failure);
-                throw e;
-            }catch (Exception e){
-                lock.readLock().unlock();
-                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
-                usageStatistic.add(UsageStatistics.Usage.get_failure);
-                throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
+            DataTable dataTable = dataTablePool.get(identifier);
+            usageStatistic.add(UsageStatistics.Usage.get_success);
+            return dataTable;
+        }catch (DataStorageException e){
+            usageStatistic.add(UsageStatistics.Usage.get_failure);
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
+            usageStatistic.add(UsageStatistics.Usage.get_failure);
+            throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
+        }finally {
+            lock.readLock().unlock();
         }
-        logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
-        throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
     }
 
     /**
@@ -177,34 +175,32 @@ public class DataBase {
      * @throws DataStorageException on various errors such as an object already existing with the same identifier
      */
     public void insertTable(DataTable table) throws DataStorageException {
-        if(ready.get()){
+        try{
             lock.writeLock().lock();
-            try{
-                if(identifier.equals(table.getDataBase().getIdentifier())){
-                    if(!dataTablePool.containsKey(table.getIdentifier())){
-                        dataTablePool.put(table.getIdentifier(), table);
-                        lock.writeLock().unlock();
-                        usageStatistic.add(UsageStatistics.Usage.insert_success);
-                        return;
-                    }
-                    logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+table.getIdentifier()+" Already Existing");
-                    throw new DataStorageException(213, "DataBase: "+identifier+": DataTable "+table.getIdentifier()+" Already Exists.");
-                }
+            if(!ready.get()){
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
+                throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
+            }
+            if(!identifier.equals(table.getDataBase().getIdentifier())){
                 logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+table.getIdentifier()+" Does Not Fit Here");
                 throw new DataStorageException(220, "DataBase: "+identifier+": DataTable "+table.getIdentifier()+" ("+table.getDataBase().identifier+">"+table.getIdentifier()+") Does Not Fit Here.");
-            }catch (DataStorageException e){
-                lock.writeLock().unlock();
-                usageStatistic.add(UsageStatistics.Usage.insert_failure);
-                throw e;
-            }catch (Exception e){
-                lock.writeLock().unlock();
-                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Inserting "+table.getIdentifier(), e);
-                usageStatistic.add(UsageStatistics.Usage.insert_failure);
-                throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
+            if(dataTablePool.containsKey(table.getIdentifier())){
+                logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+table.getIdentifier()+" Already Existing");
+                throw new DataStorageException(213, "DataBase: "+identifier+": DataTable "+table.getIdentifier()+" Already Exists.");
+            }
+            dataTablePool.put(table.getIdentifier(), table);
+            usageStatistic.add(UsageStatistics.Usage.insert_success);
+        }catch (DataStorageException e){
+            usageStatistic.add(UsageStatistics.Usage.insert_failure);
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
+            usageStatistic.add(UsageStatistics.Usage.insert_failure);
+            throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
+        }finally {
+            lock.writeLock().unlock();
         }
-        logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
-        throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
     }
 
     /**
@@ -216,32 +212,30 @@ public class DataBase {
      * @throws DataStorageException on various errors such as the object not being found
      */
     public void deleteTable(String identifier) throws DataStorageException{
-        if(ready.get()){
+        try{
             lock.writeLock().lock();
+            if(!ready.get()){
+                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
+                throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
+            }
             identifier = identifier.toLowerCase();
-            try{
-                if(dataTablePool.containsKey(identifier)){
-                    dataTablePool.get(identifier).delete();
-                    dataTablePool.remove(identifier);
-                    lock.writeLock().unlock();
-                    usageStatistic.add(UsageStatistics.Usage.delete_success);
-                    return;
-                }
+            if(!dataTablePool.containsKey(identifier)){
                 logger.debug("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) DataTable "+identifier+" Not Found");
                 throw new DataStorageException(203, "DataBase: "+identifier+": DataTable "+identifier+" Not Found.");
-            }catch (DataStorageException e){
-                lock.writeLock().unlock();
-                usageStatistic.add(UsageStatistics.Usage.delete_failure);
-                throw e;
-            }catch (Exception e){
-                lock.writeLock().unlock();
-                logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Deleting "+identifier, e);
-                usageStatistic.add(UsageStatistics.Usage.delete_failure);
-                throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
             }
+            dataTablePool.get(identifier).delete();
+            dataTablePool.remove(identifier);
+            usageStatistic.add(UsageStatistics.Usage.delete_success);
+        }catch (DataStorageException e){
+            usageStatistic.add(UsageStatistics.Usage.delete_failure);
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Unknown Error Requesting "+identifier, e);
+            usageStatistic.add(UsageStatistics.Usage.delete_failure);
+            throw new DataStorageException(0, "DataBase: "+identifier+": Unknown Error: "+e.getMessage());
+        }finally {
+            lock.writeLock().unlock();
         }
-        logger.error("DataBase ( Chain "+this.identifier+"; Hash "+hashCode()+" ) Not Ready Yet");
-        throw new DataStorageException(231, "DataBase: "+identifier+": Object Not Ready");
     }
 
     /**

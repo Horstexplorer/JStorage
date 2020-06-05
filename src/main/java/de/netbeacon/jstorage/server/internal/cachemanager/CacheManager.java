@@ -20,7 +20,6 @@ import de.netbeacon.jstorage.server.internal.cachemanager.objects.Cache;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
-import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -74,16 +73,16 @@ public class CacheManager {
      * @throws DataStorageException on exceptions such as the manager not being ready & the object not being found
      */
     public static Cache getCache(String identifier) throws DataStorageException {
-        if(ready.get()){
-            identifier = identifier.toLowerCase();
-            if(caches.containsKey(identifier)){
-                return caches.get(identifier);
-            }
+        if(!ready.get()){
+            logger.error("Not Ready Yet");
+            throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        }
+        identifier = identifier.toLowerCase();
+        if(!caches.containsKey(identifier)){
             logger.debug("Cache "+identifier+" Not Found");
             throw new DataStorageException(206, "CacheManager: Cache "+identifier+" Not Found.");
         }
-        logger.error("Not Ready Yet");
-        throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        return caches.get(identifier);
     }
 
     /**
@@ -94,19 +93,19 @@ public class CacheManager {
      * @throws DataStorageException on exceptions such as the manager not being ready & the object already existing
      */
     public static Cache createCache(String identifier) throws DataStorageException {
-        if(ready.get()){
-            identifier = identifier.toLowerCase();
-            if(!caches.containsKey(identifier)){
-                Cache cache = new Cache(identifier);
-                caches.put(cache.getCacheIdentifier(), cache);
-                logger.debug("Cache "+identifier+" Created");
-                return cache;
-            }
+        if(!ready.get()){
+            logger.error("Not Ready Yet");
+            throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        }
+        identifier = identifier.toLowerCase();
+        if(caches.containsKey(identifier)){
             logger.debug("Cache "+identifier+" Already Existing");
             throw new DataStorageException(216, "CacheManager: Cache "+identifier+" Already Existing.");
         }
-        logger.error("Not Ready Yet");
-        throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        Cache cache = new Cache(identifier);
+        caches.put(cache.getCacheIdentifier(), cache);
+        logger.debug("Cache "+identifier+" Created");
+        return cache;
     }
 
     /**
@@ -116,20 +115,19 @@ public class CacheManager {
      * @throws DataStorageException on exceptions such as the manager not being ready & the object not being found
      */
     public static void deleteCache(String identifier) throws DataStorageException {
-        if(ready.get()){
-            identifier = identifier.toLowerCase();
-            if(caches.containsKey(identifier)){
-                Cache cache = caches.get(identifier);
-                caches.remove(identifier);
-                cache.unloadData(false, false, true);
-                logger.debug("Cache "+identifier+" Deleted");
-                return;
-            }
+        if(!ready.get()){
+            logger.error("Not Ready Yet");
+            throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        }
+        identifier = identifier.toLowerCase();
+        if(!caches.containsKey(identifier)){
             logger.debug("Cache "+identifier+" Not Found");
             throw new DataStorageException(206, "CacheManager: Cache "+identifier+" Not Found.");
         }
-        logger.error("Not Ready Yet");
-        throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        Cache cache = caches.get(identifier);
+        caches.remove(identifier);
+        cache.unloadData(false, false, true);
+        logger.debug("Cache "+identifier+" Deleted");
     }
 
     /**
@@ -151,14 +149,13 @@ public class CacheManager {
      * @throws DataStorageException on exceptions such as the manager not being ready & the object already existing
      */
     public static void insertCache(Cache cache) throws DataStorageException {
-        if(ready.get()){
-            if(!caches.containsKey(cache.getCacheIdentifier())){
-                caches.put(cache.getCacheIdentifier(), cache);
-                return;
-            }
+        if(!ready.get()){
+            throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        }
+        if(caches.containsKey(cache.getCacheIdentifier())){
             throw new DataStorageException(216, "CacheManager: Cache "+cache.getCacheIdentifier()+" Already Existing.");
         }
-        throw new DataStorageException(231, "CacheManager Not Ready Yet");
+        caches.put(cache.getCacheIdentifier(), cache);
     }
 
     /*                  MISC                    */

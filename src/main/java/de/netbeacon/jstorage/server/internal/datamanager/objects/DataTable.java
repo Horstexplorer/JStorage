@@ -33,7 +33,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static java.util.stream.Collectors.toMap;
@@ -64,7 +63,7 @@ public class DataTable {
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ScheduledExecutorService sES = Executors.newScheduledThreadPool(1);
     private Future<?> sESUnloadTask;
     private Future<?> sESSnapshotTask;
@@ -244,53 +243,52 @@ public class DataTable {
      * @throws DataStorageException on various errors such as the object not being found, loading issues and other
      */
     public DataSet getDataSet(String identifier) throws DataStorageException{
-        if(ready.get()){
+        try{
             lock.readLock().lock();
+            if(!ready.get()){
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
+                throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
+            }
             identifier = identifier.toLowerCase();
-            try{
-                if(indexPool.containsKey(identifier)){
-                    // get the value > get the shard
-                    String shardID = indexPool.get(identifier);
-                    if(shardPool.containsKey(shardID)){
-                        DataShard dataShard = shardPool.get(shardID);
-                        try{
-                            DataSet dataSet = dataShard.getDataSet(identifier);
-                            lock.readLock().unlock();
-                            usageStatistic.add(UsageStatistics.Usage.get_success);
-                            return dataSet;
-                        }catch (DataStorageException e){
-                            switch(e.getType()){
-                                case 201:
-                                    // data not found but listed in index
-                                    dataInconsistency.set(true);
-                                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
-                                    throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
-                                default:
-                                    logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
-                                    throw e;
-                            }
-                        }
-                    }
-                    // shard not found but listed in index
-                    dataInconsistency.set(true);
-                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
-                    throw new DataStorageException(202, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
-                }
+            if(!indexPool.containsKey(identifier)){
                 logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found");
                 throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
-            }catch (DataStorageException e){
-                lock.readLock().unlock();
-                usageStatistic.add(UsageStatistics.Usage.get_failure);
-                throw e;
-            }catch (Exception e){
-                lock.readLock().unlock();
-                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
-                usageStatistic.add(UsageStatistics.Usage.get_failure);
-                throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
+            // get the value > get the shard
+            String shardID = indexPool.get(identifier);
+            if(!shardPool.containsKey(shardID)){
+                // shard not found but listed in index
+                dataInconsistency.set(true);
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
+                throw new DataStorageException(202, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+            }
+            DataShard dataShard = shardPool.get(shardID);
+            try{
+                DataSet dataSet = dataShard.getDataSet(identifier);
+                usageStatistic.add(UsageStatistics.Usage.get_success);
+                return dataSet;
+            }catch (DataStorageException e){
+                switch(e.getType()){
+                    case 201:
+                        // data not found but listed in index
+                        dataInconsistency.set(true);
+                        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
+                        throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+                    default:
+                        logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
+                        throw e;
+                }
+            }
+        }catch (DataStorageException e){
+            usageStatistic.add(UsageStatistics.Usage.get_failure);
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+            usageStatistic.add(UsageStatistics.Usage.get_failure);
+            throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
+        }finally {
+            lock.readLock().unlock();
         }
-        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
-        throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
     }
 
     /**
@@ -300,73 +298,69 @@ public class DataTable {
      * @throws DataStorageException on various errors such as an object already existing with the same identifier, loading issues and other
      */
     public void insertDataSet(DataSet dataSet) throws DataStorageException{
-        if(ready.get()){
+        try{
             lock.writeLock().lock();
-            if(!dataInconsistency.get()){
-                try{
-                    // check if the dataset fits to this
-                    if(dataBase.getIdentifier().equals(dataSet.getDataBase().getIdentifier()) && identifier.equals(dataSet.getTable().getIdentifier())){
-                        // check if we dont have an object with the current id
-                        if(!indexPool.containsKey(dataSet.getIdentifier())){
-                            // check if the object matches a specific structure
-                            if(fixedStructure() && !JSONMatcher.structureMatch(defaultStructure.put("identifier", "").put("table", "").put("database", ""), dataSet.getFullData())){
-                                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
-                                throw new DataStorageException(221, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
-                            }
-                            // try to put this object in some shard
-                            String validShardID = null;
-                            // check if we have a shard ready which is active & has enough space
-                            Optional<Map.Entry<String, DataShard>> o = shardPool.entrySet().stream().filter(e->e.getValue().getStatus() == 3 && e.getValue().getCurrentDataSetCount()<e.getValue().getMaxDataSetCount()).findAny();
-                            if(o.isPresent()){
-                                validShardID = o.get().getValue().getShardID();
-                            }
-                            // if validShardID is still null, check if any would have space at all, ignoring shards loading/unloading
-                            if(validShardID == null){
-                                o = shardPool.entrySet().stream().filter(e->e.getValue().getStatus() <=0 && e.getValue().getCurrentDataSetCount()<e.getValue().getMaxDataSetCount()).findAny();
-                                if(o.isPresent()){
-                                    validShardID = o.get().getValue().getShardID();
-                                }
-                            }
-                            // if there is no shard available, just create a new one
-                            if(validShardID == null){
-                                DataShard dataShard = new DataShard(dataBase, this);
-                                shardPool.put(dataShard.getShardID(), dataShard);
-                                validShardID = dataShard.getShardID();
-                            }
-                            // we should have a shardID set here
-                            DataShard dataShard = shardPool.get(validShardID);
-                            // try to insert
-                            dataShard.insertDataSet(dataSet);
-                            // write to index
-                            indexPool.put(dataSet.getIdentifier(), dataShard.getShardID());
-                            // add statistics
-                            statisticsPool.put(dataSet.getIdentifier(), new UsageStatistics());
-                            // unlock
-                            lock.writeLock().unlock();
-                            usageStatistic.add(UsageStatistics.Usage.insert_success);
-                            return;
-                        }
-                        logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Already Existing");
-                        throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
-                    }
-                    logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Fit Here");
-                    throw new DataStorageException(220, "DataTable: "+dataBase.getIdentifier()+">"+identifier+">: DataSet "+dataSet.getIdentifier()+" ("+dataSet.getDataBase().getIdentifier()+">"+dataSet.getTable().getIdentifier()+") Does Not Fit Here.");
-                }catch (DataStorageException e){
-                    lock.writeLock().unlock();
-                    usageStatistic.add(UsageStatistics.Usage.insert_failure);
-                    throw e;
-                }catch (Exception e){
-                    lock.writeLock().unlock();
-                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
-                    usageStatistic.add(UsageStatistics.Usage.insert_failure);
-                    throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
+            if(!ready.get()){
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
+                throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
+            }
+            if(dataInconsistency.get()){
+                throw new DataStorageException(300, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Data Inconsistency Needs To Be Resolved Before Inserting New Objects.");
+            }
+            // check if the dataset fits to this
+            if(!(dataBase.getIdentifier().equals(dataSet.getDataBase().getIdentifier()) && identifier.equals(dataSet.getTable().getIdentifier()))){
+                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Fit Here");
+                throw new DataStorageException(220, "DataTable: "+dataBase.getIdentifier()+">"+identifier+">: DataSet "+dataSet.getIdentifier()+" ("+dataSet.getDataBase().getIdentifier()+">"+dataSet.getTable().getIdentifier()+") Does Not Fit Here.");
+            }
+            // check if we dont have an object with the current id
+            if(indexPool.containsKey(dataSet.getIdentifier())){
+                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Already Existing");
+                throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
+            }
+            // check if the object matches a specific structure
+            if(fixedStructure() && !JSONMatcher.structureMatch(defaultStructure.put("identifier", "").put("table", "").put("database", ""), dataSet.getFullData())){
+                logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
+                throw new DataStorageException(221, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
+            }
+            // try to put this object in some shard
+            String validShardID = null;
+            // check if we have a shard ready which is active & has enough space
+            Optional<Map.Entry<String, DataShard>> o = shardPool.entrySet().stream().filter(e->e.getValue().getStatus() == 3 && e.getValue().getCurrentDataSetCount()<e.getValue().getMaxDataSetCount()).findAny();
+            if(o.isPresent()){
+                validShardID = o.get().getValue().getShardID();
+            }
+            // if validShardID is still null, check if any would have space at all, ignoring shards loading/unloading
+            if(validShardID == null){
+                o = shardPool.entrySet().stream().filter(e->e.getValue().getStatus() <=0 && e.getValue().getCurrentDataSetCount()<e.getValue().getMaxDataSetCount()).findAny();
+                if(o.isPresent()){
+                    validShardID = o.get().getValue().getShardID();
                 }
             }
+            // if there is no shard available, just create a new one
+            if(validShardID == null){
+                DataShard dataShard = new DataShard(dataBase, this);
+                shardPool.put(dataShard.getShardID(), dataShard);
+                validShardID = dataShard.getShardID();
+            }
+            // we should have a shardID set here
+            DataShard dataShard = shardPool.get(validShardID);
+            // try to insert
+            dataShard.insertDataSet(dataSet);
+            // write to index
+            indexPool.put(dataSet.getIdentifier(), dataShard.getShardID());
+            // add statistics
+            statisticsPool.put(dataSet.getIdentifier(), new UsageStatistics());
+            usageStatistic.add(UsageStatistics.Usage.insert_success);
+        }catch (DataStorageException e){
+            usageStatistic.add(UsageStatistics.Usage.insert_failure);
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+            usageStatistic.add(UsageStatistics.Usage.insert_failure);
+            throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
+        }finally {
             lock.writeLock().unlock();
-            throw new DataStorageException(300, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Data Inconsistency Needs To Be Resolved Before Inserting New Objects.");
         }
-        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
-        throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
     }
 
     /**
@@ -378,63 +372,60 @@ public class DataTable {
      * @throws DataStorageException on various errors such as the object not being found, loading issues and other
      */
     public void deleteDataSet(String identifier) throws DataStorageException {
-        if(ready.get()){
+        try{
             lock.writeLock().lock();
+            if(!ready.get()){
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
+                throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
+            }
             identifier = identifier.toLowerCase();
-            try{
-                if(indexPool.containsKey(identifier)){
-                    // get dataShard
-                    String shardID = indexPool.get(identifier);
-                    if(shardPool.containsKey(shardID)){
-                        DataShard dataShard = shardPool.get(shardID);
-                        // try to delete
-                        try{
-                            dataShard.deleteDataSet(identifier);
-                            // remove from index
-                            indexPool.remove(identifier);
-                            // remove statistics
-                            statisticsPool.remove(identifier);
-                            // check if shard is empty, then we just remove it
-                            if(dataShard.getCurrentDataSetCount() == 0){
-                                dataShard.unloadData(false, false, false);
-                                shardPool.remove(dataShard.getShardID());
-                            }
-                            // unlock
-                            lock.writeLock().unlock();
-                            usageStatistic.add(UsageStatistics.Usage.delete_success);
-                            return;
-                        }catch (DataStorageException e){
-                            switch(e.getType()){
-                                case 201:
-                                    dataInconsistency.set(true);
-                                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
-                                    throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
-                                default:
-                                    logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
-                                    throw e;
-                            }
-                        }
-                    }
-                    // shard not found but listed in index
-                    dataInconsistency.set(true);
-                    logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
-                    throw new DataStorageException(202, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
-                }
+            if(!indexPool.containsKey(identifier)){
                 logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found");
                 throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found.");
-            }catch (DataStorageException e){
-                lock.writeLock().unlock();
-                usageStatistic.add(UsageStatistics.Usage.delete_failure);
-                throw e;
-            }catch (Exception e){
-                lock.writeLock().unlock();
-                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
-                usageStatistic.add(UsageStatistics.Usage.delete_failure);
-                throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
             }
+            // get dataShard
+            String shardID = indexPool.get(identifier);
+            if(!shardPool.containsKey(shardID)){
+                // shard not found but listed in index
+                dataInconsistency.set(true);
+                logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Shard "+shardID+" Not Found. Possible Data Inconsistency Detected");
+                throw new DataStorageException(202, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataShard "+shardID+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+            }
+            DataShard dataShard = shardPool.get(shardID);
+            // try to delete
+            try{
+                dataShard.deleteDataSet(identifier);
+                // remove from index
+                indexPool.remove(identifier);
+                // remove statistics
+                statisticsPool.remove(identifier);
+                // check if shard is empty, then we just remove it
+                if(dataShard.getCurrentDataSetCount() == 0){
+                    dataShard.unloadData(false, false, false);
+                    shardPool.remove(dataShard.getShardID());
+                }
+                usageStatistic.add(UsageStatistics.Usage.delete_success);
+            }catch (DataStorageException e){
+                switch(e.getType()){
+                    case 201:
+                        dataInconsistency.set(true);
+                        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Not Found But Indexed. Possible Data Inconsistency Detected");
+                        throw new DataStorageException(201, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+identifier+" Not Found But Listed In Index. Possible Data Inconsistency.", "Locking DataSet Insert Until Resolved.");
+                    default:
+                        logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+identifier+" Causes An Exception", e);
+                        throw e;
+                }
+            }
+        }catch (DataStorageException e){
+            usageStatistic.add(UsageStatistics.Usage.delete_failure);
+            throw e;
+        }catch (Exception | Error e){
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Unknown Error", e);
+            usageStatistic.add(UsageStatistics.Usage.delete_failure);
+            throw new DataStorageException(0, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Unknown Error: "+e.getMessage());
+        } finally {
+            lock.writeLock().unlock();
         }
-        logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Not Ready");
-        throw new DataStorageException(231, "DataTable: "+dataBase.getIdentifier()+">"+identifier+": Object Not Ready");
     }
 
     /**
