@@ -318,7 +318,7 @@ public class DataTable {
                 throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
             }
             // check if the object matches a specific structure
-            if(fixedStructure() && !JSONMatcher.structureMatch(defaultStructure.put("identifier", "").put("table", "").put("database", ""), dataSet.getFullData())){
+            if(fixedStructure() && !matchesDefaultStructure(dataSet)){
                 logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
                 throw new DataStorageException(221, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
             }
