@@ -179,6 +179,7 @@ public class DataShard {
      */
     protected DataSet getDataSet(String identifier) throws DataStorageException {
         try{
+            lock.readLock().lock();
             lastAccess.set(System.currentTimeMillis());
             identifier = identifier.toLowerCase();
             if(status.get() <= 0) { // -2, -1 or 0
