@@ -19,7 +19,6 @@ package de.netbeacon.jstorage.server.internal.datamanager;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
 import de.netbeacon.jstorage.server.tools.crypt.JS2CryptTool;
-import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
@@ -62,7 +61,7 @@ public class DataManager {
      *
      * @throws SetupException on setup() or the js2crypt tool throwing an error
      */
-    public DataManager() throws SetupException, CryptException {
+    public DataManager() throws SetupException {
         if(!ready.get() && !shutdown.get()){
             js2CryptTool = new JS2CryptTool("./jstorage/config/js2crypt");
             setup();
