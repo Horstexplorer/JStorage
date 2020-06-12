@@ -17,13 +17,16 @@
 package de.netbeacon.jstorage.server.tools.meta;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents the usage statistics of a specific object
  */
 public class UsageStatistics {
 
-    private final ConcurrentHashMap<Long, Usage> access = new ConcurrentHashMap<>();
     public enum Usage{
         any,
         get_success, get_failure,
@@ -33,6 +36,19 @@ public class UsageStatistics {
         acquire_success, acquire_failure
     };
 
+    private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(4);
+    private final ConcurrentHashMap<Usage, AtomicLong> map = new ConcurrentHashMap<>();
+
+    /**
+     * Creates a new instance of this class
+     */
+    public UsageStatistics(){
+        for(Usage u : Usage.values()){
+            map.put(u, new AtomicLong(0));
+        }
+    }
+
+
     /**
      * Returns the number of 'uses' for a specific type within the last 10 minutes
      *
@@ -40,10 +56,7 @@ public class UsageStatistics {
      * @return long
      */
     public long getCountFor(Usage e){
-        //long oldest = System.nanoTime()-600000000000L;
-        //access.entrySet().stream().filter(x-> (x.getKey() <= oldest)).forEach(x->access.remove(x.getKey()));
-        //access.entrySet().stream().parallel().filter(x -> (x.getKey() >= oldest && (x.getValue() == e || e == Usage.any))).count();
-        return 1;
+        return map.get(e).get();
     }
 
     /**
@@ -52,11 +65,8 @@ public class UsageStatistics {
      * @param e DSMSEnum
      */
     public void add(Usage e){
-        //long current = System.nanoTime();
-        //access.put(current, e);
-        // delete older datasets
-        //long finalCurrent = current-600000000000L;
-        //access.entrySet().stream().parallel().filter(x-> (x.getKey() <= finalCurrent)).forEach(x->access.remove(x.getKey()));
+        map.get(e).incrementAndGet();
+        ses.schedule(()->{map.get(e).decrementAndGet();}, 10, TimeUnit.MINUTES);
     }
 
 }
