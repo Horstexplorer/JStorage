@@ -103,8 +103,8 @@ public class DataAction_DataBaseSettings implements ProcessingAction{
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException, CryptException {
-        DataBase d = DataManager.getDataBase(args.get("database"));
+    public void process() throws DataStorageException, GenericObjectException, CryptException, CryptException, NullPointerException {
+        DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
 
         if(data.has("encryption")){
             d.setEncryption(data.getBoolean("encryption"));

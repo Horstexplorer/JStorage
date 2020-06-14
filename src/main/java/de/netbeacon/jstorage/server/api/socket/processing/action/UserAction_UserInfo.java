@@ -20,6 +20,7 @@ import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONArray;
@@ -92,10 +93,10 @@ public class UserAction_UserInfo implements ProcessingAction {
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         JSONObject jsonObject = new JSONObject();
         if(args.containsKey("identifier")){
-            User u = UserManager.getUserByID(args.get("identifier"));
+            User u = UserManager.getInstance().getUserByID(args.get("identifier"));
             jsonObject.put("userID", u.getUserID()).put("userName", u.getUserName()).put("bucketSize", u.getMaxBucket());
             JSONArray jsonArray1 = new JSONArray();
             u.getGlobalPermissions().forEach(jsonArray1::put);
@@ -110,7 +111,7 @@ public class UserAction_UserInfo implements ProcessingAction {
             jsonObject.put("globalPermission", jsonArray1).put("dependentPermission", jsonArray2);
         }else{
             JSONArray jsonArray = new JSONArray();
-            UserManager.getDataPool().values().forEach(v->{
+            UserManager.getInstance().getDataPool().values().forEach(v->{
                 jsonArray.put(new JSONObject().put("userName", v.getUserName()).put("userID", v.getUserID()));
             });
             jsonObject.put("users", jsonArray);

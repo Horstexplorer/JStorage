@@ -24,6 +24,7 @@ import de.netbeacon.jstorage.server.internal.datamanager.objects.DataTable;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.meta.UsageStatistics;
@@ -95,10 +96,10 @@ public class InfoAction_Statistics implements ProcessingAction{
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         UsageStatistics usageStatistics = null;
         JSONObject statistics = new JSONObject();
-        DataBase dataBase = DataManager.getDataBase(args.get("database"));
+        DataBase dataBase = DataManager.getInstance().getDataBase(args.get("database"));
         statistics.put("database", dataBase.getIdentifier());
         if (args.containsKey("table")) {
             DataTable dataTable = dataBase.getTable(args.get("table"));

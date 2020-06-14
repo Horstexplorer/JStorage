@@ -116,6 +116,6 @@ public interface ProcessingAction {
      * @throws GenericObjectException the generic object exception
      * @throws CryptException exception related to encryption
      */
-    void process() throws DataStorageException, GenericObjectException, CryptException;
+    void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException;
 
 }

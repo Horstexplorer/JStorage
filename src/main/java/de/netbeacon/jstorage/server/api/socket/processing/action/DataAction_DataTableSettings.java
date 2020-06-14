@@ -23,6 +23,7 @@ import de.netbeacon.jstorage.server.internal.datamanager.objects.DataTable;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONObject;
@@ -103,8 +104,8 @@ public class DataAction_DataTableSettings implements ProcessingAction{
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
-        DataBase d = DataManager.getDataBase(args.get("database"));
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
+        DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
         DataTable t = d.getTable(args.get("identifier"));
 
         if(data.has("adaptiveLoading")) {

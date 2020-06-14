@@ -16,12 +16,13 @@
 
 package de.netbeacon.jstorage.server.api.socket;
 
-import de.netbeacon.jstorage.server.api.socket.processing.*;
-import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
+import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessor;
+import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.exceptions.HTTPException;
+import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,6 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The type Api socket handler.
@@ -194,7 +194,7 @@ public class APISocketHandler extends Thread {
                 User user;
                 int user_loginMode = -1; // as a user may have multiple requests at the same time - this is not shared inside the user object
                 if(headers.containsKey("token")){
-                    try{ user = UserManager.getUserByLoginToken(headers.get("token")); }
+                    try{ user = UserManager.getInstance().getUserByLoginToken(headers.get("token")); }
                     catch (GenericObjectException e){
                         throw new HTTPException(403);
                     }
@@ -211,7 +211,7 @@ public class APISocketHandler extends Thread {
                         throw new HTTPException(403);
                     }
                     String userid_pass = new String(Base64.getDecoder().decode(hcontent.substring(hcontent.indexOf(" ")+1).getBytes(StandardCharsets.UTF_8)));
-                    try{ user = UserManager.getUserByID(userid_pass.substring(0, userid_pass.indexOf(":"))); }
+                    try{ user = UserManager.getInstance().getUserByID(userid_pass.substring(0, userid_pass.indexOf(":"))); }
                     catch (GenericObjectException e){
                         throw new HTTPException(403);
                     }

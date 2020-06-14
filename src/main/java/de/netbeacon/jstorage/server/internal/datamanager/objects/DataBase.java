@@ -124,7 +124,7 @@ public class DataBase {
      * @throws CryptException on exception such as the CryptTool not being set up
      */
     public void setEncryption(boolean value) throws CryptException {
-        if(!DataManager.getJs2CryptTool().isReady()){
+        if(!DataManager.getInstance().getJs2CryptTool().isReady()){
             throw new CryptException(1, "Cant Modify Encryption While The Tool Being Not Set Up");
         }
         encrypted.set(value);

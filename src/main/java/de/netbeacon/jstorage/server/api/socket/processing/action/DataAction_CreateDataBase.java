@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONObject;
@@ -91,8 +92,8 @@ public class DataAction_CreateDataBase implements ProcessingAction{
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
-        DataBase d = DataManager.createDataBase(args.get("identifier"));
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
+        DataBase d = DataManager.getInstance().createDataBase(args.get("identifier"));
         user.addDependentPermission(d.getIdentifier(), DependentPermission.DBAdmin_Creator);
         result.addResult(new JSONObject().put("database", d.getIdentifier()));
     }

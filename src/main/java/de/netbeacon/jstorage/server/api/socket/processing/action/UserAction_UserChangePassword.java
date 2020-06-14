@@ -20,6 +20,7 @@ import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 
@@ -92,9 +93,9 @@ public class UserAction_UserChangePassword implements ProcessingAction {
     public boolean loginModeIsSupported(int loginMode){return 0 == loginMode;} // only login with password
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         if(args.containsKey("identifier")){
-            User u = UserManager.getUserByID(args.get("identifier"));
+            User u = UserManager.getInstance().getUserByID(args.get("identifier"));
             u.setPassword(args.get("password"));
         }else{
             user.setPassword(args.get("password"));

@@ -415,13 +415,13 @@ public class DataShard {
                                     // see if the data is encrypted
                                     if(JS2CryptTool.isJS2Encrypted(line)){
                                         // make sure the tool is ready
-                                        if(!DataManager.getJs2CryptTool().isReady()){
+                                        if(!DataManager.getInstance().getJs2CryptTool().isReady()){
                                             logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Loaded DataSet Seems To Be Encrypted But JS2CryptTool Is Not Ready To Work With This Type Of Data. This Results In This Data Being Lost And The Table Being Inconsistent. Please Check What Is Wrong Here.");
                                             continue;
                                         }
                                         // try decrypting
                                         try{
-                                            line = new String(DataManager.getJs2CryptTool().decode(line));
+                                            line = new String(DataManager.getInstance().getJs2CryptTool().decode(line));
                                         }catch (CryptException e){
                                             logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) An Error Occurred While Decrypting A DataSet. This Results In This Data Being Lost And The Table Being Inconsistent. Please Check What Is Wrong Here.", e);
                                             continue;
@@ -516,7 +516,7 @@ public class DataShard {
                         if(entry.getKey().equals(entry.getValue().getIdentifier())){
                             if(dataBase.encrypted()){
                                 try{
-                                    String encryptedData = DataManager.getJs2CryptTool().encode(entry.getValue().getFullData().toString().getBytes());
+                                    String encryptedData = DataManager.getInstance().getJs2CryptTool().encode(entry.getValue().getFullData().toString().getBytes());
                                     writer.write(encryptedData);
                                 }catch (CryptException e){
                                     logger.error("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Failed To Encrypt Data, Storing It Unencrypted", e);

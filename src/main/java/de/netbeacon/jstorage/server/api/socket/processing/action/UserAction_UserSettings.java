@@ -21,6 +21,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONArray;
@@ -102,11 +103,11 @@ public class UserAction_UserSettings implements ProcessingAction {
     public boolean loginModeIsSupported(int loginMode){return 0 == loginMode;} // only login with password
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         JSONObject jsonObject = new JSONObject();
         if(args.containsKey("identifier")){
             // get user
-            User u = UserManager.getUserByID(args.get("identifier"));
+            User u = UserManager.getInstance().getUserByID(args.get("identifier"));
             // update data
             updateData(u);
             // build result

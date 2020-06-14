@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.internal.cachemanager.objects.Cache;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONArray;
@@ -93,17 +94,17 @@ public class CacheAction_CacheInfo implements ProcessingAction {
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         JSONObject jsonObject = new JSONObject();
         if(args.containsKey("identifier")){
-            Cache c = CacheManager.getCache(args.get("identifier"));
+            Cache c = CacheManager.getInstance().getCache(args.get("identifier"));
             jsonObject.put("identifier", c.getCacheIdentifier()).put("lastAccess", c.getLastAccess()).put("status", c.getStatus()).put("size", c.size()).put("adaptiveLoading", c.isAdaptive());
             JSONArray jsonArray = new JSONArray();
             c.getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));
             jsonObject.put("content", jsonArray);
         }else{
             JSONArray jsonArray = new JSONArray();
-            CacheManager.getDataPool().values().forEach(v->{
+            CacheManager.getInstance().getDataPool().values().forEach(v->{
                 jsonArray.put(new JSONObject().put("identifier", v.getCacheIdentifier()).put("lastAccess", v.getLastAccess()).put("status", v.getStatus()).put("size", v.size()).put("adaptiveLoading", v.isAdaptive()));
             });
             jsonObject.put("caches", jsonArray);

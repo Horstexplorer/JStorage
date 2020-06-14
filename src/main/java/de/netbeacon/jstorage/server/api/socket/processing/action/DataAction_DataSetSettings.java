@@ -20,6 +20,7 @@ import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONObject;
@@ -99,7 +100,7 @@ public class DataAction_DataSetSettings implements ProcessingAction{
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
 
         if(data.has("maxSTPEThreads")){
             try{

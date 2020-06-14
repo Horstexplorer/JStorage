@@ -22,11 +22,14 @@ import de.netbeacon.jstorage.server.internal.cachemanager.objects.Cache;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Cache Action - Create Cache
@@ -87,8 +90,8 @@ public class CacheAction_CreateCache implements ProcessingAction {
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException{
-        Cache c = CacheManager.createCache(args.get("identifier"));
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException{
+        Cache c = CacheManager.getInstance().createCache(args.get("identifier"));
         user.addDependentPermission(c.getCacheIdentifier(), DependentPermission.CacheAdmin_Creator);
         result.addResult(new JSONObject().put("cache", c.getCacheIdentifier()));
     }

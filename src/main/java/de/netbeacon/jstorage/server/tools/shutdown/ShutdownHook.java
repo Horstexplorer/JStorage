@@ -53,8 +53,8 @@ public class ShutdownHook {
     private void shutdownNow(){
         System.out.println("! ShutdownHook Executed !");
         try{System.out.print("APISocket..."); APISocket.shutdown(); System.out.println("ok");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("DataManager..."); DataManager.shutdown(); System.out.println("ok");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("CacheManager..."); CacheManager.shutdown(); System.out.println("ok");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("UserManager..."); UserManager.shutdown(); System.out.println("ok");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
+        try{System.out.print("DataManager..."); DataManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
+        try{System.out.print("CacheManager..."); CacheManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
+        try{System.out.print("UserManager..."); UserManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
     }
 }
