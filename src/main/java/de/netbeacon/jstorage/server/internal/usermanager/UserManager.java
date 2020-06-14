@@ -35,6 +35,7 @@ import java.nio.file.Files;
 import java.util.Base64;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class takes care of preparing and accessing all User objects
@@ -45,22 +46,39 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class UserManager {
 
-    private static final AtomicBoolean ready = new AtomicBoolean(false);
-    private static final AtomicBoolean shutdown = new AtomicBoolean(false);
-    private static final ConcurrentHashMap<String, User> userPool = new ConcurrentHashMap<>();
+    private static UserManager instance;
 
-    private static final Logger logger = LoggerFactory.getLogger(UserManager.class);
+    private final AtomicBoolean ready = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final ConcurrentHashMap<String, User> userPool = new ConcurrentHashMap<>();
+    private final ReentrantLock lock = new ReentrantLock();
+    private final Logger logger = LoggerFactory.getLogger(UserManager.class);
 
     /**
      * Used to set up all User objects
-     *
-     * @throws SetupException on setup() throwing an error
      */
-    public UserManager() throws SetupException{
-        if(!ready.get() && !shutdown.get()){
-            setup();
-            ready.set(true);
+    private UserManager(){}
+
+    /**
+     * Used to get the instance of this class without forcing initialization
+     * @return CacheManager
+     */
+    public static UserManager getInstance(){
+        return getInstance(false);
+    }
+
+    /**
+     * Used to get the instance of this class
+     * <p>
+     * Can be used to initialize the class if this didnt happened yet
+     * @param initializeIfNeeded boolean
+     * @return CacheManager
+     */
+    public static UserManager getInstance(boolean initializeIfNeeded){
+        if((instance == null && initializeIfNeeded)){
+            instance = new UserManager();
         }
+        return instance;
     }
 
     /*                  DATA                    */
@@ -72,20 +90,16 @@ public class UserManager {
      * @return User user by id
      * @throws GenericObjectException on various errors such as the object not being found
      */
-    public static User getUserByID(String userID) throws GenericObjectException {
-        try{
-            if(ready.get()){
-                if(userPool.containsKey(userID)){
-                    return userPool.get(userID);
-                }
-                logger.debug("User "+userID+" Not Found");
-                throw new GenericObjectException(200, "UserManager: User Not Found");
-            }
+    public User getUserByID(String userID) throws GenericObjectException {
+        if(!ready.get()) {
             logger.error("Not Ready Yet");
             throw new GenericObjectException(100, "UserManager: Not Ready Yet");
-        }catch (GenericObjectException e){
-            throw e;
         }
+        if(!userPool.containsKey(userID)){
+            logger.debug("User "+userID+" Not Found");
+            throw new GenericObjectException(200, "UserManager: User Not Found");
+        }
+        return userPool.get(userID);
     }
 
     /**
@@ -95,18 +109,14 @@ public class UserManager {
      * @return User on successful creation
      * @throws GenericObjectException on various errors such as the UserManager not being ready
      */
-    public static User createUser(String userName) throws GenericObjectException {
-        try{
-            if(ready.get()){
-                User user = new User(userName);
-                userPool.put(user.getUserID(), user);
-                return user;
-            }
+    public User createUser(String userName) throws GenericObjectException {
+        if(!ready.get()){
             logger.error("Not Ready Yet");
             throw new GenericObjectException(100, "UserManager: Not Ready Yet");
-        }catch (GenericObjectException e){
-            throw e;
         }
+        User user = new User(userName);
+        userPool.put(user.getUserID(), user);
+        return user;
     }
 
     /**
@@ -115,23 +125,18 @@ public class UserManager {
      * @param userID target userid
      * @throws GenericObjectException on various errors such as the UserManager not being ready
      */
-    public static void deleteUser(String userID) throws GenericObjectException {
-        try{
-            if(ready.get()){
-                if(userPool.containsKey(userID)){
-                    User user = userPool.get(userID);
-                    user.onUnload();
-                    userPool.remove(user.getUserID());
-                    return;
-                }
-                logger.debug("User "+userID+" Not Found");
-                throw new GenericObjectException(200, "UserManager: User Not Found");
-            }
+    public void deleteUser(String userID) throws GenericObjectException {
+        if(!ready.get()){
             logger.error("Not Ready Yet");
             throw new GenericObjectException(100, "UserManager: Not Ready Yet");
-        }catch (GenericObjectException e){
-            throw e;
         }
+        if(!userPool.containsKey(userID)){
+            logger.debug("User "+userID+" Not Found");
+            throw new GenericObjectException(200, "UserManager: User Not Found");
+        }
+        User user = userPool.get(userID);
+        user.onUnload();
+        userPool.remove(user.getUserID());
     }
 
     /**
@@ -140,7 +145,7 @@ public class UserManager {
      * @param userID identifier of the user. See {@link User} for further information.
      * @return boolean boolean
      */
-    public static boolean containsUser(String userID){
+    public boolean containsUser(String userID){
         return userPool.containsKey(userID);
     }
 
@@ -152,18 +157,18 @@ public class UserManager {
      * @param user User object which should be inserted
      * @throws GenericObjectException on various errors such as the UserManager not being ready
      */
-    public static void insertUser(User user) throws GenericObjectException {
+    public void insertUser(User user) throws GenericObjectException {
         try{
-            if(ready.get()){
-                if(!userPool.containsKey(user.getUserID())){
-                    userPool.put(user.getUserID(), user);
-                    return;
-                }
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new GenericObjectException(100, "UserManager: Not Ready Yet");
+            }
+            if(userPool.containsKey(user.getUserID())){
                 logger.debug("User "+user.getUserID()+" Already Existing");
                 throw new GenericObjectException(300, "UserManager: User Already Existing"); // should not occur as userIDs are unique
             }
-            logger.error("Not Ready Yet");
-            throw new GenericObjectException(100, "UserManager: Not Ready Yet");
+            userPool.put(user.getUserID(), user);
+            return;
         }catch (GenericObjectException e){
             throw e;
         }
@@ -176,7 +181,7 @@ public class UserManager {
      * @return User user by login token
      * @throws GenericObjectException on exception such as user not found
      */
-    public static User getUserByLoginToken(String loginToken) throws GenericObjectException{
+    public User getUserByLoginToken(String loginToken) throws GenericObjectException{
         String userID;
         try{
             userID = new String(Base64.getDecoder().decode(loginToken.substring(0, loginToken.indexOf(".")).getBytes()));
@@ -196,81 +201,91 @@ public class UserManager {
      *
      * @throws SetupException on error
      */
-    private void setup() throws SetupException {
-        if(!ready.get() && !shutdown.get()){
-            try{
-                File d = new File("./jstorage/config/");
-                if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/config/usermanager");
-                if(!f.exists()){ f.createNewFile(); }
-                else{
-                    // load users from file
-                    String content = new String(Files.readAllBytes(f.toPath()));
-                    if(!content.isEmpty()){
-                        JSONObject jsonObject = new JSONObject(content);
-                        JSONArray users = jsonObject.getJSONArray("users");
-                        for(int i = 0; i < users.length(); i++){
-                            JSONObject userj = users.getJSONObject(i);
-                            try{
-                                String userID = userj.getString("userID");
-                                String userName = userj.getString("userName");
-                                String passwordHash = userj.getString("passwordHash");
-                                String loginRandom = userj.getString("loginRandom");
-                                int bucketsize = userj.getInt("maxBucketSize");
-                                JSONArray globalPermissions = userj.getJSONArray("globalPermissions");
-                                JSONArray dependentPermissions = userj.getJSONArray("dependentPermissions");
-                                User user = new User(userID, userName, passwordHash, loginRandom, bucketsize);
-                                // get permissions ready
-                                for(int o = 0; o < globalPermissions.length() ; o++){
-                                    try{
-                                        GlobalPermission gp = GlobalPermission.getByValue(globalPermissions.getString(o));
-                                        if(gp != null){
-                                            user.addGlobalPermission(gp);
-                                        }
-                                    }catch (Exception e){
-                                        logger.error("Loading GP For User "+user.getUserID()+" Failed During Setup", e);
+    public void setup() throws SetupException {
+        try{
+            lock.lock();
+
+            if(ready.get() || shutdown.get()){
+                return;
+            }
+
+            File d = new File("./jstorage/config/");
+            if(!d.exists()){ d.mkdirs(); }
+            File f = new File("./jstorage/config/usermanager");
+            if(!f.exists()){ f.createNewFile(); }
+            else{
+                // load users from file
+                String content = new String(Files.readAllBytes(f.toPath()));
+                if(!content.isEmpty()){
+                    JSONObject jsonObject = new JSONObject(content);
+                    JSONArray users = jsonObject.getJSONArray("users");
+                    for(int i = 0; i < users.length(); i++){
+                        JSONObject userj = users.getJSONObject(i);
+                        try{
+                            String userID = userj.getString("userID");
+                            String userName = userj.getString("userName");
+                            String passwordHash = userj.getString("passwordHash");
+                            String loginRandom = userj.getString("loginRandom");
+                            int bucketsize = userj.getInt("maxBucketSize");
+                            JSONArray globalPermissions = userj.getJSONArray("globalPermissions");
+                            JSONArray dependentPermissions = userj.getJSONArray("dependentPermissions");
+                            User user = new User(userID, userName, passwordHash, loginRandom, bucketsize);
+                            // get permissions ready
+                            for(int o = 0; o < globalPermissions.length() ; o++){
+                                try{
+                                    GlobalPermission gp = GlobalPermission.getByValue(globalPermissions.getString(o));
+                                    if(gp != null){
+                                        user.addGlobalPermission(gp);
                                     }
+                                }catch (Exception e){
+                                    logger.error("Loading GP For User "+user.getUserID()+" Failed During Setup", e);
                                 }
-                                for(int o = 0; o < dependentPermissions.length() ; o++){
-                                    JSONObject dpj = dependentPermissions.getJSONObject(o);
-                                    try{
-                                        String database = dpj.getString("database");
-                                        JSONArray dpa = dpj.getJSONArray("permissions");
-                                        for(int p = 0; p < dpa.length(); p++){
-                                            DependentPermission dp = DependentPermission.getByValue(dpa.getString(p));
-                                            if(dp != null){
-                                                user.addDependentPermission(database, dp);
-                                            }
-                                        }
-                                    }catch (Exception e){
-                                        logger.error("Loading DP For User "+user.getUserID()+" Failed During Setup", e);
-                                    }
-                                }
-                                userPool.put(user.getUserID(), user);
-                            }catch (Exception e){
-                                logger.error("Creating User From Object "+i+" Failed During Setup", e);
                             }
+                            for(int o = 0; o < dependentPermissions.length() ; o++){
+                                JSONObject dpj = dependentPermissions.getJSONObject(o);
+                                try{
+                                    String database = dpj.getString("database");
+                                    JSONArray dpa = dpj.getJSONArray("permissions");
+                                    for(int p = 0; p < dpa.length(); p++){
+                                        DependentPermission dp = DependentPermission.getByValue(dpa.getString(p));
+                                        if(dp != null){
+                                            user.addDependentPermission(database, dp);
+                                        }
+                                    }
+                                }catch (Exception e){
+                                    logger.error("Loading DP For User "+user.getUserID()+" Failed During Setup", e);
+                                }
+                            }
+                            userPool.put(user.getUserID(), user);
+                        }catch (Exception e){
+                            logger.error("Creating User From Object "+i+" Failed During Setup", e);
                         }
                     }
                 }
-                if(userPool.isEmpty()){
-                    // add default admin user
-                    User user = new User("admin");
-                    user.addGlobalPermission(GlobalPermission.Admin);
-                    String passwd = RandomStringUtils.randomAlphanumeric(16);
-                    user.setPassword(passwd);
-                    userPool.put(user.getUserID(), user);
-                    logger.info("--------------------------------------------------------------------------------");
-                    logger.info("UserManager: Created Admin User:");
-                    logger.info("UserID: "+user.getUserID());
-                    logger.info("Password: "+passwd);
-                    logger.info("LoginToken: "+user.getLoginToken());
-                    logger.info("--------------------------------------------------------------------------------");
-                }
-            }catch (Exception e){
-                logger.error("Setup Failed", e);
-                throw new SetupException("UserManager: Setup: Failed: "+e.getMessage());
             }
+            if(userPool.isEmpty()){
+                // add default admin user
+                User user = new User("admin");
+                user.addGlobalPermission(GlobalPermission.Admin);
+                String passwd = RandomStringUtils.randomAlphanumeric(16);
+                user.setPassword(passwd);
+                userPool.put(user.getUserID(), user);
+                logger.info("");
+                logger.info("--------------------------------------------------------------------------------");
+                logger.info("UserManager: Created Admin User:");
+                logger.info("UserID: "+user.getUserID());
+                logger.info("Password: "+passwd);
+                logger.info("LoginToken: "+user.getLoginToken());
+                logger.info("--------------------------------------------------------------------------------");
+                logger.info("");
+            }
+
+            ready.set(true);
+        }catch (Exception e){
+            logger.error("Setup Failed", e);
+            throw new SetupException("UserManager: Setup: Failed: "+e.getMessage());
+        }finally {
+            lock.unlock();
         }
     }
 
@@ -279,10 +294,11 @@ public class UserManager {
      *
      * @throws ShutdownException on any error. This may result in data getting lost.
      */
-    public static void shutdown() throws ShutdownException {
-        shutdown.set(true);
-        ready.set(false);
+    public void shutdown() throws ShutdownException {
         try{
+            lock.lock();
+            shutdown.set(true);
+            ready.set(false);
             // create json
             JSONObject jsonObject = new JSONObject();
             JSONArray users = new JSONArray();
@@ -305,8 +321,10 @@ public class UserManager {
             userPool.clear();
         }catch (Exception e){
             throw new ShutdownException("UserManager: Shutdown: Failed. Data May Be Lost: "+e.getMessage());
+        }finally {
+            shutdown.set(false);
+            lock.unlock();
         }
-        shutdown.set(false);
     }
 
     /*                      POOL                    */
@@ -316,7 +334,7 @@ public class UserManager {
      *
      * @return ConcurrentHashMap<String, User> data pool
      */
-    public static ConcurrentHashMap<String, User> getDataPool() {
+    public ConcurrentHashMap<String, User> getDataPool() {
         return userPool;
     }
 }

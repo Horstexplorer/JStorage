@@ -31,6 +31,7 @@ import java.io.FileWriter;
 import java.nio.file.Files;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class takes care of preparing and accessing all Cache objects
@@ -42,25 +43,43 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class CacheManager {
 
-    private static final AtomicBoolean ready = new AtomicBoolean(false);
-    private static final AtomicBoolean shutdown = new AtomicBoolean(false);
-    private static final ConcurrentHashMap<String, Cache> caches = new ConcurrentHashMap<>();
-    private static ScheduledExecutorService ses;
-    private static Future<?> cleanTask;
-    private static Future<?> unloadTask;
-    private static Future<?> snapshotTask;
-    private static final Logger logger = LoggerFactory.getLogger(CacheManager.class);
+    private static CacheManager instance;
+
+    private final AtomicBoolean ready = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final ConcurrentHashMap<String, Cache> caches = new ConcurrentHashMap<>();
+    private ScheduledExecutorService ses;
+    private Future<?> cleanTask;
+    private Future<?> unloadTask;
+    private Future<?> snapshotTask;
+    private final Logger logger = LoggerFactory.getLogger(CacheManager.class);
+    private final ReentrantLock lock = new ReentrantLock();
 
     /**
-     * Used to set up all CachedData objects
-     *
-     * @throws SetupException on setup() throwing an error
+     * Used to create an instance of this class
      */
-    public CacheManager() throws SetupException{
-        if(!ready.get() && !shutdown.get()){
-            setup();
-            ready.set(true);
+    private CacheManager(){}
+
+    /**
+     * Used to get the instance of this class without forcing initialization
+     * @return CacheManager
+     */
+    public static CacheManager getInstance(){
+        return getInstance(false);
+    }
+
+    /**
+     * Used to get the instance of this class
+     * <p>
+     * Can be used to initialize the class if this didnt happened yet
+     * @param initializeIfNeeded boolean
+     * @return CacheManager
+     */
+    public static CacheManager getInstance(boolean initializeIfNeeded){
+        if((instance == null && initializeIfNeeded)){
+            instance = new CacheManager();
         }
+        return instance;
     }
 
     /*                  OBJECT                  */
@@ -72,7 +91,7 @@ public class CacheManager {
      * @return Cache cache
      * @throws DataStorageException on exceptions such as the manager not being ready & the object not being found
      */
-    public static Cache getCache(String identifier) throws DataStorageException {
+    public Cache getCache(String identifier) throws DataStorageException {
         if(!ready.get()){
             logger.error("Not Ready Yet");
             throw new DataStorageException(231, "CacheManager Not Ready Yet");
@@ -92,7 +111,7 @@ public class CacheManager {
      * @return Cache cache
      * @throws DataStorageException on exceptions such as the manager not being ready & the object already existing
      */
-    public static Cache createCache(String identifier) throws DataStorageException {
+    public Cache createCache(String identifier) throws DataStorageException {
         if(!ready.get()){
             logger.error("Not Ready Yet");
             throw new DataStorageException(231, "CacheManager Not Ready Yet");
@@ -114,7 +133,7 @@ public class CacheManager {
      * @param identifier of the selected cache, converted to lowercase
      * @throws DataStorageException on exceptions such as the manager not being ready & the object not being found
      */
-    public static void deleteCache(String identifier) throws DataStorageException {
+    public void deleteCache(String identifier) throws DataStorageException {
         if(!ready.get()){
             logger.error("Not Ready Yet");
             throw new DataStorageException(231, "CacheManager Not Ready Yet");
@@ -136,7 +155,7 @@ public class CacheManager {
      * @param identifier of the cache, converted to lowercase
      * @return boolean boolean
      */
-    public static boolean containsCache(String identifier){
+    public boolean containsCache(String identifier){
         return caches.containsKey(identifier.toLowerCase());
     }
 
@@ -148,7 +167,7 @@ public class CacheManager {
      * @param cache which should be inserted
      * @throws DataStorageException on exceptions such as the manager not being ready & the object already existing
      */
-    public static void insertCache(Cache cache) throws DataStorageException {
+    public void insertCache(Cache cache) throws DataStorageException {
         if(!ready.get()){
             throw new DataStorageException(231, "CacheManager Not Ready Yet");
         }
@@ -167,63 +186,53 @@ public class CacheManager {
      *
      * @throws SetupException on error
      */
-    private void setup() throws SetupException{
-        if(!ready.get() && !shutdown.get()){
-            try{
-                File d = new File("./jstorage/data/cache/");
-                if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/cache/cachemanager");
-                if(!f.exists()){ f.createNewFile(); }
-                else{
-                    // read
-                    String content = new String(Files.readAllBytes(f.toPath()));
-                    if(!content.isEmpty()){
-                        JSONObject jsonObject = new JSONObject(content);
-                        JSONArray jsonArray = jsonObject.getJSONArray("caches");
-                        // might contain other settings in the future
-                        for(int i = 0; i < jsonArray.length(); i++){
-                            try{
-                                JSONObject jsonObject1 = jsonArray.getJSONObject(i);
-                                String cID = jsonObject1.getString("identifier").toLowerCase();
-                                boolean adl = jsonObject1.getBoolean("adaptiveLoad");
-                                if(!caches.containsKey(cID)){
-                                    Cache cache = new Cache(cID);
-                                    cache.setAdaptiveLoading(adl);
-                                    if(adl){
-                                        cache.loadDataAsync();
-                                    }
-                                    caches.put(cache.getCacheIdentifier(), cache);
+    public void setup() throws SetupException{
+        try{
+            lock.lock();
+            if(ready.get() || shutdown.get()){
+                return;
+            }
+            File d = new File("./jstorage/data/cache/");
+            if(!d.exists()){ d.mkdirs(); }
+            File f = new File("./jstorage/data/cache/cachemanager");
+            if(!f.exists()){ f.createNewFile(); }
+            else{
+                // read
+                String content = new String(Files.readAllBytes(f.toPath()));
+                if(!content.isEmpty()){
+                    JSONObject jsonObject = new JSONObject(content);
+                    JSONArray jsonArray = jsonObject.getJSONArray("caches");
+                    // might contain other settings in the future
+                    for(int i = 0; i < jsonArray.length(); i++){
+                        try{
+                            JSONObject jsonObject1 = jsonArray.getJSONObject(i);
+                            String cID = jsonObject1.getString("identifier").toLowerCase();
+                            boolean adl = jsonObject1.getBoolean("adaptiveLoad");
+                            if(!caches.containsKey(cID)){
+                                Cache cache = new Cache(cID);
+                                cache.setAdaptiveLoading(adl);
+                                if(adl){
+                                    cache.loadDataAsync();
                                 }
-                            }catch (Exception e){
-                                System.err.println("CacheManager: Setup: Error Creating Cache: "+jsonArray.getString(i).toLowerCase()+": "+e.getMessage());
+                                caches.put(cache.getCacheIdentifier(), cache);
                             }
+                        }catch (Exception e){
+                            System.err.println("CacheManager: Setup: Error Creating Cache: "+jsonArray.getString(i).toLowerCase()+": "+e.getMessage());
                         }
                     }
                 }
-                ses = Executors.newScheduledThreadPool(1);
-                unloadTask = ses.scheduleAtFixedRate(new Runnable() {
-                    @Override
-                    public void run() {
-                        caches.entrySet().stream().filter(v->v.getValue().isAdaptive() && v.getValue().getLastAccess()+900000 < System.currentTimeMillis() && v.getValue().getStatus() == 3).forEach(e->e.getValue().unloadDataAsync(true, true, false));
-                    }
-                }, 5, 5, TimeUnit.SECONDS);
-                snapshotTask = ses.scheduleAtFixedRate(new Runnable() {
-                    @Override
-                    public void run() {
-                        caches.entrySet().stream().filter(v -> v.getValue().getLastAccess()+850000 > System.currentTimeMillis() && v.getValue().getStatus() == 3).forEach(e->e.getValue().unloadDataAsync(false, true, true));
-                    }
-                }, 30, 30, TimeUnit.MINUTES);
-                cleanTask = ses.scheduleAtFixedRate(new Runnable() {
-                    @Override
-                    public void run() {
-                        caches.entrySet().stream().filter(v ->v.getValue().getLastAccess()+850000 > System.currentTimeMillis() && v.getValue().getStatus() == 3).forEach(e->e.getValue().getDataPool().entrySet().stream().filter(v -> !v.getValue().isValid()).forEach(k-> {
-                            try {e.getValue().deleteCachedData(k.getValue().getIdentifier());} catch (DataStorageException ignore) {}
-                        }));
-                    }
-                }, 10, 10, TimeUnit.MINUTES);
-            }catch (Exception e){
-                throw new SetupException("CacheManager: Setup Failed: "+e.getMessage());
             }
+            ses = Executors.newScheduledThreadPool(1);
+            unloadTask = ses.scheduleAtFixedRate(() -> caches.entrySet().stream().filter(v->v.getValue().isAdaptive() && v.getValue().getLastAccess()+900000 < System.currentTimeMillis() && v.getValue().getStatus() == 3).forEach(e->e.getValue().unloadDataAsync(true, true, false)), 5, 5, TimeUnit.SECONDS);
+            snapshotTask = ses.scheduleAtFixedRate(() -> caches.entrySet().stream().filter(v -> v.getValue().getLastAccess()+850000 > System.currentTimeMillis() && v.getValue().getStatus() == 3).forEach(e->e.getValue().unloadDataAsync(false, true, true)), 30, 30, TimeUnit.MINUTES);
+            cleanTask = ses.scheduleAtFixedRate(() -> caches.entrySet().stream().filter(v ->v.getValue().getLastAccess()+850000 > System.currentTimeMillis() && v.getValue().getStatus() == 3).forEach(e->e.getValue().getDataPool().entrySet().stream().filter(v -> !v.getValue().isValid()).forEach(k-> {
+                try {e.getValue().deleteCachedData(k.getValue().getIdentifier());} catch (DataStorageException ignore) {}
+            })), 10, 10, TimeUnit.MINUTES);
+            ready.set(true);
+        }catch (Exception e){
+            throw new SetupException("CacheManager: Setup Failed: "+e.getMessage());
+        }finally {
+            lock.unlock();
         }
     }
 
@@ -232,49 +241,52 @@ public class CacheManager {
      *
      * @throws ShutdownException on any error. This may result in data getting lost.
      */
-    public static void shutdown() throws ShutdownException {
-        if(ready.get()){
+    public void shutdown() throws ShutdownException {
+        try{
+            lock.lock();
+            if(!ready.get()){
+                return;
+            }
             shutdown.set(true);
             ready.set(false);
-            // write config file
-            try{
-                // build json
-                JSONObject jsonObject = new JSONObject();
-                JSONArray cachesJ = new JSONArray();
-                caches.forEach((key, value)->{
-                    JSONObject cJ = new JSONObject()
-                            .put("identifier", value.getCacheIdentifier())
-                            .put("adaptiveLoad", value.isAdaptive());
-                    cachesJ.put(cJ);
-                });
-                jsonObject.put("caches", cachesJ);
-                // write to file
-                File d = new File("./jstorage/data/cache/");
-                if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/cache/cachemanager");
-                BufferedWriter writer = new BufferedWriter(new FileWriter(f));
-                writer.write(jsonObject.toString());
-                writer.newLine();
-                writer.flush();
-                writer.close();
-                // shutdown & clear everything
-                cleanTask.cancel(true);
-                unloadTask.cancel(true);
-                snapshotTask.cancel(true);
-                ses.shutdown();
-                caches.forEach((k, v)->{
-                    try{
-                        v.unloadData(true, true, false);
-                    }catch (DataStorageException e){
-                        System.out.println("Cache: "+caches+": Unloading Data From Cache"+v.getCacheIdentifier()+" Failed, Data May Be Lost");
-                    }
-                });
-                caches.clear();
-                // reset shutdown
-                shutdown.set(false);
-            }catch (Exception e){
-                throw new ShutdownException("CacheManager: Shutdown Failed. Data May Be Lost: "+e.getMessage());
-            }
+            // build json
+            JSONObject jsonObject = new JSONObject();
+            JSONArray cachesJ = new JSONArray();
+            caches.forEach((key, value)->{
+                JSONObject cJ = new JSONObject()
+                        .put("identifier", value.getCacheIdentifier())
+                        .put("adaptiveLoad", value.isAdaptive());
+                cachesJ.put(cJ);
+            });
+            jsonObject.put("caches", cachesJ);
+            // write to file
+            File d = new File("./jstorage/data/cache/");
+            if(!d.exists()){ d.mkdirs(); }
+            File f = new File("./jstorage/data/cache/cachemanager");
+            BufferedWriter writer = new BufferedWriter(new FileWriter(f));
+            writer.write(jsonObject.toString());
+            writer.newLine();
+            writer.flush();
+            writer.close();
+            // shutdown & clear everything
+            cleanTask.cancel(true);
+            unloadTask.cancel(true);
+            snapshotTask.cancel(true);
+            ses.shutdown();
+            caches.forEach((k, v)->{
+                try{
+                    v.unloadData(true, true, false);
+                }catch (DataStorageException e){
+                    System.out.println("Cache: "+caches+": Unloading Data From Cache"+v.getCacheIdentifier()+" Failed, Data May Be Lost");
+                }
+            });
+            caches.clear();
+            // reset shutdown
+            shutdown.set(false);
+        }catch (Exception e){
+            throw new ShutdownException("CacheManager: Shutdown Failed. Data May Be Lost: "+e.getMessage());
+        }finally {
+            lock.unlock();
         }
     }
 
@@ -285,7 +297,7 @@ public class CacheManager {
      *
      * @return ConcurrentHashMap<String, Cache> data pool
      */
-    public static ConcurrentHashMap<String, Cache> getDataPool() {
+    public ConcurrentHashMap<String, Cache> getDataPool() {
         return caches;
     }
 
