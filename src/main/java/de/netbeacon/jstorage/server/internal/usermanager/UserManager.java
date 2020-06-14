@@ -61,7 +61,7 @@ public class UserManager {
 
     /**
      * Used to get the instance of this class without forcing initialization
-     * @return CacheManager
+     * @return UserManager
      */
     public static UserManager getInstance(){
         return getInstance(false);
@@ -72,7 +72,7 @@ public class UserManager {
      * <p>
      * Can be used to initialize the class if this didnt happened yet
      * @param initializeIfNeeded boolean
-     * @return CacheManager
+     * @return UserManager
      */
     public static UserManager getInstance(boolean initializeIfNeeded){
         if((instance == null && initializeIfNeeded)){

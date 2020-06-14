@@ -66,7 +66,7 @@ public class DataManager {
 
     /**
      * Used to get the instance of this class without forcing initialization
-     * @return CacheManager
+     * @return DataManager
      */
     public static DataManager getInstance(){
         return getInstance(false);
@@ -77,7 +77,7 @@ public class DataManager {
      * <p>
      * Can be used to initialize the class if this didnt happened yet
      * @param initializeIfNeeded boolean
-     * @return CacheManager
+     * @return DataManager
      */
     public static DataManager getInstance(boolean initializeIfNeeded){
         if((instance == null && initializeIfNeeded)){
