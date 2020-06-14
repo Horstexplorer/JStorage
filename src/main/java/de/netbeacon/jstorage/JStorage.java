@@ -110,7 +110,7 @@ public class JStorage {
             try{ System.out.print("DataManager..."); DataManager.getInstance(true).setup(runEncryptSetup); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
             try{ System.out.print("CacheManager..."); CacheManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
             try{ System.out.print("UserManager..."); UserManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            APISocket.start();
+            try{ System.out.print("APISocket..."); APISocket.getInstance(true).start(); System.out.println("started"); }catch (Exception e){System.out.println("error"); throw e;}
         }catch (SetupException e){
             logger.error("Error Starting Components", e);
             System.exit(0);
