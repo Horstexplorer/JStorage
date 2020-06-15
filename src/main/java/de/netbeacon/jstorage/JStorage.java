@@ -78,11 +78,9 @@ public class JStorage {
         }
         // check if encryption should be set up
         boolean runEncryptSetup = false;
-        if(arguments.containsKey("encryptSetup")){
-            runEncryptSetup = Boolean.parseBoolean(arguments.get("encryptSetup"));
+        if(arguments.containsKey("encryptsetup")){
+            runEncryptSetup = Boolean.parseBoolean(arguments.get("encryptsetup"));
         }
-        // should print out version and build
-        System.out.println("Version: "+Info.VERSION);
         // select mode
         String mode = "";
         if(arguments.containsKey("mode")){
@@ -95,23 +93,7 @@ public class JStorage {
                 modeDefault(runEncryptSetup);
                 break;
         }
-    }
 
-    private static void modeDefault(boolean runEncryptSetup){
-        try{
-            try{ System.out.print("ShutdownHook..."); new ShutdownHook(); System.out.println("ok"); }catch (Exception e){System.out.println("error"); throw e;} // should not throw
-            try{ System.out.print("DataManager..."); new DataManager(runEncryptSetup); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            try{ System.out.print("CacheManager..."); new CacheManager(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            try{ System.out.print("UserManager..."); new UserManager(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            APISocket.start();
-        }catch (SetupException e){
-            logger.error("Error Starting Components", e);
-            System.exit(0);
-        }
-        input();
-    }
-
-    private static void input(){
         Scanner scanner = new Scanner(System.in);
         while(true){
             String line = scanner.nextLine();
@@ -122,4 +104,16 @@ public class JStorage {
         System.exit(0);
     }
 
+    private static void modeDefault(boolean runEncryptSetup){
+        try{
+            try{ System.out.print("ShutdownHook..."); new ShutdownHook(); System.out.println("ok"); }catch (Exception e){System.out.println("error"); throw e;} // should not throw
+            try{ System.out.print("DataManager..."); DataManager.getInstance(true).setup(runEncryptSetup); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
+            try{ System.out.print("CacheManager..."); CacheManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
+            try{ System.out.print("UserManager..."); UserManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
+            try{ System.out.print("APISocket..."); APISocket.getInstance(true).start(); System.out.println("started"); }catch (Exception e){System.out.println("error"); throw e;}
+        }catch (SetupException e){
+            logger.error("Error Starting Components", e);
+            System.exit(0);
+        }
+    }
 }

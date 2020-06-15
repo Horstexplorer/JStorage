@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 
@@ -87,8 +88,8 @@ public class CacheAction_DeleteCache implements ProcessingAction {
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
-        CacheManager.deleteCache(args.get("identifier"));
-        UserManager.getDataPool().forEach((k,v)->v.removeDependentPermissions(args.get("identifier")));
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
+        CacheManager.getInstance().deleteCache(args.get("identifier"));
+        UserManager.getInstance().getDataPool().forEach((k,v)->v.removeDependentPermissions(args.get("identifier")));
     }
 }

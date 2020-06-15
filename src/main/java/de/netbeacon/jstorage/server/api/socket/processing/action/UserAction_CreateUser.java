@@ -20,6 +20,7 @@ import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -89,8 +90,8 @@ public class UserAction_CreateUser implements ProcessingAction {
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
-        User u = UserManager.createUser(args.get("identifier"));
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
+        User u = UserManager.getInstance().createUser(args.get("identifier"));
         String password;
         if(args.containsKey("password")){
             password = args.get("password");

@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
@@ -62,7 +61,7 @@ public class DataSet{
     private final DataBase database;
     private final JSONObject data;
     // access management
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantLock updatePermissionLock = new ReentrantLock();
     private final ConcurrentHashMap<String, DataUpdateObject> updatePermissions = new ConcurrentHashMap<>();
     private final static ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);

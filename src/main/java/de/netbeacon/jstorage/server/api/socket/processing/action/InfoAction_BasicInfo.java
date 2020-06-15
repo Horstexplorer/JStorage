@@ -18,6 +18,7 @@ package de.netbeacon.jstorage.server.api.socket.processing.action;
 
 import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.info.Info;
@@ -89,7 +90,7 @@ public class InfoAction_BasicInfo implements ProcessingAction{
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         result.addResult(new JSONObject().put("this", "jstorage").put("version", Info.VERSION));
     }
 }

@@ -23,6 +23,7 @@ import de.netbeacon.jstorage.server.internal.cachemanager.objects.CachedData;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import org.json.JSONObject;
@@ -96,8 +97,8 @@ public class CacheAction_GetCachedData implements ProcessingAction {
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException {
-        Cache c = CacheManager.getCache(args.get("cache"));
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
+        Cache c = CacheManager.getInstance().getCache(args.get("cache"));
         CachedData d = c.getCachedData("identifier");
         if(d.isValid()){
             result.addResult(new JSONObject().put("cache", c.getCacheIdentifier()).put("identifier", d.getIdentifier()).put("isvalid", d.isValid()).put("isValidUntil", d.isValidUntil()).put("data", d.getData()));

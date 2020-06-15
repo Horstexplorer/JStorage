@@ -19,7 +19,6 @@ package de.netbeacon.jstorage.server.internal.datamanager;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
 import de.netbeacon.jstorage.server.tools.crypt.JS2CryptTool;
-import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
@@ -36,7 +35,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -48,42 +47,45 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class DataManager {
 
-    private static final AtomicBoolean ready = new AtomicBoolean(false);
-    private static final AtomicBoolean shutdown = new AtomicBoolean(false);
-    private static final ConcurrentHashMap<String, DataBase> dataBasePool = new ConcurrentHashMap<>();
-    private static final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private static ScheduledExecutorService ses;
-    private static Future<?> counterTask; // the fix has been planted
-    private static JS2CryptTool js2CryptTool;
+    private static DataManager instance;
 
-    private static final Logger logger = LoggerFactory.getLogger(DataManager.class);
+    private final AtomicBoolean ready = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final ConcurrentHashMap<String, DataBase> dataBasePool = new ConcurrentHashMap<>();
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private ScheduledExecutorService ses;
+    private Future<?> counterTask; // the fix has been planted
+    private JS2CryptTool js2CryptTool;
+    private final ReentrantLock lock2 = new ReentrantLock();
+    private final Logger logger = LoggerFactory.getLogger(DataManager.class);
 
     /**
-     * Used to set up all DataBase objects
-     *
-     * @throws SetupException on setup() or the js2crypt tool throwing an error
+     * Used to create an instance of this class
      */
-    public DataManager() throws SetupException, CryptException {
-        if(!ready.get() && !shutdown.get()){
-            js2CryptTool = new JS2CryptTool("./jstorage/config/js2crypt");
-            setup();
-            ready.set(true);
-        }
+    private DataManager(){}
+
+    /**
+     * Used to get the instance of this class without forcing initialization
+     * @return DataManager
+     */
+    public static DataManager getInstance(){
+        return getInstance(false);
     }
 
     /**
-     * Used to set up all DataBase objects
-     *
-     * @param setupEncryptionNow used to tell the crypt manager that it should run the initial setup now
-     * @throws SetupException on setup() or the js2crypt tool throwing an error
+     * Used to get the instance of this class
+     * <p>
+     * Can be used to initialize the class if this didnt happened yet
+     * @param initializeIfNeeded boolean
+     * @return DataManager
      */
-    public DataManager(boolean setupEncryptionNow) throws SetupException {
-        if(!ready.get() && !shutdown.get()){
-            js2CryptTool = new JS2CryptTool("./jstorage/config/js2crypt", setupEncryptionNow);
-            setup();
-            ready.set(true);
+    public static DataManager getInstance(boolean initializeIfNeeded){
+        if((instance == null && initializeIfNeeded)){
+            instance = new DataManager();
         }
+        return instance;
     }
+
 
     /*                  DATA                    */
 
@@ -96,24 +98,21 @@ public class DataManager {
      * @return DataBase data base
      * @throws DataStorageException on various errors such as the object not existing
      */
-    public static DataBase getDataBase(String identifier) throws DataStorageException {
+    public DataBase getDataBase(String identifier) throws DataStorageException {
         try{
-            identifier = identifier.toLowerCase();
             lock.readLock().lock();
-            if(ready.get()){
-                if(dataBasePool.containsKey(identifier)){
-                    DataBase dataBase = dataBasePool.get(identifier);
-                    lock.readLock().unlock();
-                    return dataBase;
-                }
+            identifier = identifier.toLowerCase();
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(!dataBasePool.containsKey(identifier)){
                 logger.debug("DataBase "+identifier+" Not Found");
                 throw new DataStorageException(204, "DataManager: DataBase "+identifier+" Not Found.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
-        }catch (DataStorageException e){
+            return dataBasePool.get(identifier);
+        }finally {
             lock.readLock().unlock();
-            throw e;
         }
     }
 
@@ -126,25 +125,23 @@ public class DataManager {
      * @return DataBase data base
      * @throws DataStorageException on various errors such as an object already existing with the same identifier
      */
-    public static DataBase createDataBase(String identifier) throws DataStorageException {
+    public DataBase createDataBase(String identifier) throws DataStorageException {
         try{
-            identifier = identifier.toLowerCase();
             lock.writeLock().lock();
-            if(ready.get()){
-                if(!dataBasePool.containsKey(identifier)){
-                    DataBase dataBase = new DataBase(identifier);
-                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
-                    lock.writeLock().unlock();
-                    return dataBase;
-                }
+            identifier = identifier.toLowerCase();
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(dataBasePool.containsKey(identifier)){
                 logger.debug("DataBase "+identifier+" Already Existing");
                 throw new DataStorageException(214, "DataManager: DataBase "+identifier+" Already Existing.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
-        }catch (DataStorageException e){
+            DataBase dataBase = new DataBase(identifier);
+            dataBasePool.put(dataBase.getIdentifier(), dataBase);
+            return dataBase;
+        }finally {
             lock.writeLock().unlock();
-            throw e;
         }
     }
 
@@ -156,26 +153,23 @@ public class DataManager {
      * @param identifier of the target DataBase
      * @throws DataStorageException on various errors such as the object not existing
      */
-    public static void deleteDataBase(String identifier) throws DataStorageException {
+    public void deleteDataBase(String identifier) throws DataStorageException {
         try{
-            identifier = identifier.toLowerCase();
             lock.writeLock().lock();
-            if(ready.get()){
-                if(dataBasePool.containsKey(identifier)){
-                    DataBase dataBase = dataBasePool.get(identifier);
-                    dataBase.delete();
-                    dataBasePool.remove(identifier);
-                    lock.writeLock().unlock();
-                    return;
-                }
+            identifier = identifier.toLowerCase();
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(!dataBasePool.containsKey(identifier)){
                 logger.debug("DataBase "+identifier+" Not Found");
                 throw new DataStorageException(204, "DataManager: DataBase "+identifier+" Not Found.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
-        }catch (DataStorageException e){
+            DataBase dataBase = dataBasePool.get(identifier);
+            dataBase.delete();
+            dataBasePool.remove(identifier);
+        }finally {
             lock.writeLock().unlock();
-            throw e;
         }
     }
 
@@ -187,7 +181,7 @@ public class DataManager {
      * @param identifier identifier of the DataBase. See {@link DataBase} for further information.
      * @return boolean boolean
      */
-    public static boolean containsDataBase(String identifier){
+    public boolean containsDataBase(String identifier){
         lock.readLock().lock();
         identifier = identifier.toLowerCase();
         boolean contains = dataBasePool.containsKey(identifier);
@@ -203,20 +197,18 @@ public class DataManager {
      * @param dataBase the DataBase which should be inserted
      * @throws DataStorageException on various errors such as an object already existing with the same identifier
      */
-    public static void insertDataBase(DataBase dataBase) throws DataStorageException {
+    public void insertDataBase(DataBase dataBase) throws DataStorageException {
         try{
             lock.writeLock().lock();
-            if(ready.get()){
-                if(!dataBasePool.containsKey(dataBase.getIdentifier())){
-                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
-                    lock.writeLock().unlock();
-                    return;
-                }
+            if(!ready.get()){
+                logger.error("Not Ready Yet");
+                throw new DataStorageException(231, "DataManager Not Ready Yet");
+            }
+            if(dataBasePool.containsKey(dataBase.getIdentifier())){
                 logger.debug("DataBase "+dataBase.getIdentifier()+" Already Existing");
                 throw new DataStorageException(214, "DataManager: DataBase "+dataBase.getIdentifier()+" Already Existing.");
             }
-            logger.error("Not Ready Yet");
-            throw new DataStorageException(231, "DataManager Not Ready Yet");
+            dataBasePool.put(dataBase.getIdentifier(), dataBase);
         }catch (DataStorageException e){
             lock.writeLock().unlock();
             throw e;
@@ -228,7 +220,7 @@ public class DataManager {
      *
      * @return JS2CryptTool
      */
-    public static JS2CryptTool getJs2CryptTool(){
+    public JS2CryptTool getJs2CryptTool(){
         return js2CryptTool;
     }
 
@@ -241,63 +233,69 @@ public class DataManager {
      *
      * @throws SetupException on error
      */
-    private void setup() throws SetupException{
-        if(!ready.get() && !shutdown.get()){
-            try{
-                File d = new File("./jstorage/data/db/");
-                if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/db/datamanager");
-                if(!f.exists()){ f.createNewFile(); }
-                else{
-                    // read
-                    String content = new String(Files.readAllBytes(f.toPath()));
-                    if(!content.isEmpty()){
-                        JSONObject jsonObject = new JSONObject(content);
-                        JSONObject jsonObject1 = jsonObject.getJSONObject("dataSetSettings");
+    public void setup(boolean setupEncryptionNow) throws SetupException{
+        try{
+            lock2.lock();
+            if(ready.get() || shutdown.get()){
+                return;
+            }
+
+            js2CryptTool = new JS2CryptTool("./jstorage/config/js2crypt", setupEncryptionNow);
+
+            File d = new File("./jstorage/data/db/");
+            if(!d.exists()){ d.mkdirs(); }
+            File f = new File("./jstorage/data/db/datamanager");
+            if(!f.exists()){ f.createNewFile(); }
+            else{
+                // read
+                String content = new String(Files.readAllBytes(f.toPath()));
+                if(!content.isEmpty()){
+                    JSONObject jsonObject = new JSONObject(content);
+                    JSONObject jsonObject1 = jsonObject.getJSONObject("dataSetSettings");
+                    try{
+                        DataSet.setDataSetsPerThread(jsonObject1.getInt("dataSetsPerThread"));
+                        DataSet.setMaxSTPEThreads(jsonObject1.getInt("maxSTPEThreads"));
+                    }catch (Exception e){
+                        logger.error("DataSet Configuration Failed", e);
+                    }
+                    JSONArray jsonArray = jsonObject.getJSONArray("databases");
+                    // might contain other settings in the future
+                    for(int i = 0; i < jsonArray.length(); i++){
                         try{
-                            DataSet.setDataSetsPerThread(jsonObject1.getInt("dataSetsPerThread"));
-                            DataSet.setMaxSTPEThreads(jsonObject1.getInt("maxSTPEThreads"));
-                        }catch (Exception e){
-                            logger.error("DataSet Configuration Failed", e);
-                        }
-                        JSONArray jsonArray = jsonObject.getJSONArray("databases");
-                        // might contain other settings in the future
-                        for(int i = 0; i < jsonArray.length(); i++){
-                            try{
-                                String dbn = jsonArray.getString(i).toLowerCase();
-                                DataBase dataBase = new DataBase(dbn);
-                                if(!dataBasePool.containsKey(dataBase.getIdentifier())){
-                                    dataBasePool.put(dataBase.getIdentifier(), dataBase);
-                                }else{
-                                    throw new DataStorageException(214, "DataManager: Setup: DataBase "+dataBase.getIdentifier()+" Already Existing.");
-                                }
-                            }catch (DataStorageException e){
-                                logger.error("Failed To Create DataBase During Setup", e);
+                            String dbn = jsonArray.getString(i).toLowerCase();
+                            DataBase dataBase = new DataBase(dbn);
+                            if(!dataBasePool.containsKey(dataBase.getIdentifier())){
+                                dataBasePool.put(dataBase.getIdentifier(), dataBase);
+                            }else{
+                                throw new DataStorageException(214, "DataManager: Setup: DataBase "+dataBase.getIdentifier()+" Already Existing.");
                             }
+                        }catch (DataStorageException e){
+                            logger.error("Failed To Create DataBase During Setup", e);
                         }
                     }
                 }
-                // setup task & ses
-                ses = Executors.newScheduledThreadPool(1);
-                counterTask = ses.scheduleAtFixedRate(new Runnable() {
-                    @Override
-                    public void run() {
-                        AtomicLong sets = new AtomicLong();
-                        dataBasePool.values().forEach(v->v.getDataPool().values().forEach(c-> sets.addAndGet(c.getIndexPool().size())));
-                        long l = Math.abs(DataSet.getDataSetCount()-sets.get());
-                        if(l > 0){
-                            if(l < 15){
-                                logger.info("DataManager: Difference Between Expected & Indexed DataSets Too Large ("+l+"). Updating Values.");
-                                DataSet.setDataSetCount(sets.get());
-                            }else{
-                                logger.info("DataManager: Difference Between Expected & Indexed DataSets Detected ("+l+"). No Actions Required.");
-                            }
-                        }
-                    }
-                }, 10, 10, TimeUnit.MINUTES);
-            }catch (Exception e){
-                throw new SetupException("DataManager: Setup Failed: "+e.getMessage());
             }
+            // setup task & ses
+            ses = Executors.newScheduledThreadPool(1);
+            counterTask = ses.scheduleAtFixedRate(() -> {
+                AtomicLong sets = new AtomicLong();
+                dataBasePool.values().forEach(v->v.getDataPool().values().forEach(c-> sets.addAndGet(c.getIndexPool().size())));
+                long l = Math.abs(DataSet.getDataSetCount()-sets.get());
+                if(l > 0){
+                    if(l < 15){
+                        logger.info("DataManager: Difference Between Expected & Indexed DataSets Too Large ("+l+"). Updating Values.");
+                        DataSet.setDataSetCount(sets.get());
+                    }else{
+                        logger.info("DataManager: Difference Between Expected & Indexed DataSets Detected ("+l+"). No Actions Required.");
+                    }
+                }
+            }, 10, 10, TimeUnit.MINUTES);
+
+            ready.set(true);
+        }catch (Exception e){
+            throw new SetupException("DataManager: Setup Failed: "+e.getMessage());
+        }finally {
+            lock2.unlock();
         }
     }
 
@@ -306,10 +304,11 @@ public class DataManager {
      *
      * @throws ShutdownException on any error. This may result in data getting lost.
      */
-    public static void shutdown() throws ShutdownException{
-        shutdown.set(true);
-        ready.set(false);
+    public void shutdown() throws ShutdownException{
         try{
+            lock2.lock();
+            shutdown.set(true);
+            ready.set(false);
             // shutdown task & ses
             counterTask.cancel(true);
             ses.shutdown();
@@ -340,8 +339,10 @@ public class DataManager {
         }catch (Exception e){
             logger.error("Shutdown Failed. Data May Be Lost", e);
             throw new ShutdownException("DataManager: Shutdown Failed. Data May Be Lost: "+e.getMessage());
+        }finally {
+            shutdown.set(false);
+            lock2.unlock();
         }
-        shutdown.set(false);
     }
 
     /*              POOL              */
@@ -351,7 +352,7 @@ public class DataManager {
      *
      * @return ConcurrentHashMap<String, DataBase> data pool
      */
-    public static ConcurrentHashMap<String, DataBase> getDataPool() {
+    public ConcurrentHashMap<String, DataBase> getDataPool() {
         return dataBasePool;
     }
 }

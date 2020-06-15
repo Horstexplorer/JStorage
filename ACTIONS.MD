@@ -32,6 +32,7 @@ DataTable Info | Tries to list information for all or a specific data table with
 DataSet Info | Tries to list information for a specific database within a within a datatable |
 DataSet Settings | Tries to change settings for dataset management |
 DataTable Settings | Tries to change settings for a specific datatable within a database |
+DataBase Settings | Tries to change settings for a specific database |
 Delete DataBase | Tries to delete a specific database |
 Delete DataTable | Tries to delete a specific datatable within the selected database |
 Delete DataSet | Tries to delete a specific dataset datatable within the selected table from a database |

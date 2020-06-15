@@ -41,11 +41,62 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class APISocket implements Runnable {
 
-    private static Thread thread;
-    private static final AtomicBoolean running = new AtomicBoolean(false);
-    private static SSLServerSocket sslServerSocket;
+    private static APISocket instance;
 
+    private Thread thread;
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private SSLServerSocket sslServerSocket;
     private final Logger logger = LoggerFactory.getLogger(APISocket.class);
+
+    /**
+     * Used to create an instance of this class
+     */
+    private APISocket(){}
+
+    /**
+     * Used to get the instance of this class without forcing initialization
+     * @return APISocket
+     */
+    public static APISocket getInstance(){
+        return getInstance(false);
+    }
+
+    /**
+     * Used to get the instance of this class
+     * <p>
+     * Can be used to initialize the class if this didnt happened yet
+     * @param initializeIfNeeded boolean
+     * @return APISocket
+     */
+    public static APISocket getInstance(boolean initializeIfNeeded){
+        if(instance == null && initializeIfNeeded){
+            instance = new APISocket();
+        }
+        return instance;
+    }
+
+    /**
+     * Used to start the web socket
+     */
+    public void start(){
+        if(thread == null && !running.get()){
+            thread = new Thread(new APISocket());
+            thread.start();
+        }
+    }
+
+    /**
+     * Used to shutdown the web socket
+     */
+    public void shutdown(){
+        if(running.get()){
+            thread.interrupt();
+            try{sslServerSocket.close();}catch (Exception ignore){}
+            try{IPBanManager.shutdown();}catch (Exception ignore){}
+            running.set(false);
+            thread = null;
+        }
+    }
 
     @Override
     public void run(){
@@ -116,29 +167,6 @@ public class APISocket implements Runnable {
             }finally {
                 running.set(false);
             }
-        }
-    }
-
-    /**
-     * Used to start the web socket
-     */
-    public static void start(){
-        if(thread == null && !running.get()){
-            thread = new Thread(new APISocket());
-            thread.start();
-        }
-    }
-
-    /**
-     * Used to shutdown the web socket
-     */
-    public static void shutdown(){
-        if(running.get()){
-            thread.interrupt();
-            try{sslServerSocket.close();}catch (Exception ignore){}
-            try{IPBanManager.shutdown();}catch (Exception ignore){}
-            running.set(false);
-            thread = null;
         }
     }
 }
