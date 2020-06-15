@@ -191,6 +191,9 @@ public class HTTPProcessor {
                     }catch (CryptException e){
                         result.setInternalStatus("CryptException "+e.getType()+" "+e.getMessage());
                         result.setHTTPStatusCode(500);
+                    }catch (NullPointerException e){
+                        result.setInternalStatus("Somehow this occurred. Something is really broken");
+                        result.setHTTPStatusCode(500);
                     }
                 }else{
                     result.setHTTPStatusCode(400);
