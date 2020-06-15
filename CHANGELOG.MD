@@ -16,6 +16,8 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.1.3_10 R
+- some internal optimizations
 ## v1.1.2_9 D
 - removed tests to rewrite them
 - updated usage statistics to work properly
