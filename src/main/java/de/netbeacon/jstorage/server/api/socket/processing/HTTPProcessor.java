@@ -27,10 +27,10 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 /**
  * Used to unify http result processing
@@ -50,7 +50,7 @@ public class HTTPProcessor {
     private final HTTPProcessorResult result = new HTTPProcessorResult();
     private boolean processed = false;
 
-    private static final HashMap<String, ProcessingAction> actions = new HashMap<>();
+    private static final HashMap<String, Object> actions = new HashMap<>();
 
     private final Logger logger = LoggerFactory.getLogger(HTTPProcessor.class);
 
@@ -86,8 +86,10 @@ public class HTTPProcessor {
                 result.addAdditionalInformation("Invalid Path Length");
             }else{
                 // check which action fits
-                if(actions.containsKey(path.get(0).toLowerCase())){
-                    ProcessingAction action = actions.get(path.get(0).toLowerCase()).createNewInstance();
+                ProcessingAction actionbp = getAction(path);
+                if(actionbp != null){
+                    // create new instance
+                    ProcessingAction action = actionbp.createNewInstance();
                     // set data
                     action.setup(user, result, args);
                     // check if we have everything needed to process
@@ -197,7 +199,7 @@ public class HTTPProcessor {
                     }
                 }else{
                     result.setHTTPStatusCode(400);
-                    result.addAdditionalInformation("Invalid Action");
+                    result.addAdditionalInformation("Invalid Action / Path");
                 }
             }
         }catch (Exception e){
@@ -221,55 +223,102 @@ public class HTTPProcessor {
         return null;
     }
 
+
+
     /**
      * Setup actions.
      */
     public static void setupActions(){
         if(actions.isEmpty()){
-            Consumer<ProcessingAction> register = new Consumer<ProcessingAction>() {
-                @Override
-                public void accept(ProcessingAction processingAction) {
-                    actions.put(processingAction.getAction(), processingAction);
-                }
-            };
+
             // data actions
-            register.accept(new DataAction_CreateDataBase());
-            register.accept(new DataAction_CreateDataTable());
-            register.accept(new DataAction_CreateDataSet());
-            register.accept(new DataAction_CreateDataType());
-            register.accept(new DataAction_DeleteDataBase());
-            register.accept(new DataAction_DeleteDataTable());
-            register.accept(new DataAction_DeleteDataSet());
-            register.accept(new DataAction_DeleteDataType());
-            register.accept(new DataAction_DataBaseInfo());
-            register.accept(new DataAction_DataTableInfo());
-            register.accept(new DataAction_DataSetInfo());
-            register.accept(new DataAction_DataBaseSettings());
-            register.accept(new DataAction_DataTableSettings());
-            register.accept(new DataAction_DataSetSettings());
-            register.accept(new DataAction_GetDataSet());
-            register.accept(new DataAction_GetDataType());
+            addAction(Arrays.asList("data", "db"), new DataAction_CreateDataBase());
+            addAction(Arrays.asList("data", "db", "table"), new DataAction_CreateDataTable());
+            addAction(Arrays.asList("data", "db", "table", "dataset"), new DataAction_CreateDataSet());
+            addAction(Arrays.asList("data", "db", "table", "dataset", "datatype"), new DataAction_CreateDataType());
+            addAction(Arrays.asList("data", "db"), new DataAction_DeleteDataBase());
+            addAction(Arrays.asList("data", "db", "table"), new DataAction_DeleteDataTable());
+            addAction(Arrays.asList("data", "db", "table", "dataset"), new DataAction_DeleteDataSet());
+            addAction(Arrays.asList("data", "db", "table", "dataset", "datatype"), new DataAction_DeleteDataType());
+            addAction(Arrays.asList("data", "db"), new DataAction_DataBaseInfo());
+            addAction(Arrays.asList("data", "db", "table"), new DataAction_DataTableInfo());
+            addAction(Arrays.asList("data", "db", "table", "dataset"), new DataAction_DataSetInfo());
+            addAction(Arrays.asList("data", "db"), new DataAction_DataBaseSettings());
+            addAction(Arrays.asList("data", "db", "table"), new DataAction_DataTableSettings());
+            addAction(Arrays.asList("data", "db", "table", "dataset"), new DataAction_DataSetSettings());
+            addAction(Arrays.asList("data", "db", "table", "dataset"), new DataAction_GetDataSet());
             // cache actions
-            register.accept(new CacheAction_CacheSettings());
-            register.accept(new CacheAction_CacheInfo());
-            register.accept(new CacheAction_CreateCache());
-            register.accept(new CacheAction_ClearCache());
-            register.accept(new CacheAction_DeleteCache());
-            register.accept(new CacheAction_GetCachedData());
-            register.accept(new CacheAction_CreateCachedData());
-            register.accept(new CacheAction_DeleteCachedData());
+            addAction(Arrays.asList("cache"), new CacheAction_CacheSettings());
+            addAction(Arrays.asList("cache"), new CacheAction_CacheInfo());
+            addAction(Arrays.asList("cache", "mng"), new CacheAction_CreateCache());
+            addAction(Arrays.asList("cache", "mng"), new CacheAction_ClearCache());
+            addAction(Arrays.asList("cache", "mng"), new CacheAction_DeleteCache());
+            addAction(Arrays.asList("cache", "access"), new CacheAction_GetCachedData());
+            addAction(Arrays.asList("cache", "access"), new CacheAction_CreateCachedData());
+            addAction(Arrays.asList("cache", "access"), new CacheAction_DeleteCachedData());
             // user actions
-            register.accept(new UserAction_UserSettings());
-            register.accept(new UserAction_UserInfo());
-            register.accept(new UserAction_CreateUser());
-            register.accept(new UserAction_DeleteUser());
-            register.accept(new UserAction_UserChangePassword());
-            register.accept(new UserAction_UserGetNewLoginToken());
+            addAction(Arrays.asList("user"), new UserAction_UserSettings());
+            addAction(Arrays.asList("user"), new UserAction_UserInfo());
+            addAction(Arrays.asList("user", "mng"), new UserAction_CreateUser());
+            addAction(Arrays.asList("user", "mng"), new UserAction_DeleteUser());
+            addAction(Arrays.asList("user", "mng"), new UserAction_UserChangePassword());
+            addAction(Arrays.asList("user", "mng"), new UserAction_UserGetNewLoginToken());
             // other
-            register.accept(new InfoAction_BasicInfo());
-            register.accept(new InfoAction_Statistics());
+            addAction(Arrays.asList("info", "basic"), new InfoAction_BasicInfo());
+            addAction(Arrays.asList("info", "stats"), new InfoAction_Statistics());
         }
     }
 
+    /**
+     * Used to insert actions with a given path
+     * <p>
+     * Wont override existing objects
+     * @param path path/to
+     * @param action ProcessingAction
+     */
+    private static void addAction(List<String> path, ProcessingAction action){
+        HashMap<String, Object> current = actions;
+        for (String s : path) {
+            if (!current.containsKey(s.toLowerCase())) {
+                current.put(s.toLowerCase(), new HashMap<String, Object>());
+            }
+            if (current.get(s) instanceof HashMap) {
+                current = (HashMap<String, Object>) current.get(s.toLowerCase());
+            } else {
+                return; // wont overwrite existing objects
+            }
+        }
+        current.put(action.getAction().toLowerCase(), action); // add new action
+    }
+
+    /**
+     * Used to get a specific action matching the path
+     *
+     * @param path containing/the/path/action
+     * @return ProcessingAction or null
+     */
+    private ProcessingAction getAction(List<String> path){
+        HashMap<String, Object> current = actions;
+        for (int i = 0; i < path.size(); i++) {
+            if(current.containsKey(path.get(i).toLowerCase())){
+                if((i == path.size()-1)){ // last object in path
+                    if(current.get(path.get(i).toLowerCase()) instanceof ProcessingAction){
+                        return (ProcessingAction) current.get(path.get(i).toLowerCase());
+                    }else{
+                        return null;
+                    }
+                }else{
+                    if(current.get(path.get(i).toLowerCase()) instanceof HashMap){
+                        current = (HashMap<String, Object>) current.get(path.get(i).toLowerCase());
+                    }else{
+                        return null;
+                    }
+                }
+            }else{
+                return null;
+            }
+        }
+        return null;
+    }
 
 }
