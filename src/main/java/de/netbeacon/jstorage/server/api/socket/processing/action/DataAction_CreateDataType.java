@@ -42,7 +42,8 @@ import java.util.List;
  * --- Returns --- <br>
  * dataset basics, datatype data <br>
  * --- Requirements --- <br>
- * action: createdatatype <br>
+ * path: data/db/table/dataset/datatype <br>
+ * action: create <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: optional <br>
@@ -66,7 +67,7 @@ public class DataAction_CreateDataType implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "createdatatype";
+        return "create";
     }
 
     @Override

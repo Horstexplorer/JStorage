@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: deletedatatype <br>
+ * path: data/db/table/dataset/datatype <br>
+ * action: deleted <br>
  * http_method: delete <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -64,7 +65,7 @@ public class DataAction_DeleteDataType implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "deletedatatype";
+        return "delete";
     }
 
     @Override

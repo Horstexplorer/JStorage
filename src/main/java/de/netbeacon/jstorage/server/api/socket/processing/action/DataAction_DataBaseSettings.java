@@ -40,7 +40,8 @@ import java.util.List;
  * --- Returns --- <br>
  * database, settings <br>
  * --- Requirements --- <br>
- * action: databasesettings <br>
+ * path: data/db <br>
+ * action: settings <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: yes - optional: encryption(boolean) <br>
@@ -64,7 +65,7 @@ public class DataAction_DataBaseSettings implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "databasesettings";
+        return "settings";
     }
 
     @Override

@@ -40,7 +40,8 @@ import java.util.List;
  * userID, userName, bucketSize, globalPermission, dependentPermission or <br>
  * users as JSONObject <br>
  * --- Requirements --- <br>
- * action: userinfo <br>
+ * path: user <br>
+ * action: info <br>
  * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -63,7 +64,7 @@ public class UserAction_UserInfo implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "userinfo";
+        return "info";
     }
 
     @Override

@@ -39,7 +39,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Returns userID, userName, password, bucketSize as json on success <br>
  * --- Requirements --- <br>
- * action: createuser <br>
+ * path: user/mng <br>
+ * action: create <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -62,7 +63,7 @@ public class UserAction_CreateUser implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "createuser";
+        return "create";
     }
 
     @Override

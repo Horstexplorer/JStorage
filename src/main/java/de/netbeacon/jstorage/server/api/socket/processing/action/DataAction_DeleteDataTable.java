@@ -39,7 +39,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: deleteedatatable <br>
+ * path: data/db/table <br>
+ * action: delete <br>
  * http_method: delete <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -62,7 +63,7 @@ public class DataAction_DeleteDataTable implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "deletedatatable";
+        return "delete";
     }
 
     @Override

@@ -40,7 +40,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: deletedataset <br>
+ * path: data/db/table/dataset <br>
+ * action: delete <br>
  * http_method: delete <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -63,7 +64,7 @@ public class DataAction_DeleteDataSet implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "deletedataset";
+        return "delete";
     }
 
     @Override

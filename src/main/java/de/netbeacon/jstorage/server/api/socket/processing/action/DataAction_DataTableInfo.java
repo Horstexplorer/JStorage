@@ -43,7 +43,8 @@ import java.util.List;
  * database, table, adaptiveLoad, datasets, shards or <br>
  * database, tables as JSONObject <br>
  * --- Requirements --- <br>
- * action: datatableinfo <br>
+ * path: data/db/table <br>
+ * action: info <br>
  * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -66,7 +67,7 @@ public class DataAction_DataTableInfo implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "datatableinfo";
+        return "info";
     }
 
     @Override

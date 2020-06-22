@@ -42,7 +42,8 @@ import java.util.List;
  * cache, identifier, isvalid, isValidUntil, data if cached data is valid, else <br>
  * cache, identifier, isvalid as JSON <br>
  * --- Requirements --- <br>
- * action: getcacheddata <br>
+ * path: cache/data <br>
+ * action: get <br>
  * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -65,7 +66,7 @@ public class CacheAction_GetCachedData implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "getcacheddata";
+        return "get";
     }
 
     @Override

@@ -37,7 +37,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: userchangepassword <br>
+ * path: user/mng <br>
+ * action: changepw <br>
  * http_method: put <br>
  * login-mode: password <br>
  * payload: no <br>
@@ -60,7 +61,7 @@ public class UserAction_UserChangePassword implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "userchangepassword";
+        return "changepw";
     }
 
     @Override

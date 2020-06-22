@@ -42,6 +42,7 @@ import java.util.List;
  * --- Returns --- <br>
  * basic information <br>
  * --- Requirements --- <br>
+ * path: info/stats <br>
  * action: statistics <br>
  * http_method: get <br>
  * login-mode: token <br>

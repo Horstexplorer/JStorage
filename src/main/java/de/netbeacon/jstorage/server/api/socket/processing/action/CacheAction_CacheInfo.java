@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * identifier, lastAccess, status, size, adaptiveLoading as JSONObject <br>
  * --- Requirements --- <br>
- * action: cacheinfo <br>
+ * path: cache<br>
+ * action: info <br>
  * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -64,7 +65,7 @@ public class CacheAction_CacheInfo implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "cacheinfo";
+        return "info";
     }
 
     @Override

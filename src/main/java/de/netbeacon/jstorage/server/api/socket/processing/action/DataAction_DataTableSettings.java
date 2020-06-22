@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * database, table, settings <br>
  * --- Requirements --- <br>
- * action: datatablesettings <br>
+ * path: data/db/table <br>
+ * action: settings <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: yes - optional: adaptiveLoading(boolean), defaultStructure(JSONObject), autoOptimize(Boolean), autoResolveDataInconsistency(Integer in range -1 to 3) <br>
@@ -65,7 +66,7 @@ public class DataAction_DataTableSettings implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "datatablesettings";
+        return "settings";
     }
 
     @Override

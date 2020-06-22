@@ -28,7 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSocket;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -37,11 +40,10 @@ import java.util.*;
 /**
  * The type Api socket handler.
  */
-public class APISocketHandler extends Thread {
+public class APISocketHandler implements Runnable {
 
     private final SSLSocket socket;
     private BufferedReader bufferedReader;
-    private DataInputStream dataInputStream;
     private BufferedWriter bufferedWriter;
     private final String ip;
 
@@ -275,7 +277,7 @@ public class APISocketHandler extends Thread {
                 }else{
                     endHeaders(); // "server: I finished sending headers"
                 }
-                logger.debug("Send Result: "+hpr.getHTTPStatusMessage()+ " "+hpr.getResult().toString());
+                logger.debug("Send Result: "+hpr.getHTTPStatusMessage()+ " "+((hpr.getResult() != null)? hpr.getResult().toString() : "empty"));
                 // done processing :3 *happy calculation noises*
             }catch (HTTPException e){
                 IPBanManager.flagIP(ip); // may change later as not every exception should trigger ab ip flag

@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * database, table as JSONObject <br>
  * --- Requirements --- <br>
- * action: createdatatable <br>
+ * path: data/db/table <br>
+ * action: create <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -64,7 +65,7 @@ public class DataAction_CreateDataTable implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "createdatatable";
+        return "create";
     }
 
     @Override
