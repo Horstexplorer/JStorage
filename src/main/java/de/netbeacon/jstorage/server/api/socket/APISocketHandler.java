@@ -277,7 +277,7 @@ public class APISocketHandler implements Runnable {
                 }else{
                     endHeaders(); // "server: I finished sending headers"
                 }
-                logger.debug("Send Result: "+hpr.getHTTPStatusMessage()+ " "+hpr.getResult().toString());
+                logger.debug("Send Result: "+hpr.getHTTPStatusMessage()+ " "+((hpr.getResult() != null)? hpr.getResult().toString() : "empty"));
                 // done processing :3 *happy calculation noises*
             }catch (HTTPException e){
                 IPBanManager.flagIP(ip); // may change later as not every exception should trigger ab ip flag

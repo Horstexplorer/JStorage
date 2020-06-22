@@ -81,126 +81,121 @@ public class HTTPProcessor {
             // parse urls
             path = HTTPProcessorHelper.getPath(requestURL); // path has to be in the /<action>?arg1=val&arg2=val format
             args = HTTPProcessorHelper.getArgs(requestURL);
-            if(path.size() != 1){
-                result.setHTTPStatusCode(400);
-                result.addAdditionalInformation("Invalid Path Length");
-            }else{
-                // check which action fits
-                ProcessingAction actionbp = getAction(path);
-                if(actionbp != null){
-                    // create new instance
-                    ProcessingAction action = actionbp.createNewInstance();
-                    // set data
-                    action.setup(user, result, args);
-                    // check if we have everything needed to process
-                    if(!action.supportedHTTPMethod(requestMethod.toLowerCase())) {
-                        result.setHTTPStatusCode(405);
-                        result.addAdditionalInformation("Invalid Method");
-                        return;
-                    }
-                    if(!args.keySet().containsAll(action.requiredArguments())) {
-                        result.setHTTPStatusCode(400);
-                        result.addAdditionalInformation("Invalid Arguments");
-                        return;
-                    }
-                    if((action.requiresData() && (payload == null))) {
-                        result.setHTTPStatusCode(400);
-                        result.addAdditionalInformation("Data Required");
-                        return;
-                    }else{
-                        action.setPayload(payload); // might be null - required to allow optional payloads
-                    }
-                    if(!action.loginModeIsSupported(userLoginMode)) {
-                        result.setHTTPStatusCode(403);
-                        result.addAdditionalInformation("Invalid Login Method");
-                        return;
-                    }
-                    if(!action.userHasPermission()) {
-                        result.setHTTPStatusCode(403);
-                        result.addAdditionalInformation("Not Authorized");
-                        return;
-                    }
-                    // process
-                    try{
-                        action.process();
-                        // set http ok - result has been set by processor
-                        result.setHTTPStatusCode(200);
-                    }catch (DataStorageException e){
-                        result.setInternalStatus("DataStorageException "+e.getType()+" "+e.getMessage());
-                        switch (e.getType()){
-                            case 101:
-                            case 102:
-                            case 110:
-                            case 111:
-                            case 112:
-                            case 120:
-                                result.setHTTPStatusCode(400);
-                                break;
-                            case 201:
-                            case 202:
-                            case 203:
-                            case 204:
-                            case 205:
-                            case 206:
-                                result.setHTTPStatusCode(404);
-                                break;
-                            case 211:
-                            case 212:
-                            case 213:
-                            case 214:
-                            case 215:
-                            case 216:
-                            case 220:
-                            case 221:
-                            case 231:
-                            case 232:
-                            case 240:
-                            case 241:
-                            case 242:
-                                result.setHTTPStatusCode(400);
-                                break;
-                            case 300:
-                                result.setHTTPStatusCode(423);
-                                break;
-                            case 400:
-                                result.setHTTPStatusCode(400);
-                                break;
-                            case 0:
-                            default:
-                                result.setHTTPStatusCode(500);
-                                break;
-                        }
-                    }catch(GenericObjectException e){
-                        result.setInternalStatus("GenericObjectException "+e.getType()+" "+e.getMessage());
-                        switch (e.getType()){
-                            case 100:
-                            case 101:
-                            case 102:
-                                result.setHTTPStatusCode(400);
-                                break;
-                            case 200:
-                                result.setHTTPStatusCode(404);
-                                break;
-                            case 300:
-                            case 400:
-                                result.setHTTPStatusCode(400);
-                                break;
-                            case 0:
-                            default:
-                                result.setHTTPStatusCode(500);
-                                break;
-                        }
-                    }catch (CryptException e){
-                        result.setInternalStatus("CryptException "+e.getType()+" "+e.getMessage());
-                        result.setHTTPStatusCode(500);
-                    }catch (NullPointerException e){
-                        result.setInternalStatus("Somehow this occurred. Something is really broken");
-                        result.setHTTPStatusCode(500);
-                    }
-                }else{
-                    result.setHTTPStatusCode(400);
-                    result.addAdditionalInformation("Invalid Action / Path");
+            // check which action fits
+            ProcessingAction actionbp = getAction(path);
+            if(actionbp != null){
+                // create new instance
+                ProcessingAction action = actionbp.createNewInstance();
+                // set data
+                action.setup(user, result, args);
+                // check if we have everything needed to process
+                if(!action.supportedHTTPMethod(requestMethod.toLowerCase())) {
+                    result.setHTTPStatusCode(405);
+                    result.addAdditionalInformation("Invalid Method");
+                    return;
                 }
+                if(!args.keySet().containsAll(action.requiredArguments())) {
+                    result.setHTTPStatusCode(400);
+                    result.addAdditionalInformation("Invalid Arguments");
+                    return;
+                }
+                if((action.requiresData() && (payload == null))) {
+                    result.setHTTPStatusCode(400);
+                    result.addAdditionalInformation("Data Required");
+                    return;
+                }else{
+                    action.setPayload(payload); // might be null - required to allow optional payloads
+                }
+                if(!action.loginModeIsSupported(userLoginMode)) {
+                    result.setHTTPStatusCode(403);
+                    result.addAdditionalInformation("Invalid Login Method");
+                    return;
+                }
+                if(!action.userHasPermission()) {
+                    result.setHTTPStatusCode(403);
+                    result.addAdditionalInformation("Not Authorized");
+                    return;
+                }
+                // process
+                try{
+                    action.process();
+                    // set http ok - result has been set by processor
+                    result.setHTTPStatusCode(200);
+                }catch (DataStorageException e){
+                    result.setInternalStatus("DataStorageException "+e.getType()+" "+e.getMessage());
+                    switch (e.getType()){
+                        case 101:
+                        case 102:
+                        case 110:
+                        case 111:
+                        case 112:
+                        case 120:
+                            result.setHTTPStatusCode(400);
+                            break;
+                        case 201:
+                        case 202:
+                        case 203:
+                        case 204:
+                        case 205:
+                        case 206:
+                            result.setHTTPStatusCode(404);
+                            break;
+                        case 211:
+                        case 212:
+                        case 213:
+                        case 214:
+                        case 215:
+                        case 216:
+                        case 220:
+                        case 221:
+                        case 231:
+                        case 232:
+                        case 240:
+                        case 241:
+                        case 242:
+                            result.setHTTPStatusCode(400);
+                            break;
+                        case 300:
+                            result.setHTTPStatusCode(423);
+                            break;
+                        case 400:
+                            result.setHTTPStatusCode(400);
+                            break;
+                        case 0:
+                        default:
+                            result.setHTTPStatusCode(500);
+                            break;
+                    }
+                }catch(GenericObjectException e){
+                    result.setInternalStatus("GenericObjectException "+e.getType()+" "+e.getMessage());
+                    switch (e.getType()){
+                        case 100:
+                        case 101:
+                        case 102:
+                            result.setHTTPStatusCode(400);
+                            break;
+                        case 200:
+                            result.setHTTPStatusCode(404);
+                            break;
+                        case 300:
+                        case 400:
+                            result.setHTTPStatusCode(400);
+                            break;
+                        case 0:
+                        default:
+                            result.setHTTPStatusCode(500);
+                            break;
+                    }
+                }catch (CryptException e){
+                    result.setInternalStatus("CryptException "+e.getType()+" "+e.getMessage());
+                    result.setHTTPStatusCode(500);
+                }catch (NullPointerException e){
+                    result.setInternalStatus("Somehow this occurred. Something is really broken");
+                    result.setHTTPStatusCode(500);
+                }
+            }else{
+                result.setHTTPStatusCode(400);
+                result.addAdditionalInformation("Invalid Action / Path");
             }
         }catch (Exception e){
             result.setHTTPStatusCode(500);
