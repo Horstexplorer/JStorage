@@ -16,6 +16,9 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.2.0_12 R
+- improved actions (defined by path, shorter names possible)
+- small bug fixes
 ## v1.1.4_11 D
 - connections get now accepted by a ThreadPoolExecutor
 ## v1.1.3_10 R
