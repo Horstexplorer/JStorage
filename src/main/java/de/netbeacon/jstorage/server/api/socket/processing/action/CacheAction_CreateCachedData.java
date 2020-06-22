@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: createcacheddata <br>
+ * path: cache/data <br>
+ * action: create <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: yes - dataset (undefined structure) <br>
@@ -65,7 +66,7 @@ public class CacheAction_CreateCachedData implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "createcacheddata";
+        return "create";
     }
 
     @Override

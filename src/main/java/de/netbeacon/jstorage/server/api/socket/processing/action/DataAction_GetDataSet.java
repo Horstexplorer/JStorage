@@ -42,7 +42,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Dataset as JSONObject <br>
  * --- Requirements --- <br>
- * action: getdataset <br>
+ * path: data/db/table/dataset <br>
+ * action: get <br>
  * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -65,7 +66,7 @@ public class DataAction_GetDataSet implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "getdataset";
+        return "get";
     }
 
     @Override

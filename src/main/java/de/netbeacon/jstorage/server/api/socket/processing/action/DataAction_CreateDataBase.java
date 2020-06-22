@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * database as JSON <br>
  * --- Requirements --- <br>
- * action: createdatabase <br>
+ * path: data/db <br>
+ * action: create <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -64,7 +65,7 @@ public class DataAction_CreateDataBase implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "createdatabase";
+        return "create";
     }
 
     @Override

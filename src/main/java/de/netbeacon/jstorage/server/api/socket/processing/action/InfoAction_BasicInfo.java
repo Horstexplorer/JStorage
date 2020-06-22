@@ -36,6 +36,7 @@ import java.util.List;
  * --- Returns --- <br>
  * basic information <br>
  * --- Requirements --- <br>
+ * path: info/basic <br>
  * action: info <br>
  * http_method: get <br>
  * login-mode: all <br>

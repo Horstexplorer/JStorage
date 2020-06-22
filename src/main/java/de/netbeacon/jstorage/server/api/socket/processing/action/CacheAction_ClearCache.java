@@ -39,7 +39,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: clearcache <br>
+ * path: cache/mng <br>
+ * action: clear <br>
  * http_method: delete <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -62,7 +63,7 @@ public class CacheAction_ClearCache implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "clearcache";
+        return "clear";
     }
 
     @Override

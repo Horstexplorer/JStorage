@@ -42,7 +42,8 @@ import java.util.List;
  * --- Returns --- <br>
  * dataset <br>
  * --- Requirements --- <br>
- * action: createdataset <br>
+ * path: data/db/table/dataset <br>
+ * action: create <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: optional <br>
@@ -66,7 +67,7 @@ public class DataAction_CreateDataSet implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "createdataset";
+        return "create";
     }
 
     @Override

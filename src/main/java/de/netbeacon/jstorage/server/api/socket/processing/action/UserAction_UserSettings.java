@@ -39,8 +39,9 @@ import java.util.List;
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
  * userID, userName, bucketSize, globalPermission, dependentPermission as JSONObject <br>
- * --- Requirements ---
- * action: usersettings <br>
+ * --- Requirements --- <br>
+ * path: user <br>
+ * action: settings <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: yes - optional: bucketSize(int), dependentPermission(JSON), globalPermission(JSON) <br>
@@ -64,7 +65,7 @@ public class UserAction_UserSettings implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "usersettings";
+        return "settings";
     }
 
     @Override

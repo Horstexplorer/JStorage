@@ -248,9 +248,9 @@ public class HTTPProcessor {
             addAction(Arrays.asList("cache", "mng"), new CacheAction_CreateCache());
             addAction(Arrays.asList("cache", "mng"), new CacheAction_ClearCache());
             addAction(Arrays.asList("cache", "mng"), new CacheAction_DeleteCache());
-            addAction(Arrays.asList("cache", "access"), new CacheAction_GetCachedData());
-            addAction(Arrays.asList("cache", "access"), new CacheAction_CreateCachedData());
-            addAction(Arrays.asList("cache", "access"), new CacheAction_DeleteCachedData());
+            addAction(Arrays.asList("cache", "data"), new CacheAction_GetCachedData());
+            addAction(Arrays.asList("cache", "data"), new CacheAction_CreateCachedData());
+            addAction(Arrays.asList("cache", "data"), new CacheAction_DeleteCachedData());
             // user actions
             addAction(Arrays.asList("user"), new UserAction_UserSettings());
             addAction(Arrays.asList("user"), new UserAction_UserInfo());

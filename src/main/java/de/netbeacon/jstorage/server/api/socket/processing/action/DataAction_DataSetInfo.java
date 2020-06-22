@@ -43,7 +43,8 @@ import java.util.List;
  * --- Returns --- <br>
  * database, table, identifier, size, keys <br>
  * --- Requirements --- <br>
- * action: datasetinfo <br>
+ * path: data/db/table/dataset <br>
+ * action: info <br>
  * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -66,7 +67,7 @@ public class DataAction_DataSetInfo implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "datasetinfo";
+        return "info";
     }
 
     @Override

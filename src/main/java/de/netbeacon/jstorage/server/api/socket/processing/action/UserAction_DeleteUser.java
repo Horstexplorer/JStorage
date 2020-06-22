@@ -37,7 +37,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: deleteuser <br>
+ * path: user/mng <br>
+ * action: delete <br>
  * http_method: delete <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -60,7 +61,7 @@ public class UserAction_DeleteUser implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "deleteuser";
+        return "delete";
     }
 
     @Override

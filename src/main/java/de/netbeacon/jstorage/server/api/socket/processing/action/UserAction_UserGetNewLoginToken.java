@@ -39,7 +39,8 @@ import java.util.List;
  * --- Returns --- <br>
  * userID, userName, loginToken as JSONObject <br>
  * --- Requirements --- <br>
- * action: usergetnewlogintoken <br>
+ * path: user/mng <br>
+ * action: getnewlogintoken <br>
  * http_method: put <br>
  * login-mode: password <br>
  * payload: no <br>
@@ -62,7 +63,7 @@ public class UserAction_UserGetNewLoginToken implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "usergetnewlogintoken";
+        return "getnewlogintoken";
     }
 
     @Override

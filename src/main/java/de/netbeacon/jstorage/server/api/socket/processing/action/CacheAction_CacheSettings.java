@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Info <br>
  * --- Requirements --- <br>
- * action: cachesettings <br>
+ * path: cache <br>
+ * action: settings <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: yes - optional: adaptiveLoading(boolean) <br>
@@ -65,7 +66,7 @@ public class CacheAction_CacheSettings implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "cachesettings";
+        return "settings";
     }
 
     @Override

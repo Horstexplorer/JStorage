@@ -38,7 +38,8 @@ import java.util.List;
  * --- Returns --- <br>
  * global dataset settings <br>
  * --- Requirements --- <br>
- * action: datasetsettings <br>
+ * path: data/db/table/dataset <br>
+ * action: settings <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: yes - optional: maxSTPEThreads(int), dataSetsPerThread(int) <br>
@@ -62,7 +63,7 @@ public class DataAction_DataSetSettings implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "datasetsettings";
+        return "settings";
     }
 
     @Override

@@ -39,7 +39,8 @@ import java.util.List;
  * --- Returns --- <br>
  * Nothing <br>
  * --- Requirements --- <br>
- * action: deletecacheddata <br>
+ * path: cache/data <br>
+ * action: delete <br>
  * http_method: delete <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -62,7 +63,7 @@ public class CacheAction_DeleteCachedData implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "deletecacheddata";
+        return "delete";
     }
 
     @Override

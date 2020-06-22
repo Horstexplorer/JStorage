@@ -42,7 +42,8 @@ import java.util.List;
  * database, tables or <br>
  * databases as JSONObject <br>
  * --- Requirements --- <br>
- * action: deletedatabase <br>
+ * path: data/db <br>
+ * action: info <br>
  * http_method: get <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -65,7 +66,7 @@ public class DataAction_DataBaseInfo implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "databaseinfo";
+        return "info";
     }
 
     @Override

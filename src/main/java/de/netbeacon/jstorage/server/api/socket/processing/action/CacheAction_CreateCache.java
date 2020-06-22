@@ -41,7 +41,8 @@ import java.util.List;
  * --- Returns --- <br>
  * cache as JSON <br>
  * --- Requirements --- <br>
- * action: createcache <br>
+ * path: cache/mng <br>
+ * action: create <br>
  * http_method: put <br>
  * login-mode: token <br>
  * payload: no <br>
@@ -74,7 +75,7 @@ public class CacheAction_CreateCache implements ProcessingAction {
 
     @Override
     public String getAction() {
-        return "createcache";
+        return "create";
     }
 
     @Override
