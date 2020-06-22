@@ -29,7 +29,9 @@ import javax.net.ssl.SSLSocket;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -45,6 +47,11 @@ public class APISocket implements Runnable {
 
     private Thread thread;
     private final AtomicBoolean running = new AtomicBoolean(false);
+
+    private BlockingQueue<Runnable> workQueue;
+    private ThreadPoolExecutor processing;
+
+    private ExecutorService overload;
     private SSLServerSocket sslServerSocket;
     private final Logger logger = LoggerFactory.getLogger(APISocket.class);
 
@@ -80,7 +87,7 @@ public class APISocket implements Runnable {
      */
     public void start(){
         if(thread == null && !running.get()){
-            thread = new Thread(new APISocket());
+            thread = new Thread(this);
             thread.start();
         }
     }
@@ -91,6 +98,9 @@ public class APISocket implements Runnable {
     public void shutdown(){
         if(running.get()){
             thread.interrupt();
+            try{workQueue.clear();}catch (Exception ignore){}
+            try{processing.shutdownNow();}catch (Exception ignore){}
+            try{overload.shutdownNow();}catch (Exception ignore){}
             try{sslServerSocket.close();}catch (Exception ignore){}
             try{IPBanManager.shutdown();}catch (Exception ignore){}
             running.set(false);
@@ -103,6 +113,10 @@ public class APISocket implements Runnable {
         if(!running.get()){
             running.set(true);
 
+            int corePoolSize = 8;
+            int maxPoolSize = 16;
+            int maxQueueSize = 2048;
+            int keepAliveTime = 5;
             int port = 8888;
             String certPath = "./jstorage/cert/certificate.pem";
             String keyPath = "./jstorage/cert/key.pem";
@@ -113,7 +127,13 @@ public class APISocket implements Runnable {
                 if(!d.exists()){ d.mkdirs(); }
                 File f = new File("./jstorage/config/apisocket");
                 if(!f.exists()){
-                    JSONObject jsonObject = new JSONObject().put("port", port).put("certPath", certPath).put("keyPath", keyPath);
+                    JSONObject jsonObject = new JSONObject()
+                            .put("port", port).put("certPath", certPath)
+                            .put("keyPath", keyPath)
+                            .put("corePoolSize", corePoolSize)
+                            .put("maxPoolSize", maxPoolSize)
+                            .put("maxQueueSize", maxQueueSize)
+                            .put("keepAliveTime", keepAliveTime);
                     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
                     writer.write(jsonObject.toString());
                     writer.newLine();
@@ -126,8 +146,16 @@ public class APISocket implements Runnable {
                         port = jsonObject.getInt("port");
                         certPath = jsonObject.getString("certPath");
                         keyPath = jsonObject.getString("keyPath");
+                        corePoolSize = Math.max(jsonObject.getInt("corePoolSize"), 1);
+                        maxPoolSize = Math.max(jsonObject.getInt("maxPoolSize"), corePoolSize);
+                        maxQueueSize = Math.max(jsonObject.getInt("maxQueueSize"), 1);
+                        keepAliveTime = Math.max(jsonObject.getInt("keepAliveTime"), 1);
                     }
                 }
+                // start executors
+                overload = Executors.newSingleThreadExecutor();
+                workQueue = new ArrayBlockingQueue<>(maxQueueSize);
+                processing = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
             }catch (Exception e){
                 logger.error("Setup Failed", e);
             }
@@ -154,8 +182,20 @@ public class APISocket implements Runnable {
                         sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
                         sslSocket.startHandshake();
                         // processing
-                        new APISocketHandler(sslSocket).start();
-
+                        try{
+                            processing.execute(new APISocketHandler(sslSocket));
+                        }catch (RejectedExecutionException e){
+                            logger.warn("Cannot Process Incoming Connection - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
+                            overload.execute(() -> {
+                                try{
+                                    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(sslSocket.getOutputStream()));
+                                    bufferedWriter.write("HTTP/1.1 503 Service Unavailable\r\n\r\n");
+                                    bufferedWriter.flush();
+                                    bufferedWriter.close();
+                                    sslSocket.close();
+                                }catch (Exception ignore){}
+                            });
+                        }
                     }catch (Exception e){
                         logger.error("Error For Incoming Connection: "+sslSocket.getRemoteSocketAddress(), e);
                         try{sslSocket.close();}catch (Exception ignore){}

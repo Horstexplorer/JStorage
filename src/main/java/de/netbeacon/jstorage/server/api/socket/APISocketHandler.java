@@ -28,7 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLSocket;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -37,11 +40,10 @@ import java.util.*;
 /**
  * The type Api socket handler.
  */
-public class APISocketHandler extends Thread {
+public class APISocketHandler implements Runnable {
 
     private final SSLSocket socket;
     private BufferedReader bufferedReader;
-    private DataInputStream dataInputStream;
     private BufferedWriter bufferedWriter;
     private final String ip;
 
