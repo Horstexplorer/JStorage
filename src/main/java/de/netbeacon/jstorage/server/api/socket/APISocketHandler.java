@@ -266,8 +266,8 @@ public class APISocketHandler implements Runnable {
                 if(hpr.getInternalStatus() != null){
                     sendLines("Internal-Status: "+hpr.getInternalStatus());
                 }
-                // send remaining bucket size
-                sendLines("Remaining-Ratelimit: "+user.getRemainingBucket());
+                // send max & remaining bucket size
+                sendLines("Max-Ratelimit: "+user.getMaxBucket(),"Remaining-Ratelimit: "+user.getRemainingBucket());
                 // send data
                 if(hpr.getResult() != null){
                     sendLines("Content-Type: application/json", "Content-Length: "+hpr.getResult().toString().length());
