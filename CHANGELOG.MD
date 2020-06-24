@@ -16,6 +16,8 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.2.1_13 R
+- minor improvements
 ## v1.2.0_12 R
 - improved actions (defined by path, shorter names possible)
 - small bug fixes
