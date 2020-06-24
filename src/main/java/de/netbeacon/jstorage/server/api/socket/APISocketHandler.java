@@ -130,7 +130,7 @@ public class APISocketHandler implements Runnable {
                     // invalid request, something broke
                     throw new HTTPException(400);
                 }
-                if(!(headers.get("http_method").equals("GET") || headers.get("http_method").equals("PUT") || headers.get("http_method").equals("UPDATE") || headers.get("http_method").equals("DELETE"))){
+                if(!(headers.get("http_method").equalsIgnoreCase("GET") || headers.get("http_method").equalsIgnoreCase("PUT") || headers.get("http_method").equalsIgnoreCase("POST") || headers.get("http_method").equalsIgnoreCase("DELETE"))){
                     // invalid method
                     throw new HTTPException(405);
                 }
@@ -140,7 +140,7 @@ public class APISocketHandler implements Runnable {
                 }
                     // analyze method
                 JSONObject bodycontent = null;
-                if(headers.get("http_method").equals("PUT") || headers.get("http_method").equals("UPDATE")){
+                if(headers.get("http_method").equalsIgnoreCase("PUT") || headers.get("http_method").equalsIgnoreCase("POST") || headers.get("http_method").equalsIgnoreCase("DELETE")){
                     // check if contains data
                     if(headers.containsKey("content-length") ^ headers.containsKey("content-type")){ // only partial headers (xor)
                         throw new HTTPException(400);
