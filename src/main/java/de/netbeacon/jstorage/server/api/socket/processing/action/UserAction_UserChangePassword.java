@@ -23,6 +23,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ import java.util.List;
  * Tries to change the password of the current or selected user <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Nothing <br>
+ * userid <br>
  * --- Requirements --- <br>
  * path: user/mng <br>
  * action: changepw <br>
@@ -98,8 +99,10 @@ public class UserAction_UserChangePassword implements ProcessingAction {
         if(args.containsKey("identifier")){
             User u = UserManager.getInstance().getUserByID(args.get("identifier"));
             u.setPassword(args.get("password"));
+            result.addResult(new JSONObject().put("user", u.getUserID()));
         }else{
             user.setPassword(args.get("password"));
+            result.addResult(new JSONObject().put("userID", user.getUserID()));
         }
     }
 }

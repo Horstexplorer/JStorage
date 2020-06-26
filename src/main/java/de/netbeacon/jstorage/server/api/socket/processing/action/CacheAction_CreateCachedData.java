@@ -39,7 +39,7 @@ import java.util.List;
  * Tries to create a specific dataset within the selected cache <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Nothing <br>
+ * cache, cachedData - identifier, validUntil <br>
  * --- Requirements --- <br>
  * path: cache/data <br>
  * action: create <br>
@@ -109,7 +109,7 @@ public class CacheAction_CreateCachedData implements ProcessingAction {
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         Cache c = CacheManager.getInstance().getCache(args.get("cache"));
-        CachedData cachedData = new CachedData(c.getCacheIdentifier(), args.get("identifier"), data);
+        CachedData cachedData = new CachedData(c.getIdentifier(), args.get("identifier"), data);
         c.insertCachedData(cachedData);
         if(args.containsKey("duration")){
             try{
@@ -120,5 +120,6 @@ public class CacheAction_CreateCachedData implements ProcessingAction {
                 cachedData.setValidForDuration(10);
             }
         }
+        result.addResult(new JSONObject().put("cache", c.getIdentifier()).put("cachedData", new JSONObject().put("identifier", cachedData.getIdentifier()).put("validUntil", cachedData.isValidUntil())));
     }
 }

@@ -26,6 +26,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ import java.util.List;
  * Tries to delete a specific dataset datatable within the selected table from a database <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Nothing <br>
+ * database, table, dataset <br>
  * --- Requirements --- <br>
  * path: data/db/table/dataset <br>
  * action: delete <br>
@@ -99,5 +100,6 @@ public class DataAction_DeleteDataSet implements ProcessingAction{
         DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
         DataTable t = d.getTable(args.get("table"));
         t.deleteDataSet(args.get("identifier"));
+        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("dataset", args.get("identifier").toLowerCase()));
     }
 }

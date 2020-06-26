@@ -122,7 +122,7 @@ public class CacheManager {
             throw new DataStorageException(216, "CacheManager: Cache "+identifier+" Already Existing.");
         }
         Cache cache = new Cache(identifier);
-        caches.put(cache.getCacheIdentifier(), cache);
+        caches.put(cache.getIdentifier(), cache);
         logger.debug("Cache "+identifier+" Created");
         return cache;
     }
@@ -171,10 +171,10 @@ public class CacheManager {
         if(!ready.get()){
             throw new DataStorageException(231, "CacheManager Not Ready Yet");
         }
-        if(caches.containsKey(cache.getCacheIdentifier())){
-            throw new DataStorageException(216, "CacheManager: Cache "+cache.getCacheIdentifier()+" Already Existing.");
+        if(caches.containsKey(cache.getIdentifier())){
+            throw new DataStorageException(216, "CacheManager: Cache "+cache.getIdentifier()+" Already Existing.");
         }
-        caches.put(cache.getCacheIdentifier(), cache);
+        caches.put(cache.getIdentifier(), cache);
     }
 
     /*                  MISC                    */
@@ -214,7 +214,7 @@ public class CacheManager {
                                 if(adl){
                                     cache.loadDataAsync();
                                 }
-                                caches.put(cache.getCacheIdentifier(), cache);
+                                caches.put(cache.getIdentifier(), cache);
                             }
                         }catch (Exception e){
                             System.err.println("CacheManager: Setup: Error Creating Cache: "+jsonArray.getString(i).toLowerCase()+": "+e.getMessage());
@@ -254,7 +254,7 @@ public class CacheManager {
             JSONArray cachesJ = new JSONArray();
             caches.forEach((key, value)->{
                 JSONObject cJ = new JSONObject()
-                        .put("identifier", value.getCacheIdentifier())
+                        .put("identifier", value.getIdentifier())
                         .put("adaptiveLoad", value.isAdaptive());
                 cachesJ.put(cJ);
             });
@@ -277,7 +277,7 @@ public class CacheManager {
                 try{
                     v.unloadData(true, true, false);
                 }catch (DataStorageException e){
-                    System.out.println("Cache: "+caches+": Unloading Data From Cache"+v.getCacheIdentifier()+" Failed, Data May Be Lost");
+                    System.out.println("Cache: "+caches+": Unloading Data From Cache"+v.getIdentifier()+" Failed, Data May Be Lost");
                 }
             });
             caches.clear();

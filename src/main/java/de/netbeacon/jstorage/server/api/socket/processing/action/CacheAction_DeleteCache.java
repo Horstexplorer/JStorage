@@ -25,6 +25,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ import java.util.List;
  * Tries to delete the specified cache <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Nothing <br>
+ * cache <br>
  * --- Requirements --- <br>
  * path: cache/mng <br>
  * action: delete <br>
@@ -92,5 +93,6 @@ public class CacheAction_DeleteCache implements ProcessingAction {
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         CacheManager.getInstance().deleteCache(args.get("identifier"));
         UserManager.getInstance().getDataPool().forEach((k,v)->v.removeDependentPermissions(args.get("identifier")));
+        result.addResult(new JSONObject().put("cache", args.get("identifier").toLowerCase()));
     }
 }
