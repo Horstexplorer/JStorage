@@ -1,6 +1,6 @@
 # JStorage
 ###### JSON based data storage & cache system with web api access
-> Version: 1.2.1_13 R
+> Version: 1.2.2_14 R
 
 
 ## Table of Content
