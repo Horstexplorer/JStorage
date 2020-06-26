@@ -25,6 +25,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -97,5 +98,6 @@ public class CacheAction_DeleteCachedData implements ProcessingAction {
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         Cache c = CacheManager.getInstance().getCache(args.get("cache"));
         c.deleteCachedData(args.get("identifier"));
+        result.addResult(new JSONObject().put("cache", c.getIdentifier()).put("cachedData", args.get("identifier").toLowerCase()));
     }
 }

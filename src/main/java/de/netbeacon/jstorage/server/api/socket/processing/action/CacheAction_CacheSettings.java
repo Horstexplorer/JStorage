@@ -117,7 +117,7 @@ public class CacheAction_CacheSettings implements ProcessingAction {
         }
 
         // return info
-        JSONObject jsonObject = new JSONObject().put("identifier", c.getCacheIdentifier());
+        JSONObject jsonObject = new JSONObject().put("identifier", c.getIdentifier());
         JSONArray jsonArray = new JSONArray();
         jsonArray.put(new JSONObject().put("adaptiveLoading", c.isAdaptive()));
         jsonObject.put("settings", jsonArray);

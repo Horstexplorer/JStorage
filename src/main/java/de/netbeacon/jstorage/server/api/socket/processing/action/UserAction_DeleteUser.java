@@ -23,6 +23,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,7 +36,7 @@ import java.util.List;
  * Tries to delete a user <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Nothing <br>
+ * userid <br>
  * --- Requirements --- <br>
  * path: user/mng <br>
  * action: delete <br>
@@ -92,5 +93,6 @@ public class UserAction_DeleteUser implements ProcessingAction {
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         UserManager.getInstance().deleteUser(args.get("identifier"));
+        result.addResult(new JSONObject().put("userID", args.get("identifier").toLowerCase()));
     }
 }

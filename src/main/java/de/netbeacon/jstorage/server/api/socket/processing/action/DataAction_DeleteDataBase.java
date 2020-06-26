@@ -25,6 +25,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
+import org.json.JSONObject;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,7 +38,7 @@ import java.util.List;
  * Tries to delete a specific database <br>
  * Exceptions catched by superordinate processing handler <br>
  * --- Returns --- <br>
- * Nothing <br>
+ * database <br>
  * --- Requirements --- <br>
  * path: data/db <br>
  * action: delete <br>
@@ -95,5 +96,6 @@ public class DataAction_DeleteDataBase implements ProcessingAction{
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         DataManager.getInstance().deleteDataBase(args.get("identifier"));
         UserManager.getInstance().getDataPool().forEach((k, v)->v.removeDependentPermissions(args.get("identifier")));
+        result.addResult(new JSONObject().put("database", args.get("identifier").toLowerCase()));
     }
 }

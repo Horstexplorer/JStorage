@@ -16,6 +16,8 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.2.2_14 R
+- minor improvements, response now should always contain a response body
 ## v1.2.1_13 R
 - minor improvements
 ## v1.2.0_12 R

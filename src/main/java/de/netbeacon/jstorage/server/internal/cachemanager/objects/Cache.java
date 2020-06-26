@@ -36,7 +36,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class Cache {
 
-    private final String cacheIdentifier;
+    private final String identifier;
     private final ConcurrentHashMap<String, CachedData> cachedData = new ConcurrentHashMap<>();
 
     private final AtomicLong lastAccess = new AtomicLong();
@@ -53,8 +53,8 @@ public class Cache {
      * @param identifier of the new cache, will be converted to lowercase
      */
     public Cache(String identifier){
-        this.cacheIdentifier = identifier.toLowerCase();
-        logger.debug("Cache: New Cache Created: "+this.cacheIdentifier);
+        this.identifier = identifier.toLowerCase();
+        logger.debug("Cache: New Cache Created: "+this.identifier);
     }
 
     /*                  OBJECT                  */
@@ -64,7 +64,7 @@ public class Cache {
      *
      * @return String string
      */
-    public String getCacheIdentifier(){ return cacheIdentifier; }
+    public String getIdentifier(){ return identifier; }
 
     /**
      * Returns the timestamp of the last access for this object
@@ -127,25 +127,25 @@ public class Cache {
                     return getCachedData(identifier);
                 }else{
                     // something went wrong
-                    throw new DataStorageException(101,"Cache: "+cacheIdentifier+": Loading Data Failed - Cant GET Data When Cache Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
+                    throw new DataStorageException(101,"Cache: "+this.identifier+": Loading Data Failed - Cant GET Data When Cache Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
                 }
             }else if(status.get() < 3) { // 1 or 2
                 // this should not occur as we are using locks
-                throw new DataStorageException(110, "Cache: "+cacheIdentifier+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
+                throw new DataStorageException(110, "Cache: "+this.identifier+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
             }
             // should be always false
             if(status.get() != 3) {
-                throw new DataStorageException(0, "Cache: "+cacheIdentifier+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
+                throw new DataStorageException(0, "Cache: "+this.identifier+": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
             }
             if(!cachedData.containsKey(identifier)){
-                throw new DataStorageException(205, "Cache: "+cacheIdentifier+": Data Not Found.");
+                throw new DataStorageException(205, "Cache: "+this.identifier+": Data Not Found.");
             }
             return cachedData.get(identifier);
         }catch (DataStorageException e){
             throw e;
         }catch (Exception | Error e){
-            logger.error("Cache: "+cacheIdentifier+": An Unknown Error Occurred Getting Data From This Cache", e);
-            throw new DataStorageException(0, "Cache: "+cacheIdentifier+": An Unknown Error Occurred Deleting This Cache: "+e.getMessage());
+            logger.error("Cache: "+this.identifier+": An Unknown Error Occurred Getting Data From This Cache", e);
+            throw new DataStorageException(0, "Cache: "+this.identifier+": An Unknown Error Occurred Deleting This Cache: "+e.getMessage());
         }finally {
             try{lock.readLock().unlock();}catch (Exception | Error ignore){} // this happens if the data had to be loaded (unlock before return to allow write lock for this thread)
         }
@@ -174,28 +174,28 @@ public class Cache {
                     return;
                 }else{
                     // something went wrong
-                    throw new DataStorageException(101,"Cache: "+cacheIdentifier+": Loading Data Failed - Cant GET Data When Cache Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
+                    throw new DataStorageException(101,"Cache: "+this.identifier+": Loading Data Failed - Cant GET Data When Cache Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
                 }
             }else if(status.get() < 3) { // 1 or 2
                 // this should not occur as we are using locks
-                throw new DataStorageException(110, "Cache: "+cacheIdentifier+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
+                throw new DataStorageException(110, "Cache: "+this.identifier+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
             }
             // should be always false
             if(status.get() != 3) {
-                throw new DataStorageException(0, "Cache: " + cacheIdentifier + ": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
+                throw new DataStorageException(0, "Cache: " + this.identifier + ": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
             }
-            if(!cacheIdentifier.equals(data.getCacheIdentifier())){
-                throw new DataStorageException(220, "Cache: "+cacheIdentifier+": Data For Cache "+data.getCacheIdentifier()+" Does Not Fit Here");
+            if(!this.identifier.equals(data.getCacheIdentifier())){
+                throw new DataStorageException(220, "Cache: "+this.identifier+": Data For Cache "+data.getCacheIdentifier()+" Does Not Fit Here");
             }
             if(cachedData.containsKey(data.getIdentifier()) && cachedData.get(data.getIdentifier()).isValid()){
-                throw new DataStorageException(242, "Cache: "+cacheIdentifier+" Data "+data.getIdentifier()+" Is Still Valid");
+                throw new DataStorageException(242, "Cache: "+this.identifier+" Data "+data.getIdentifier()+" Is Still Valid");
             }
             cachedData.put(data.getIdentifier(), data);
         }catch (DataStorageException e){
             throw e;
         }catch (Exception | Error e){
-            logger.error("Cache: "+cacheIdentifier+": An Unknown Error Occurred Inserting Into This Cache", e);
-            throw new DataStorageException(0, "Cache: "+cacheIdentifier+": An Unknown Error Occurred Deleting This Cache: "+e.getMessage());
+            logger.error("Cache: "+this.identifier+": An Unknown Error Occurred Inserting Into This Cache", e);
+            throw new DataStorageException(0, "Cache: "+this.identifier+": An Unknown Error Occurred Deleting This Cache: "+e.getMessage());
         }finally {
             try{lock.readLock().unlock();}catch (Exception | Error ignore){} // this happens if the data had to be loaded (unlock before return to allow write lock for this thread)
         }
@@ -226,28 +226,28 @@ public class Cache {
                     return;
                 }else{
                     // something went wrong
-                    throw new DataStorageException(101,"Cache: "+cacheIdentifier+": Loading Data Failed - Cant DELETE Data When Cache Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
+                    throw new DataStorageException(101,"Cache: "+this.identifier+": Loading Data Failed - Cant DELETE Data When Cache Is Unloaded. Last Status: "+lastStatus+" New Status: "+status.get());
                 }
             }else if(status.get() < 3) { // 1 or 2
                 // this should not occur as we are using locks
-                throw new DataStorageException(110, "Cache: "+cacheIdentifier+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
+                throw new DataStorageException(110, "Cache: "+this.identifier+": Data Has Not Finished Loading Yet", "This Error Should Not Be Thrown");
             }
             // should be always true
             if(status.get() != 3) {
-                throw new DataStorageException(0, "Cache: " + cacheIdentifier + ": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
+                throw new DataStorageException(0, "Cache: " +this.identifier+ ": Something Went Wrong - Data Neither Seems To Be Loaded Nor Unloaded Nor In Between.", "This Error Should Not Be Thrown");
             }
             if(!cachedData.containsKey(identifier)) {
-                throw new DataStorageException(205, "Cache: "+cacheIdentifier+": Data Not Found.");
+                throw new DataStorageException(205, "Cache: "+this.identifier+": Data Not Found.");
             }
             if(!(!cachedData.get(identifier).isValid() || cachedData.get(identifier).isValidUntil() < 0)) {
-                throw new DataStorageException(242, "Cache: "+cacheIdentifier+": Data "+identifier+" Cant Be Removed.");
+                throw new DataStorageException(242, "Cache: "+this.identifier+": Data "+identifier+" Cant Be Removed.");
             }
             cachedData.remove(identifier);
         }catch (DataStorageException e){
             throw e;
         }catch (Exception | Error e){
-            logger.error("Cache: "+cacheIdentifier+": An Unknown Error Occurred Deleting This Cache", e);
-            throw new DataStorageException(0, "Cache: "+cacheIdentifier+": An Unknown Error Occurred Deleting This Cache: "+e.getMessage());
+            logger.error("Cache: "+this.identifier+": An Unknown Error Occurred Deleting This Cache", e);
+            throw new DataStorageException(0, "Cache: "+this.identifier+": An Unknown Error Occurred Deleting This Cache: "+e.getMessage());
         }finally {
             try{lock.readLock().unlock();}catch (Exception | Error ignore){} // this happens if the data had to be loaded (unlock before return to allow write lock for this thread)
         }
@@ -281,11 +281,11 @@ public class Cache {
             } else { lockedBefore = true; }
             if(status.get() <= 0) {
                 status.set(2); // set loading
-                logger.debug("Cache: "+cacheIdentifier+": Loading Data");
+                logger.debug("Cache: "+this.identifier+": Loading Data");
                 // check files
                 File d = new File("./jstorage/data/cache/");
                 if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/data/cache/"+cacheIdentifier+"_cache");
+                File f = new File("./jstorage/data/cache/"+this.identifier+"_cache");
                 if(!f.exists()){ f.createNewFile();}
                 else{
                     // check if file can be loaded to memory
@@ -303,7 +303,7 @@ public class Cache {
                                     String id = jsonObject.getString("identifier").toLowerCase();
                                     long validUntil = jsonObject.getLong("validUntil");
                                     JSONObject data = jsonObject.getJSONObject("data");
-                                    if(cacheIdentifier.equals(cid) && !cachedData.containsKey(cid)){
+                                    if(this.identifier.equals(cid) && !cachedData.containsKey(cid)){
                                         CachedData cData = new CachedData(cid, id, data);
                                         if(validUntil > 0){
                                             cData.setValidForDuration(validUntil-System.currentTimeMillis());
@@ -320,12 +320,12 @@ public class Cache {
                 }
                 // set loaded
                 status.set(3);
-                logger.debug("Cache: "+cacheIdentifier+": Loading Data Finished: New Status: "+status.get());
+                logger.debug("Cache: "+this.identifier+": Loading Data Finished: New Status: "+status.get());
             }
         }catch (Exception | Error e){
             status.set(-1);
-            logger.debug("Cache: "+cacheIdentifier+": Loading Data Finished: New Status: "+status.get());
-            throw new DataStorageException(101,"Cache: "+cacheIdentifier+": Loading Data Failed: "+e.getMessage());
+            logger.debug("Cache: "+this.identifier+": Loading Data Finished: New Status: "+status.get());
+            throw new DataStorageException(101,"Cache: "+this.identifier+": Loading Data Failed: "+e.getMessage());
         }finally {
             if(!lockedBefore){
                 lock.writeLock().unlock();
@@ -371,19 +371,19 @@ public class Cache {
             } else { lockedBefore = true; }
             if(status.get() == 3) {
                 status.set(1); // set unloading
-                logger.debug("Cache: "+cacheIdentifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable);
+                logger.debug("Cache: "+this.identifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable);
                 // check for delete - ignore others
                 if(deleteTable){
                     // clear
                     cachedData.clear();
                     // remove file if exists
-                    File f = new File("./jstorage/data/cache/"+cacheIdentifier+"_cache");
+                    File f = new File("./jstorage/data/cache/"+this.identifier+"_cache");
                     f.delete();
                     status.set(0);
                 }else if(saveToFile){
                     File d = new File("./jstorage/data/cache/");
                     if(!d.exists()){ d.mkdirs(); }
-                    File f = new File("./jstorage/data/cache/"+cacheIdentifier+"_cache");
+                    File f = new File("./jstorage/data/cache/"+this.identifier+"_cache");
                     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
                     for(Map.Entry<String, CachedData> entry : cachedData.entrySet()){
                         if(entry.getKey().equals(entry.getValue().getIdentifier())){
@@ -410,19 +410,19 @@ public class Cache {
                 }
             }else if(status.get() <= 0 && deleteTable) {// cache can be deleted even if not loaded
                 status.set(1); // set unloading
-                logger.debug("Cache: "+cacheIdentifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable);
+                logger.debug("Cache: "+this.identifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable);
                 // clear
                 cachedData.clear();
                 // remove file if exists
-                File f = new File("./jstorage/data/cache/"+cacheIdentifier+"_cache");
+                File f = new File("./jstorage/data/cache/"+this.identifier+"_cache");
                 f.delete();
                 status.set(0);
             }
-            logger.debug("Cache: "+cacheIdentifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable+" finished. New Status: "+status.get());
+            logger.debug("Cache: "+this.identifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable+" finished. New Status: "+status.get());
         }catch (Exception | Error e){
             status.set(-1);
-            logger.debug("Cache: "+cacheIdentifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable+" finished. New Status: "+status.get());
-            throw new DataStorageException(102,"Cache: "+cacheIdentifier+": Unloading Data Failed, Data May Be Lost: "+e.getMessage());
+            logger.debug("Cache: "+this.identifier+": Unloading Data: u="+unload+" s="+saveToFile+" d="+deleteTable+" finished. New Status: "+status.get());
+            throw new DataStorageException(102,"Cache: "+this.identifier+": Unloading Data Failed, Data May Be Lost: "+e.getMessage());
         }finally {
             if(!lockedBefore){ // dont unlock is it has been locked before; the other part of the code might still be sensitive
                 lock.writeLock().unlock();

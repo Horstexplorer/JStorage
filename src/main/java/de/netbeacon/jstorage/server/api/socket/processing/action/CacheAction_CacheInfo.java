@@ -99,14 +99,14 @@ public class CacheAction_CacheInfo implements ProcessingAction {
         JSONObject jsonObject = new JSONObject();
         if(args.containsKey("identifier")){
             Cache c = CacheManager.getInstance().getCache(args.get("identifier"));
-            jsonObject.put("identifier", c.getCacheIdentifier()).put("lastAccess", c.getLastAccess()).put("status", c.getStatus()).put("size", c.size()).put("adaptiveLoading", c.isAdaptive());
+            jsonObject.put("identifier", c.getIdentifier()).put("lastAccess", c.getLastAccess()).put("status", c.getStatus()).put("size", c.size()).put("adaptiveLoading", c.isAdaptive());
             JSONArray jsonArray = new JSONArray();
             c.getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));
             jsonObject.put("content", jsonArray);
         }else{
             JSONArray jsonArray = new JSONArray();
             CacheManager.getInstance().getDataPool().values().forEach(v->{
-                jsonArray.put(new JSONObject().put("identifier", v.getCacheIdentifier()).put("lastAccess", v.getLastAccess()).put("status", v.getStatus()).put("size", v.size()).put("adaptiveLoading", v.isAdaptive()));
+                jsonArray.put(new JSONObject().put("identifier", v.getIdentifier()).put("lastAccess", v.getLastAccess()).put("status", v.getStatus()).put("size", v.size()).put("adaptiveLoading", v.isAdaptive()));
             });
             jsonObject.put("caches", jsonArray);
         }
