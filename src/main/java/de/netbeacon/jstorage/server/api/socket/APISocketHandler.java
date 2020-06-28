@@ -81,14 +81,15 @@ public class APISocketHandler implements Runnable {
     public void run(){
         try{
             try{
+                // get streams
+                bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+
                 // check ip for blacklist, eg update later
                 if(IPBanManager.isBanned(ip)){
                     IPBanManager.extendBan(ip, 60*10); // increase ban by 10 minutes
                     throw new HTTPException(403);
                 }
-                // get streams
-                bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
                 /*
 
