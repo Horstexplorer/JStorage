@@ -56,8 +56,17 @@ public class RateLimiter {
         if(filler < current){
             filler = current;
         }
-        long div = Math.max(current+msWindowSize - filler, 0);
-        return  (int) (div / msPerUsage);
+        long div = Math.max(current + msWindowSize - filler, 0);
+        return (div / msPerUsage);
+    }
+
+    /**
+     * Returns an estimate in ms on how long it would take to completely refill the bucket
+     *
+     * @return long
+     */
+    public long getRefillTime(){
+        return msWindowSize-(getRemainingUsages()*msPerUsage);
     }
 
     /*                  SET                 */

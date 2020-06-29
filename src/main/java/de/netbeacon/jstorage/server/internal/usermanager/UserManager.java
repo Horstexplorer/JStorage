@@ -158,20 +158,15 @@ public class UserManager {
      * @throws GenericObjectException on various errors such as the UserManager not being ready
      */
     public void insertUser(User user) throws GenericObjectException {
-        try{
-            if(!ready.get()){
-                logger.error("Not Ready Yet");
-                throw new GenericObjectException(100, "UserManager: Not Ready Yet");
-            }
-            if(userPool.containsKey(user.getUserID())){
-                logger.debug("User "+user.getUserID()+" Already Existing");
-                throw new GenericObjectException(300, "UserManager: User Already Existing"); // should not occur as userIDs are unique
-            }
-            userPool.put(user.getUserID(), user);
-            return;
-        }catch (GenericObjectException e){
-            throw e;
+        if(!ready.get()){
+            logger.error("Not Ready Yet");
+            throw new GenericObjectException(100, "UserManager: Not Ready Yet");
         }
+        if(userPool.containsKey(user.getUserID())){
+            logger.debug("User "+user.getUserID()+" Already Existing");
+            throw new GenericObjectException(300, "UserManager: User Already Existing"); // should not occur as userIDs are unique
+        }
+        userPool.put(user.getUserID(), user);
     }
 
     /**
