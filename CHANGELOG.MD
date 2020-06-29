@@ -16,6 +16,10 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.2.3_15 R
+- fixed npe occurring when the ip has been banned
+- changed and extended ratelimit headers
+- unified responses
 ## v1.2.2_14 R
 - minor improvements, response now should always contain a response body
 ## v1.2.1_13 R
