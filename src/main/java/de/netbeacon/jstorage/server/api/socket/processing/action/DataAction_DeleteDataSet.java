@@ -100,6 +100,11 @@ public class DataAction_DeleteDataSet implements ProcessingAction{
         DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
         DataTable t = d.getTable(args.get("table"));
         t.deleteDataSet(args.get("identifier"));
-        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("dataset", args.get("identifier").toLowerCase()));
+        JSONObject customResponseData = new JSONObject()
+                .put("database", d.getIdentifier())
+                .put("table", t.getIdentifier())
+                .put("identifier", args.get("identifier").toLowerCase());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

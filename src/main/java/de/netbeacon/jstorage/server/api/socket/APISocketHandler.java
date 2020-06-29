@@ -81,14 +81,15 @@ public class APISocketHandler implements Runnable {
     public void run(){
         try{
             try{
+                // get streams
+                bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+
                 // check ip for blacklist, eg update later
                 if(IPBanManager.isBanned(ip)){
                     IPBanManager.extendBan(ip, 60*10); // increase ban by 10 minutes
                     throw new HTTPException(403);
                 }
-                // get streams
-                bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
                 /*
 
@@ -266,8 +267,8 @@ public class APISocketHandler implements Runnable {
                 if(hpr.getInternalStatus() != null){
                     sendLines("Internal-Status: "+hpr.getInternalStatus());
                 }
-                // send max & remaining bucket size
-                sendLines("Max-Ratelimit: "+user.getMaxBucket(),"Remaining-Ratelimit: "+user.getRemainingBucket());
+                // send max & remaining bucket size + estimated refill time
+                sendLines("Ratelimit-Limit: "+user.getMaxBucket(),"Ratelimit-Remaining: "+user.getRemainingBucket(), "Ratelimit-Reset: "+user.getBucketRefillTime());
                 // send data
                 if(hpr.getResult() != null){
                     sendLines("Content-Type: application/json", "Content-Length: "+hpr.getResult().toString().length());

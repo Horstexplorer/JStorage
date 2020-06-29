@@ -103,12 +103,13 @@ public class DataAction_GetDataType implements ProcessingAction{
         DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
         DataTable t = d.getTable(args.get("table"));
         DataSet ds = t.getDataSet(args.get("dataset"));
-        JSONObject data;
+        JSONObject customResponseData;
         if(args.containsKey("acquire")){
-            data = ds.get(args.get("identifier"), Boolean.parseBoolean(args.get("acquire")));
+            customResponseData = ds.get(args.get("identifier"), Boolean.parseBoolean(args.get("acquire")));
         }else{
-            data = ds.get(args.get("identifier"), false);
+            customResponseData = ds.get(args.get("identifier"), false);
         }
-        result.addResult(data);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

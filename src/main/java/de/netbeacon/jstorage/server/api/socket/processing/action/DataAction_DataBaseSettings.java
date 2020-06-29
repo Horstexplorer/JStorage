@@ -111,7 +111,11 @@ public class DataAction_DataBaseSettings implements ProcessingAction{
             d.setEncryption(data.getBoolean("encryption"));
         }
 
-        JSONObject jsonObject = new JSONObject().put("database", d.getIdentifier()).put("settings", new JSONObject().put("encryption", d.encrypted()));
-        result.addResult(jsonObject);
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", d.getIdentifier())
+                .put("settings", new JSONObject()
+                        .put("encryption", d.encrypted()));
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

@@ -92,6 +92,10 @@ public class InfoAction_BasicInfo implements ProcessingAction{
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
-        result.addResult(new JSONObject().put("this", "jstorage").put("version", Info.VERSION));
+        JSONObject customResponseData = new JSONObject()
+                .put("this", "jstorage")
+                .put("version", Info.VERSION);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

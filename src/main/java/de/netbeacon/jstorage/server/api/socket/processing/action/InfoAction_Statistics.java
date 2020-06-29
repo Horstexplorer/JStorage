@@ -99,15 +99,15 @@ public class InfoAction_Statistics implements ProcessingAction{
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         UsageStatistics usageStatistics = null;
-        JSONObject statistics = new JSONObject();
+        JSONObject customResponseDatas = new JSONObject();
         DataBase dataBase = DataManager.getInstance().getDataBase(args.get("database"));
-        statistics.put("database", dataBase.getIdentifier());
+        customResponseDatas.put("database", dataBase.getIdentifier());
         if (args.containsKey("table")) {
             DataTable dataTable = dataBase.getTable(args.get("table"));
-            statistics.put("table", dataTable.getIdentifier());
+            customResponseDatas.put("table", dataTable.getIdentifier());
             if (args.containsKey("dataset")) {
                 DataSet dataSet = dataTable.getDataSet(args.get("dataset"));
-                statistics.put("dataset", dataTable.getIdentifier());
+                customResponseDatas.put("dataset", dataTable.getIdentifier());
                 usageStatistics = dataTable.getStatisticsFor(dataSet.getIdentifier()); // reuse the exception if not found
             } else {
                 usageStatistics = dataTable.getStatistics();
@@ -119,8 +119,8 @@ public class InfoAction_Statistics implements ProcessingAction{
                 .put("all", usageStatistics.getCountFor(UsageStatistics.Usage.any))
                 .put("success", new JSONObject().put("get", usageStatistics.getCountFor(UsageStatistics.Usage.get_success)).put("insert", usageStatistics.getCountFor(UsageStatistics.Usage.insert_success)).put("update", usageStatistics.getCountFor(UsageStatistics.Usage.update_success)).put("delete", usageStatistics.getCountFor(UsageStatistics.Usage.delete_success)))
                 .put("failure", new JSONObject().put("get", usageStatistics.getCountFor(UsageStatistics.Usage.get_failure)).put("insert", usageStatistics.getCountFor(UsageStatistics.Usage.insert_failure)).put("update", usageStatistics.getCountFor(UsageStatistics.Usage.update_failure)).put("delete", usageStatistics.getCountFor(UsageStatistics.Usage.delete_failure)));
-        statistics.put("statistics", values);
-        result.setHTTPStatusCode(200);
-        result.addResult(values);
+        customResponseDatas.put("statistics", values);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseDatas));
     }
 }

@@ -109,6 +109,12 @@ public class UserAction_CreateUser implements ProcessingAction {
             }
         }
         u.addGlobalPermission(GlobalPermission.UserDefault_Self);
-        result.addResult(new JSONObject().put("userID", u.getUserID()).put("userName", u.getUserName()).put("bucketSize", u.getMaxBucket()).put("password", password));
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", u.getUserID())
+                .put("userName", u.getUserName())
+                .put("bucketSize", u.getMaxBucket())
+                .put("password", password);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

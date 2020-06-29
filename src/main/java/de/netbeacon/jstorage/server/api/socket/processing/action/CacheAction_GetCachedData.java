@@ -101,10 +101,21 @@ public class CacheAction_GetCachedData implements ProcessingAction {
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         Cache c = CacheManager.getInstance().getCache(args.get("cache"));
         CachedData d = c.getCachedData("identifier");
+        JSONObject customResponseData = new JSONObject();
         if(d.isValid()){
-            result.addResult(new JSONObject().put("cache", c.getIdentifier()).put("identifier", d.getIdentifier()).put("isvalid", d.isValid()).put("isValidUntil", d.isValidUntil()).put("data", d.getData()));
+            customResponseData
+                    .put("cache", c.getIdentifier())
+                    .put("identifier", d.getIdentifier())
+                    .put("isvalid", d.isValid())
+                    .put("isValidUntil", d.isValidUntil())
+                    .put("data", d.getData());
         }else{
-            result.addResult(new JSONObject().put("cache", c.getIdentifier()).put("identifier", d.getIdentifier()).put("isvalid", d.isValid()));
+            customResponseData
+                    .put("cache", c.getIdentifier())
+                    .put("identifier", d.getIdentifier())
+                    .put("isvalid", d.isValid());
         }
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

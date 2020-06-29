@@ -119,7 +119,8 @@ public class DataAction_CreateDataSet implements ProcessingAction{
             ds = new DataSet(d, t, args.get("identifier"), data);
         }
         t.insertDataSet(ds); // as this might throw, leaving an increased dataset count but no actual dataset, the DataManager corrects the count from time to time
-        // return ds
-        result.addResult(ds.getFullData());
+        JSONObject customResponseData = ds.getFullData();
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

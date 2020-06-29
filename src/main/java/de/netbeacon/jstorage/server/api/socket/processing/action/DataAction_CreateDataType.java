@@ -112,6 +112,8 @@ public class DataAction_CreateDataType implements ProcessingAction{
         }else{
             ds.insert(args.get("identifier"), data);
         }
-        result.addResult(ds.get(args.get("identifier"), false));
+        JSONObject customResponseData = ds.get(args.get("identifier"), false);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

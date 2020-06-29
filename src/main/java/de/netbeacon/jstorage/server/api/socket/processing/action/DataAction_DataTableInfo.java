@@ -100,18 +100,26 @@ public class DataAction_DataTableInfo implements ProcessingAction{
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
-        JSONObject jsonObject = new JSONObject();
+        JSONObject customResponseData = new JSONObject();
         DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
         if(args.containsKey("identifier")){
             DataTable t = d.getTable(args.get("identifier"));
             JSONArray jsonArray = new JSONArray();
             t.getIndexPool().forEach((k,v)->jsonArray.put(k));
-            jsonObject.put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("adaptiveLoading", t.isAdaptive()).put("datasets", jsonArray).put("shards", t.getDataPool().size());
+            customResponseData
+                    .put("database", d.getIdentifier())
+                    .put("identifier", t.getIdentifier())
+                    .put("adaptiveLoading", t.isAdaptive())
+                    .put("datasets", jsonArray)
+                    .put("shards", t.getDataPool().size());
         }else{
             JSONArray jsonArray = new JSONArray();
             d.getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));
-            jsonObject.put("database", d.getIdentifier()).put("tables", jsonArray);
+            customResponseData
+                    .put("database", d.getIdentifier())
+                    .put("tables", jsonArray);
         }
-        result.addResult(jsonObject);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

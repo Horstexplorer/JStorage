@@ -93,6 +93,9 @@ public class UserAction_DeleteUser implements ProcessingAction {
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         UserManager.getInstance().deleteUser(args.get("identifier"));
-        result.addResult(new JSONObject().put("userID", args.get("identifier").toLowerCase()));
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", args.get("identifier").toLowerCase());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

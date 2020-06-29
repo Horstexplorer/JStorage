@@ -97,6 +97,10 @@ public class DataAction_DeleteDataTable implements ProcessingAction{
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
         d.deleteTable(args.get("identifier"));
-        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("datatable", args.get("identifier").toLowerCase()));
+        JSONObject customResponseData = new JSONObject()
+                .put("database", d.getIdentifier())
+                .put("identifier", args.get("identifier").toLowerCase());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

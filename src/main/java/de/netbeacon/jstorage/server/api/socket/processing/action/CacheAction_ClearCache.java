@@ -97,6 +97,9 @@ public class CacheAction_ClearCache implements ProcessingAction {
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         Cache c = CacheManager.getInstance().getCache(args.get("identifier"));
         c.getDataPool().clear();
-        result.addResult(new JSONObject().put("cache", c.getIdentifier()));
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", c.getIdentifier());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

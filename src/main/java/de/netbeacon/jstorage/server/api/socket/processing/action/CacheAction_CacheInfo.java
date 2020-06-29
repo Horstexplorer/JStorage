@@ -96,20 +96,21 @@ public class CacheAction_CacheInfo implements ProcessingAction {
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
-        JSONObject jsonObject = new JSONObject();
+        JSONObject customResponseData = new JSONObject();
         if(args.containsKey("identifier")){
             Cache c = CacheManager.getInstance().getCache(args.get("identifier"));
-            jsonObject.put("identifier", c.getIdentifier()).put("lastAccess", c.getLastAccess()).put("status", c.getStatus()).put("size", c.size()).put("adaptiveLoading", c.isAdaptive());
+            customResponseData.put("identifier", c.getIdentifier()).put("lastAccess", c.getLastAccess()).put("status", c.getStatus()).put("size", c.size()).put("adaptiveLoading", c.isAdaptive());
             JSONArray jsonArray = new JSONArray();
             c.getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));
-            jsonObject.put("content", jsonArray);
+            customResponseData.put("content", jsonArray);
         }else{
             JSONArray jsonArray = new JSONArray();
             CacheManager.getInstance().getDataPool().values().forEach(v->{
                 jsonArray.put(new JSONObject().put("identifier", v.getIdentifier()).put("lastAccess", v.getLastAccess()).put("status", v.getStatus()).put("size", v.size()).put("adaptiveLoading", v.isAdaptive()));
             });
-            jsonObject.put("caches", jsonArray);
+            customResponseData.put("caches", jsonArray);
         }
-        result.addResult(jsonObject);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

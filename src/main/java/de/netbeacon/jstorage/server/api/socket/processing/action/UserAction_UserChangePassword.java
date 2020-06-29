@@ -96,13 +96,18 @@ public class UserAction_UserChangePassword implements ProcessingAction {
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
+        JSONObject customResponseData = new JSONObject();
         if(args.containsKey("identifier")){
             User u = UserManager.getInstance().getUserByID(args.get("identifier"));
             u.setPassword(args.get("password"));
-            result.addResult(new JSONObject().put("user", u.getUserID()));
+            customResponseData
+                    .put("identifier", u.getUserID());
         }else{
             user.setPassword(args.get("password"));
-            result.addResult(new JSONObject().put("userID", user.getUserID()));
+            customResponseData
+                    .put("identifier", user.getUserID());
         }
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

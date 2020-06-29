@@ -97,15 +97,22 @@ public class UserAction_UserGetNewLoginToken implements ProcessingAction {
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
-        JSONObject jsonObject = new JSONObject();
+        JSONObject customResponseData = new JSONObject();
         if(args.containsKey("identifier")){
             User u = UserManager.getInstance().getUserByID(args.get("identifier"));
             u.createNewLoginRandom();
-            jsonObject.put("userID", u.getUserID()).put("userName", u.getUserName()).put("loginToken", u.getLoginToken());
+            customResponseData
+                    .put("identifier", u.getUserID())
+                    .put("userName", u.getUserName())
+                    .put("loginToken", u.getLoginToken());
         }else{
             user.createNewLoginRandom(); // create new one
-            jsonObject.put("userID", user.getUserID()).put("userName", user.getUserName()).put("loginToken", user.getLoginToken());
+            customResponseData
+                    .put("identifier", user.getUserID())
+                    .put("userName", user.getUserName())
+                    .put("loginToken", user.getLoginToken());
         }
-        result.addResult(jsonObject);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

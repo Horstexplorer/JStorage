@@ -120,6 +120,12 @@ public class CacheAction_CreateCachedData implements ProcessingAction {
                 cachedData.setValidForDuration(10);
             }
         }
-        result.addResult(new JSONObject().put("cache", c.getIdentifier()).put("cachedData", new JSONObject().put("identifier", cachedData.getIdentifier()).put("validUntil", cachedData.isValidUntil())));
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", c.getIdentifier())
+                .put("cachedData", new JSONObject()
+                        .put("identifier", cachedData.getIdentifier())
+                        .put("validUntil", cachedData.isValidUntil()));
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

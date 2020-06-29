@@ -97,17 +97,18 @@ public class DataAction_DataBaseInfo implements ProcessingAction{
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
-        JSONObject jsonObject = new JSONObject();
+        JSONObject customResponseData = new JSONObject();
         if(args.containsKey("identifier")){
             DataBase d = DataManager.getInstance().getDataBase(args.get("identifier"));
             JSONArray jsonArray = new JSONArray();
             d.getDataPool().values().forEach(v ->jsonArray.put(v.getIdentifier()));
-            jsonObject.put("database", d.getIdentifier()).put("tables", jsonArray);
+            customResponseData.put("identifier", d.getIdentifier()).put("tables", jsonArray);
         }else{
             JSONArray jsonArray = new JSONArray();
             DataManager.getInstance().getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));
-            jsonObject.put("databases", jsonArray);
+            customResponseData.put("databases", jsonArray);
         }
-        result.addResult(jsonObject);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

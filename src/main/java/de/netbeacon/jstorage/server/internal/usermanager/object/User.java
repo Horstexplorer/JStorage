@@ -26,8 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import java.security.SecureRandom;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This class represents a user
@@ -215,6 +214,13 @@ public class User {
     public long getMaxBucket(){
         return rateLimiter.getMaxUsages();
     }
+
+    /**
+     * Used to get the timestamp when the bucket will be fully refilled
+     *
+     * @return long
+     */
+    public long getBucketRefillTime() {return System.currentTimeMillis()+rateLimiter.getRefillTime(); }
 
     /*                  ACCESS               */
 

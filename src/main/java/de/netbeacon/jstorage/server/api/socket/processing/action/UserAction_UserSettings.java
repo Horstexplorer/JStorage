@@ -117,7 +117,7 @@ public class UserAction_UserSettings implements ProcessingAction {
             // update data
             updateData(user);
             // build result
-            result.addResult(buildResult(user));
+            result.addResult(this.getDefaultResponse(buildResult(user)));
         }
     }
 
@@ -190,7 +190,7 @@ public class UserAction_UserSettings implements ProcessingAction {
     }
 
     private JSONObject buildResult(User u){
-        JSONObject jsonObject = new JSONObject().put("userID", user.getUserID()).put("userName", user.getUserName()).put("bucketSize", user.getMaxBucket());
+        JSONObject jsonObject = new JSONObject().put("identifier", user.getUserID()).put("userName", user.getUserName()).put("bucketSize", user.getMaxBucket());
         JSONArray jsonArray1 = new JSONArray();
         user.getGlobalPermissions().forEach(jsonArray1::put);
         JSONArray jsonArray2 = new JSONArray();

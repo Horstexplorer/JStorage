@@ -102,7 +102,8 @@ public class DataAction_GetDataSet implements ProcessingAction{
         DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
         DataTable t = d.getTable(args.get("table"));
         DataSet ds = t.getDataSet(args.get("identifier"));
-        JSONObject jsonObject = ds.getFullData();
-        result.addResult(jsonObject);
+        JSONObject customResponseData = ds.getFullData();
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

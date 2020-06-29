@@ -121,6 +121,11 @@ public class DataAction_DataSetSettings implements ProcessingAction{
             }
         }
 
-        result.addResult(new JSONObject().put("maxSTPEThreads", DataSet.getMaxSTPEThreads()).put("dataSetsPerThread", DataSet.getDataSetsPerThread()).put("dataSets", DataSet.getDataSetCount()));
+        JSONObject customResponseData = new JSONObject()
+                .put("maxSTPEThreads", DataSet.getMaxSTPEThreads())
+                .put("dataSetsPerThread", DataSet.getDataSetsPerThread())
+                .put("dataSets", DataSet.getDataSetCount());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }
