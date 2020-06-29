@@ -129,6 +129,7 @@ public interface ProcessingAction {
     default JSONObject getDefaultResponse(JSONObject customResponse){
         return new JSONObject()
                 .put("request", new JSONObject()
+                        .put("actor", getClass().getName())
                         .put("action", getAction()))
                 .put("result", customResponse);
     }
