@@ -118,4 +118,18 @@ public interface ProcessingAction {
      */
     void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException;
 
+    /*                  MISC                   */
+
+    /**
+     * Used to unify responses
+     *
+     * @param customResponse containing the custom response
+     * @return JSONObject containing a unified response
+     */
+    default JSONObject getDefaultResponse(JSONObject customResponse){
+        return new JSONObject()
+                .put("request", new JSONObject()
+                        .put("action", getAction()))
+                .put("result", customResponse);
+    }
 }

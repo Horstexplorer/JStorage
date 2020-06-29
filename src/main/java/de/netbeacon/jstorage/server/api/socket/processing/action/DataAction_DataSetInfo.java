@@ -106,6 +106,13 @@ public class DataAction_DataSetInfo implements ProcessingAction{
         JSONObject data = ds.getFullData();
         JSONArray jsonArray = new JSONArray();
         data.keySet().stream().filter(v->!(v.equalsIgnoreCase("database") || v.equalsIgnoreCase("table") || v.equalsIgnoreCase("identifier"))).forEach(jsonArray::put);
-        result.addResult(new JSONObject().put("database", ds.getDataBase().getIdentifier()).put("table", ds.getTable().getIdentifier()).put("identifier", ds.getIdentifier()).put("size", data.toString().getBytes().length).put("keys", jsonArray));
+        JSONObject customResponseData = new JSONObject()
+                .put("database", ds.getDataBase().getIdentifier())
+                .put("table", ds.getTable().getIdentifier())
+                .put("identifier", ds.getIdentifier())
+                .put("size", data.toString().getBytes().length)
+                .put("keys", jsonArray);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

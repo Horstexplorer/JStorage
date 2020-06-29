@@ -98,6 +98,10 @@ public class CacheAction_DeleteCachedData implements ProcessingAction {
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         Cache c = CacheManager.getInstance().getCache(args.get("cache"));
         c.deleteCachedData(args.get("identifier"));
-        result.addResult(new JSONObject().put("cache", c.getIdentifier()).put("cachedData", args.get("identifier").toLowerCase()));
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", c.getIdentifier())
+                .put("cachedData", args.get("identifier").toLowerCase());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

@@ -141,8 +141,16 @@ public class DataAction_DataTableSettings implements ProcessingAction{
         }
 
         // return info
-        JSONObject settings = new JSONObject();
-        settings.put("adaptiveLoading", t.isAdaptive()).put("defaultStructure", t.getDefaultStructure()).put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode()).put("autoOptimize", t.autoOptimizationEnabled());
-        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("settings", settings));
+        JSONObject settings = new JSONObject()
+                .put("adaptiveLoading", t.isAdaptive())
+                .put("defaultStructure", t.getDefaultStructure())
+                .put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode())
+                .put("autoOptimize", t.autoOptimizationEnabled());
+        JSONObject customResponseData = new JSONObject()
+                .put("database", d.getIdentifier())
+                .put("identifier", t.getIdentifier())
+                .put("settings", settings);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

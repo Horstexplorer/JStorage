@@ -94,6 +94,9 @@ public class CacheAction_CreateCache implements ProcessingAction {
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException{
         Cache c = CacheManager.getInstance().createCache(args.get("identifier"));
         user.addDependentPermission(c.getIdentifier(), DependentPermission.CacheAdmin_Creator);
-        result.addResult(new JSONObject().put("cache", c.getIdentifier()));
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", c.getIdentifier());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

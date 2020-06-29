@@ -102,6 +102,12 @@ public class DataAction_DeleteDataType implements ProcessingAction{
         DataTable t = d.getTable(args.get("table"));
         DataSet ds = t.getDataSet(args.get("dataset"));
         ds.delete(args.get("identifier"));
-        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()).put("dataset", ds.getIdentifier()).put("datatype", args.get("identifier").toLowerCase()));
+        JSONObject customResponseData = new JSONObject()
+                .put("database", d.getIdentifier())
+                .put("table", t.getIdentifier())
+                .put("dataset", ds.getIdentifier())
+                .put("identifier", args.get("identifier").toLowerCase());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

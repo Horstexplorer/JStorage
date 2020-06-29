@@ -96,6 +96,9 @@ public class DataAction_CreateDataBase implements ProcessingAction{
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         DataBase d = DataManager.getInstance().createDataBase(args.get("identifier"));
         user.addDependentPermission(d.getIdentifier(), DependentPermission.DBAdmin_Creator);
-        result.addResult(new JSONObject().put("database", d.getIdentifier()));
+        JSONObject customResponseData = new JSONObject()
+                .put("identifier", d.getIdentifier());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

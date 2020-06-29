@@ -108,7 +108,10 @@ public class DataAction_CreateDataTable implements ProcessingAction{
                 throw new GenericObjectException(200, "Error Parsing Setting \"adaptiveLoad\"");
             }
         }
-
-        result.addResult(new JSONObject().put("database", d.getIdentifier()).put("table", t.getIdentifier()));
+        JSONObject customResponseData = new JSONObject()
+                .put("database", d.getIdentifier())
+                .put("identifier", t.getIdentifier());
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }

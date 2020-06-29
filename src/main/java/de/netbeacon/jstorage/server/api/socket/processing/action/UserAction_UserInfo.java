@@ -95,10 +95,10 @@ public class UserAction_UserInfo implements ProcessingAction {
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
-        JSONObject jsonObject = new JSONObject();
+        JSONObject customResponseData = new JSONObject();
         if(args.containsKey("identifier")){
             User u = UserManager.getInstance().getUserByID(args.get("identifier"));
-            jsonObject.put("userID", u.getUserID()).put("userName", u.getUserName()).put("bucketSize", u.getMaxBucket());
+            customResponseData.put("identifier", u.getUserID()).put("userName", u.getUserName()).put("bucketSize", u.getMaxBucket());
             JSONArray jsonArray1 = new JSONArray();
             u.getGlobalPermissions().forEach(jsonArray1::put);
             JSONArray jsonArray2 = new JSONArray();
@@ -109,14 +109,15 @@ public class UserAction_UserInfo implements ProcessingAction {
                 jsonObject1.put("permissions", jsonArray3);
                 jsonArray2.put(jsonObject1);
             });
-            jsonObject.put("globalPermission", jsonArray1).put("dependentPermission", jsonArray2);
+            customResponseData.put("globalPermission", jsonArray1).put("dependentPermission", jsonArray2);
         }else{
             JSONArray jsonArray = new JSONArray();
             UserManager.getInstance().getDataPool().values().forEach(v->{
                 jsonArray.put(new JSONObject().put("userName", v.getUserName()).put("userID", v.getUserID()));
             });
-            jsonObject.put("users", jsonArray);
+            customResponseData.put("users", jsonArray);
         }
-        result.addResult(jsonObject);
+        // set result
+        result.addResult(this.getDefaultResponse(customResponseData));
     }
 }
