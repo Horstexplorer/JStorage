@@ -39,6 +39,8 @@ import java.util.*;
 
 /**
  * The type Api socket handler.
+ *
+ * @author horstexplorer
  */
 public class APISocketHandler implements Runnable {
 
