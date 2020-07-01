@@ -31,6 +31,8 @@ import java.security.SecureRandom;
 
 /**
  * Used to en/decrypt bytes
+ *
+ * @author horstexplorer
  */
 public class Crypt {
 

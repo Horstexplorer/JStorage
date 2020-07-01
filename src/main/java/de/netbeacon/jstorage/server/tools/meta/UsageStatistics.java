@@ -24,6 +24,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Represents the usage statistics of a specific object
+ *
+ * @author horstexplorer
  */
 public class UsageStatistics {
 

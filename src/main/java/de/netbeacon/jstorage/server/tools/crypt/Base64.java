@@ -18,6 +18,8 @@ package de.netbeacon.jstorage.server.tools.crypt;
 
 /**
  * Simple QOL wrap for base64 en/decoding
+ *
+ * @author horstexplorer
  */
 public class Base64 {
 

@@ -23,6 +23,8 @@ import java.util.Set;
 
 /**
  * Used to check whether a specific json structure is adhered to
+ *
+ * @author horstexplorer
  */
 public class JSONMatcher {
 
