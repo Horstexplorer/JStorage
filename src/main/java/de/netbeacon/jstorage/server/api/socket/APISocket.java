@@ -121,7 +121,7 @@ public class APISocket implements Runnable {
             String certPath = "./jstorage/cert/certificate.pem";
             String keyPath = "./jstorage/cert/key.pem";
 
-            logger.info("Setup");
+            logger.info("Setting Up API Socket");
             try{
                 File d = new File("./jstorage/config/");
                 if(!d.exists()){ d.mkdirs(); }
@@ -157,9 +157,9 @@ public class APISocket implements Runnable {
                 workQueue = new ArrayBlockingQueue<>(maxQueueSize);
                 processing = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
             }catch (Exception e){
-                logger.error("Setup Failed", e);
+                logger.error("Setting Up API Socket Failed. Trying To Continue", e);
             }
-            logger.info("Starting");
+            logger.info("Starting API Socket");
             try{
                 // load other dependencies & prepare processors
                 new IPBanManager();
@@ -171,12 +171,12 @@ public class APISocket implements Runnable {
                 SSLContext sslContext = sslContextFactory.createSSLContext();
                 logger.info("Loaded SSLContext: "+sslContext.getProvider().getInfo());
                 sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
-                logger.info("Running At: "+sslServerSocket.getInetAddress()+":"+sslServerSocket.getLocalPort());
+                logger.info("API Socket Running At: "+sslServerSocket.getInetAddress()+":"+sslServerSocket.getLocalPort());
 
                 // running
                 while(true){
                     SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-                    logger.info("Incoming Connection: "+sslSocket.getRemoteSocketAddress());
+                    logger.info("Incoming API Connection: "+sslSocket.getRemoteSocketAddress());
                     try{
                         // handshake
                         sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
@@ -185,7 +185,7 @@ public class APISocket implements Runnable {
                         try{
                             processing.execute(new APISocketHandler(sslSocket));
                         }catch (RejectedExecutionException e){
-                            logger.warn("Cannot Process Incoming Connection - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
+                            logger.warn("Cannot Process Incoming API Connection - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
                             overload.execute(() -> {
                                 try{
                                     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(sslSocket.getOutputStream()));
@@ -197,7 +197,7 @@ public class APISocket implements Runnable {
                             });
                         }
                     }catch (Exception e){
-                        logger.error("Error For Incoming Connection: "+sslSocket.getRemoteSocketAddress(), e);
+                        logger.error("Error For Incoming API Connection: "+sslSocket.getRemoteSocketAddress(), e);
                         try{sslSocket.close();}catch (Exception ignore){}
                     }
                 }
