@@ -873,7 +873,7 @@ public class DataTable {
         shardPool.forEach((k, v)-> {
             try{
                 v.unloadData(false, false, true);
-            } catch (DataStorageException e){}
+            } catch (DataStorageException ignore){}
         });
         shardPool.clear();
         indexPool.clear();

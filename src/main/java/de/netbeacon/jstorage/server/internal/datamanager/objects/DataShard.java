@@ -463,14 +463,11 @@ public class DataShard {
      */
     protected void loadDataAsync(){
         if(status.get() <= 0){
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        loadData();
-                    } catch (DataStorageException e) {
-                        e.printStackTrace();
-                    }
+            Thread t = new Thread(() -> {
+                try {
+                    loadData();
+                } catch (DataStorageException e) {
+                    e.printStackTrace();
                 }
             });
             t.setDaemon(true);
