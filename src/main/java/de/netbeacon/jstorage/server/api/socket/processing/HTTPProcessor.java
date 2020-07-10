@@ -107,12 +107,12 @@ public class HTTPProcessor {
                     action.setPayload(payload); // might be null - required to allow optional payloads
                 }
                 if(!action.loginModeIsSupported(userLoginMode)) {
-                    result.setHTTPStatusCode(403);
+                    result.setHTTPStatusCode(401);
                     result.addAdditionalInformation("Invalid Login Method");
                     return;
                 }
                 if(!action.userHasPermission()) {
-                    result.setHTTPStatusCode(403);
+                    result.setHTTPStatusCode(401);
                     result.addAdditionalInformation("Not Authorized");
                     return;
                 }

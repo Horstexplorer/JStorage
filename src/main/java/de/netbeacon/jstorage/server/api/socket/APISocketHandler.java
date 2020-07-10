@@ -61,7 +61,7 @@ public class APISocketHandler implements Runnable {
      */
     protected APISocketHandler(SSLSocket socket){
         this.socket = socket;
-        logger.info("Handling Connection From "+socket.getRemoteSocketAddress());
+        logger.debug("Handling Connection From "+socket.getRemoteSocketAddress());
         this.ip = socket.getRemoteSocketAddress().toString().substring(1, socket.getRemoteSocketAddress().toString().indexOf(":"));
     }
 
@@ -88,8 +88,8 @@ public class APISocketHandler implements Runnable {
                 bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
 
                 // check ip for blacklist, eg update later
-                if(IPBanManager.isBanned(ip)){
-                    IPBanManager.extendBan(ip, 60*10); // increase ban by 10 minutes
+                if(IPBanManager.getInstance().isBanned(ip)){
+                    IPBanManager.getInstance().extendBan(ip, 60*10); // increase ban by 10 minutes
                     throw new HTTPException(403);
                 }
 
@@ -276,14 +276,13 @@ public class APISocketHandler implements Runnable {
                     sendLines("Content-Type: application/json", "Content-Length: "+hpr.getResult().toString().length());
                     endHeaders(); // spacer between header and data
                     sendData(hpr.getResult().toString());
-                    logger.info(hpr.getResult().toString().length()+", "+hpr.getResult().toString().getBytes().length);
                 }else{
                     endHeaders(); // "server: I finished sending headers"
                 }
                 logger.debug("Send Result: "+hpr.getHTTPStatusMessage()+ " "+((hpr.getResult() != null)? hpr.getResult().toString() : "empty"));
                 // done processing :3 *happy calculation noises*
             }catch (HTTPException e){
-                IPBanManager.flagIP(ip); // may change later as not every exception should trigger ab ip flag
+                IPBanManager.getInstance().flagIP(ip); // may change later as not every exception should trigger ab ip flag
                 logger.debug("Send Result: ", e);
                 if(e.getAdditionalInformation() == null){
                     sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage());
@@ -297,7 +296,7 @@ public class APISocketHandler implements Runnable {
             try{sendLines("HTTP/1.1 500 Internal Server Error"); endHeaders();}catch (Exception ignore){}
             e.printStackTrace();
         }finally {
-            logger.info("Finished Processing Of "+socket.getRemoteSocketAddress());
+            logger.debug("Finished Processing Of "+socket.getRemoteSocketAddress());
             close();
         }
     }

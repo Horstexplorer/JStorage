@@ -173,7 +173,7 @@ public class APISocket implements Runnable {
                 // running
                 while(true){
                     SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-                    logger.info("Incoming API Connection: "+sslSocket.getRemoteSocketAddress());
+                    logger.debug("Incoming API Connection: "+sslSocket.getRemoteSocketAddress());
                     try{
                         // handshake
                         sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
@@ -194,12 +194,13 @@ public class APISocket implements Runnable {
                             });
                         }
                     }catch (Exception e){
-                        logger.error("Error For Incoming Connection On API Socket: "+sslSocket.getRemoteSocketAddress(), e);
+                        logger.debug("Error For Incoming Connection On API Socket: "+sslSocket.getRemoteSocketAddress(), e);
                         try{sslSocket.close();}catch (Exception ignore){}
                     }
                 }
             }catch (Exception e){
                 try{sslServerSocket.close();}catch (Exception ignore){}
+                logger.error("Stopped API Socket Due To Exception: ", e);
             }finally {
                 running.set(false);
             }
