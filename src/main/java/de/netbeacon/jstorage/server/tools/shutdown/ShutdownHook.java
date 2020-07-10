@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.internal.cachemanager.CacheManager;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
+import de.netbeacon.jstorage.server.tools.meta.SystemStats;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -54,5 +55,6 @@ public class ShutdownHook {
         try{System.out.print("UserManager..."); UserManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("DataManager..."); DataManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("CacheManager..."); CacheManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
+        try{System.out.print("SystemStats..."); SystemStats.getInstance().stopAnalysis(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
     }
 }

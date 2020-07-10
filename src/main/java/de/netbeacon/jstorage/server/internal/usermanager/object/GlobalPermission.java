@@ -50,7 +50,12 @@ public enum GlobalPermission {
     /**
      * Cache admin global permission.
      */
-    CacheAdmin;                 // manage all caches
+    CacheAdmin,                 // manage all caches
+
+    /**
+     * Used to let the user access the advanced statistics on the hello socket
+     */
+    ViewAdvancedStatistics;
 
     /**
      * Used to get the enum matching the string

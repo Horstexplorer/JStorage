@@ -107,6 +107,36 @@ public class APISocket implements Runnable {
         }
     }
 
+    /**
+     * Used to calculate a load value between 0 and 20 for SystemStats
+     * @return int
+     */
+    public int getLoadValue(){
+        int wq = (1-(workQueue.remainingCapacity()/(workQueue.size()+workQueue.remainingCapacity())))*10;
+        int tp = (processing.getPoolSize()/processing.getMaximumPoolSize())*10;
+        return wq+tp;
+    }
+
+    public int getWorkQueueRemainingCapacity(){
+        return workQueue.remainingCapacity();
+    }
+
+    public int getWorkQueueMaxCapacity(){
+        return workQueue.remainingCapacity()+workQueue.size();
+    }
+
+    public int getCurrentPoolSize(){
+        return processing.getPoolSize();
+    }
+
+    public int getCorePoolSize(){
+        return processing.getCorePoolSize();
+    }
+
+    public int getMaxPoolSize(){
+        return processing.getMaximumPoolSize();
+    }
+
     @Override
     public void run(){
         if(!running.get()){
