@@ -16,7 +16,7 @@
 
 package de.netbeacon.jstorage.server.api.socket.processing.action;
 
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
+import de.netbeacon.jstorage.server.api.socket.processing.APIProcessorResult;
 import de.netbeacon.jstorage.server.internal.cachemanager.CacheManager;
 import de.netbeacon.jstorage.server.internal.cachemanager.objects.Cache;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
@@ -53,7 +53,7 @@ import java.util.List;
  */
 public class CacheAction_ClearCache implements ProcessingAction {
 
-    private HTTPProcessorResult result;
+    private APIProcessorResult result;
     private HashMap<String, String> args;
     private User user;
 
@@ -68,7 +68,7 @@ public class CacheAction_ClearCache implements ProcessingAction {
     }
 
     @Override
-    public void setup(User user, HTTPProcessorResult result, HashMap<String, String> args) {
+    public void setup(User user, APIProcessorResult result, HashMap<String, String> args) {
         this.user = user;
         this.result = result;
         this.args = args;

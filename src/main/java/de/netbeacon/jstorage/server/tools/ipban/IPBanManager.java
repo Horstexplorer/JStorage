@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 /**
@@ -42,31 +43,50 @@ import java.util.regex.Pattern;
  */
 public class IPBanManager {
 
-    private static final AtomicBoolean ready = new AtomicBoolean(false);
-    private static final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private static IPBanManager instance;
+
+    private final AtomicBoolean ready = new AtomicBoolean(false);
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
     private static final Pattern ipPattern = Pattern.compile("^(((([1]?\\d)?\\d|2[0-4]\\d|25[0-5])\\.){3}(([1]?\\d)?\\d|2[0-4]\\d|25[0-5]))|([\\da-fA-F]{1,4}(\\:[\\da-fA-F]{1,4}){7})|(([\\da-fA-F]{1,4}:){0,5}::([\\da-fA-F]{1,4}:){0,5}[\\da-fA-F]{1,4})$");
-    private static int banAfterFlags = 5;
-    private static final ConcurrentHashMap<String, IPBanObject> banlist = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<String, AtomicInteger> flaglist = new ConcurrentHashMap<>();
-    private static final HashSet<String> whitelist = new HashSet<>();
+    private int banAfterFlags = 10;
+    private final ConcurrentHashMap<String, IPBanObject> banlist = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, AtomicInteger> flaglist = new ConcurrentHashMap<>();
+    private final HashSet<String> whitelist = new HashSet<>();
+
+    private final ReentrantLock lock = new ReentrantLock();
 
     private static ScheduledExecutorService ses;
     private static ScheduledFuture<?> cleanTask;
     private static ScheduledFuture<?> flagTask;
 
-    private static final Logger logger = LoggerFactory.getLogger(IPBanManager.class);
+    private final Logger logger = LoggerFactory.getLogger(IPBanManager.class);
 
     /**
      * Used to set up the banned ips
-     *
-     * @throws SetupException on setup error
      */
-    public IPBanManager() throws SetupException{
-        if(!ready.get() || !shutdown.get()){
-            setup();
-            ready.set(true);
+    protected IPBanManager(){}
+
+    /**
+     * Used to get the instance of this class without forcing initialization
+     * @return IPBanManager
+     */
+    public static IPBanManager getInstance(){
+        return getInstance(false);
+    }
+
+    /**
+     * Used to get the instance of this class
+     * <p>
+     * Can be used to initialize the class if this didnt happened yet
+     * @param initializeIfNeeded boolean
+     * @return IPBanManager
+     */
+    public static IPBanManager getInstance(boolean initializeIfNeeded){
+        if(instance == null && initializeIfNeeded){
+            instance = new IPBanManager();
         }
+        return instance;
     }
 
     /*                  OBJECT                  */
@@ -78,7 +98,7 @@ public class IPBanManager {
      *
      * @param value value
      */
-    public static void setBanAfterFlags(int value){
+    public void setBanAfterFlags(int value){
         if(value > 0){
             banAfterFlags = value;
         }else{
@@ -94,7 +114,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean, false if the ip is already whitelisted or is invalid
      */
-    public static boolean addToWhitelist(String ip){
+    public boolean addToWhitelist(String ip){
         if(ipPattern.matcher(ip).matches()){
             if(!whitelist.contains(ip)){
                 whitelist.add(ip);
@@ -111,7 +131,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean, false if the ip is not on the whitelist or is invalid
      */
-    public static boolean removeFromWhitelist(String ip){
+    public boolean removeFromWhitelist(String ip){
         if(ipPattern.matcher(ip).matches()){
             if(whitelist.contains(ip)){
                 whitelist.remove(ip);
@@ -132,7 +152,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
      */
-    public static boolean isIP(String ip){
+    public boolean isIP(String ip){
         return ipPattern.matcher(ip).matches();
     }
 
@@ -142,7 +162,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean, true if is banned
      */
-    public static boolean isBanned(String ip){
+    public boolean isBanned(String ip){
         if(ipPattern.matcher(ip).matches()){
             return banlist.containsKey(ip);
         }
@@ -158,7 +178,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return int int
      */
-    public static int isFlagged(String ip){
+    public int isFlagged(String ip){
         if(ipPattern.matcher(ip).matches()){
             if(flaglist.containsKey(ip)){
                 return flaglist.get(ip).get();
@@ -173,7 +193,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
      */
-    public static boolean isWhitelisted(String ip){
+    public boolean isWhitelisted(String ip){
         if(ipPattern.matcher(ip).matches()){
             return whitelist.contains(ip);
         }
@@ -190,7 +210,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
      */
-    public static boolean unbanIP(String ip){
+    public boolean unbanIP(String ip){
         if(ipPattern.matcher(ip).matches()){
             if(banlist.containsKey(ip)){
                banlist.remove(ip);
@@ -210,7 +230,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
      */
-    public static boolean banIP(String ip){
+    public boolean banIP(String ip){
         if(ipPattern.matcher(ip).matches()){
             if(!banlist.containsKey(ip) && !whitelist.contains(ip)){
                 try{
@@ -234,7 +254,7 @@ public class IPBanManager {
      * @param duration in seconds
      * @return boolean boolean
      */
-    public static boolean banIP(String ip, long duration){
+    public boolean banIP(String ip, long duration){
         if(ipPattern.matcher(ip).matches()){
             if(!banlist.containsKey(ip) && !whitelist.contains(ip)){
                 try{
@@ -257,7 +277,7 @@ public class IPBanManager {
      * @param additional in seconds
      * @return boolean boolean
      */
-    public static boolean extendBan(String ip, long additional){
+    public boolean extendBan(String ip, long additional){
         if(ipPattern.matcher(ip).matches()){
             if(banlist.containsKey(ip) && banlist.get(ip).getUntil() > -1L){
                 banlist.get(ip).increaseBan(additional);
@@ -280,7 +300,7 @@ public class IPBanManager {
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
      */
-    public static boolean flagIP(String ip){
+    public boolean flagIP(String ip){
         if(ipPattern.matcher(ip).matches()){
             if(!whitelist.contains(ip)){
                 if(!flaglist.containsKey(ip)){
@@ -304,8 +324,12 @@ public class IPBanManager {
      *
      * @throws SetupException on exception
      */
-    private void setup() throws SetupException {
+    public void setup() throws SetupException {
         try{
+            lock.lock();
+            if(shutdown.get() | ready.get()){
+                return;
+            }
             // check dir
             File d = new File("./jstorage/config/");
             if(!d.exists()){ d.mkdirs(); }
@@ -398,6 +422,8 @@ public class IPBanManager {
         }catch (Exception e){
             logger.error("Setup Failed", e);
             throw new SetupException("IPBanManager: Setup Failed: "+e.getMessage());
+        }finally {
+            lock.unlock();
         }
     }
 
@@ -406,7 +432,7 @@ public class IPBanManager {
      *
      * @throws ShutdownException on exception
      */
-    public static void shutdown() throws ShutdownException {
+    public void shutdown() throws ShutdownException {
         if(ready.get()){
             try{
                 shutdown.set(true);

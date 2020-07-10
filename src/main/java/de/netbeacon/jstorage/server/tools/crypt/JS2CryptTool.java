@@ -35,6 +35,8 @@ import java.util.regex.Pattern;
 
 /**
  * This class takes care of en and decryption of data
+ *
+ * @author horstexplorer
  */
 public class JS2CryptTool {
 

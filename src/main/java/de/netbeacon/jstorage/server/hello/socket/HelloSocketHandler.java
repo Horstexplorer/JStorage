@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package de.netbeacon.jstorage.server.api.socket;
+package de.netbeacon.jstorage.server.hello.socket;
 
-import de.netbeacon.jstorage.server.api.socket.processing.APIProcessor;
-import de.netbeacon.jstorage.server.api.socket.processing.APIProcessorResult;
+import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessor;
+import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.exceptions.HTTPException;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
-import org.json.JSONObject;
+import de.netbeacon.jstorage.server.tools.ratelimiter.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,15 +34,20 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
 
 /**
- * The type Api socket handler.
+ * This class takes care of evaluating incoming requests from the hello socket
  *
  * @author horstexplorer
  */
-public class APISocketHandler implements Runnable {
+public class HelloSocketHandler implements Runnable {
 
     private final SSLSocket socket;
     private BufferedReader bufferedReader;
@@ -50,37 +55,25 @@ public class APISocketHandler implements Runnable {
     private final String ip;
 
     private static final int maxheadersize = 8; // 8kb
-    private static final int maxbodysize = 8000; //8mb
 
-    private final Logger logger = LoggerFactory.getLogger(APISocketHandler.class);
+    private static final ConcurrentHashMap<String, RateLimiter> ipRateLimiter = new ConcurrentHashMap<>();
+
+    private final Logger logger = LoggerFactory.getLogger(HelloSocketHandler.class);
 
     /**
-     * Instantiates a new Api socket handler.
+     * Instantiates a new Hello socket handler.
      *
      * @param socket the socket
      */
-    protected APISocketHandler(SSLSocket socket){
+    protected HelloSocketHandler(SSLSocket socket){
         this.socket = socket;
         logger.debug("Handling Connection From "+socket.getRemoteSocketAddress());
         this.ip = socket.getRemoteSocketAddress().toString().substring(1, socket.getRemoteSocketAddress().toString().indexOf(":"));
     }
 
 
-    /*
-                Note on how such header should look like
-
-                GET /some/path HTTP/1.1
-                Host: 127.0.0.1:8888
-                Token: <authtoken>
-                Content-Type: application/json
-                Content-Length: 123
-
-                // body should contains 123 char json
-
-    */
-
     @Override
-    public void run(){
+    public void run() {
         try{
             try{
                 // get streams
@@ -128,76 +121,23 @@ public class APISocketHandler implements Runnable {
                     }
                 });
                 // analyse headers
-                    // check if all required headers exist
+                // check if all required headers exist
                 if(!headers.containsKey("http_method") || !headers.containsKey("http_url")){
                     // invalid request, something broke
                     throw new HTTPException(400);
                 }
-                if(!(headers.get("http_method").equalsIgnoreCase("GET") || headers.get("http_method").equalsIgnoreCase("PUT") || headers.get("http_method").equalsIgnoreCase("POST") || headers.get("http_method").equalsIgnoreCase("DELETE"))){
+                if(!(headers.get("http_method").equalsIgnoreCase("GET"))){
                     // invalid method
                     throw new HTTPException(405);
                 }
-                if(!headers.containsKey("token") && !headers.containsKey("authorization")){
-                    // unauthorized
-                    throw new HTTPException(401);
-                }
-                    // analyze method
-                JSONObject bodycontent = null;
-                if(headers.get("http_method").equalsIgnoreCase("PUT") || headers.get("http_method").equalsIgnoreCase("POST") || headers.get("http_method").equalsIgnoreCase("DELETE")){
-                    // check if contains data
-                    if(headers.containsKey("content-length") ^ headers.containsKey("content-type")){ // only partial headers (xor)
-                        throw new HTTPException(400);
-                    }else if(headers.containsKey("content-length") && headers.containsKey("content-type")){ // both
-                        // check values
-                        if(!(headers.get("content-type").equalsIgnoreCase("application/json") || headers.get("content-type").equalsIgnoreCase("application/json; charset=utf-8"))){
-                            throw new HTTPException(406);
-                        }
-                        int clength = -1;
-                        try{clength = Integer.parseInt(headers.get("content-length"));if(clength <= 0){throw new Exception();}
-                        }catch (Exception e){throw new HTTPException(400);}
-                        // get data
-                        //bufferedReader.readLine(); // skip empty line // not needed as we use this line to determine that we stop reading the header
-                        // start reading, max & 16MB
-                        if(1024*maxbodysize >= clength){
-                            ByteBuffer bodyBuffer = ByteBuffer.allocate(1024*maxbodysize);
-                            try{
-                                int byt;
-                                while (clength > 0 && (byt = bufferedReader.read()) != -1){
-                                    clength--;
-                                    bodyBuffer.put((byte) byt);
-                                }
-                                bodyBuffer.flip();
-                                byte[] bodydata = new byte[bodyBuffer.remaining()];
-                                bodyBuffer.get(bodydata);
-                                bodycontent = new JSONObject(new String(bodydata));
-                            }catch (BufferOverflowException e){ // should never be thrown
-                                throw new HTTPException(413, "Body/Payload Exceeds Limit");
-                            }catch (Exception e){ // most likely failed to build the json
-                                throw new HTTPException(422);
-                            }
-                        }else{
-                            throw new HTTPException(413, "Body/Payload Exceeds Limit"); // should be thrown instead of rethrow in BOE
-                        }
-                    }else{ // none
-                        // not required as some data may be updated via header/request url
-                        // may throw an exception in the future
-                    }
-                }else{
-                    // should not contain any body
-                    if(headers.containsKey("content-length") || headers.containsKey("content-type")){
-                        throw new HTTPException(409, "Should Not Contain Data");
-                    }
-                }
-
                 /*
 
                     USER AUTH & ACCESS
 
                  */
-                
+
                 // get user from logintoken
-                User user;
-                int user_loginMode = -1; // as a user may have multiple requests at the same time - this is not shared inside the user object
+                User user = null;
                 if(headers.containsKey("token")){
                     try{ user = UserManager.getInstance().getUserByLoginToken(headers.get("token")); }
                     catch (GenericObjectException e){
@@ -207,32 +147,21 @@ public class APISocketHandler implements Runnable {
                     if(!user.verifyLoginToken(headers.get("token"))){
                         throw new HTTPException(403);
                     }
-                    // set value
-                    user_loginMode = 1;
-                }else if(headers.containsKey("authorization")){
-                    // parse the base64
-                    String hcontent = headers.get("authorization");
-                    if(!"basic".equalsIgnoreCase(hcontent.substring(0, hcontent.indexOf(" ")))){
-                        throw new HTTPException(403);
-                    }
-                    String userid_pass = new String(Base64.getDecoder().decode(hcontent.substring(hcontent.indexOf(" ")+1).getBytes(StandardCharsets.UTF_8)));
-                    try{ user = UserManager.getInstance().getUserByID(userid_pass.substring(0, userid_pass.indexOf(":"))); }
-                    catch (GenericObjectException e){
-                        throw new HTTPException(403);
-                    }
-                    // try to login using the password
-                    if(!user.verifyPassword(userid_pass.substring(userid_pass.indexOf(":")+1))){
-                        throw new HTTPException(403);
-                    }
-                    // set value
-                    user_loginMode = 0;
-                }else{
-                    // throw exception - this should not occur
-                    throw new HTTPException(401);
                 }
+
                 // check ratelimit
-                if(!user.allowProcessing()){
+                if(user != null && !user.allowProcessing()){
                     throw new HTTPException(429);
+                }
+                if(user == null){
+                    if(!ipRateLimiter.containsKey(ip)){
+                        RateLimiter rateLimiter = new RateLimiter(TimeUnit.MINUTES, 1);
+                        rateLimiter.setMaxUsages(60);
+                        ipRateLimiter.put(ip, rateLimiter);
+                    }
+                    if(!IPBanManager.getInstance().isWhitelisted(ip) && !ipRateLimiter.get(ip).takeNice()){
+                        throw new HTTPException(429);
+                    }
                 }
 
                 /*
@@ -242,11 +171,11 @@ public class APISocketHandler implements Runnable {
                  */
 
                 // prepare
-                APIProcessor httpProcessor = new APIProcessor(user, user_loginMode, headers.get("http_method"), headers.get("http_url"), bodycontent);
+                HelloProcessor helloProcessor = new HelloProcessor(user, headers.get("http_url"));
                 // process
-                httpProcessor.process();
+                helloProcessor.process();
                 // get result
-                APIProcessorResult hpr = httpProcessor.getResult();
+                HelloProcessorResult hpr = helloProcessor.getResult();
 
                 /*
 
@@ -261,25 +190,25 @@ public class APISocketHandler implements Runnable {
                 sendLines("HTTP/1.1 "+hpr.getHTTPStatusCode()+" "+hpr.getHTTPStatusMessage());
                 // server closes the connection
                 sendLines("Connection: close");
-                // add additional
-                if(hpr.getAdditionalInformation() != null){
-                    sendLines("Additional-Information: "+hpr.getAdditionalInformation());
-                }
-                // add internal
-                if(hpr.getInternalStatus() != null){
-                    sendLines("Internal-Status: "+hpr.getInternalStatus());
-                }
                 // send max & remaining bucket size + estimated refill time
-                sendLines("Ratelimit-Limit: "+user.getMaxBucket(),"Ratelimit-Remaining: "+user.getRemainingBucket(), "Ratelimit-Reset: "+user.getBucketRefillTime());
+                if(user != null){
+                    sendLines("Ratelimit-Limit: "+user.getMaxBucket(),"Ratelimit-Remaining: "+user.getRemainingBucket(), "Ratelimit-Reset: "+user.getBucketRefillTime());
+                }else{
+                    sendLines("Ratelimit-Limit: "+ipRateLimiter.get(ip).getMaxUsages(),"Ratelimit-Remaining: "+ipRateLimiter.get(ip).getRemainingUsages(), "Ratelimit-Reset: "+System.currentTimeMillis()+ipRateLimiter.get(ip).getRefillTime());
+                }
                 // send data
-                if(hpr.getResult() != null){
-                    sendLines("Content-Type: application/json", "Content-Length: "+hpr.getResult().toString().length());
+                if(hpr.getBodyPage() != null){
+                    sendLines("Content-Type: text/html", "Content-Length: "+hpr.getBodyPage().length());
                     endHeaders(); // spacer between header and data
-                    sendData(hpr.getResult().toString());
+                    sendData(hpr.getBodyPage());
+                }else if(hpr.getBodyJSON() != null){
+                    sendLines("Content-Type: application/json", "Content-Length: "+hpr.getBodyJSON().toString().length());
+                    endHeaders(); // spacer between header and data
+                    sendData(hpr.getBodyJSON().toString());
                 }else{
                     endHeaders(); // "server: I finished sending headers"
                 }
-                logger.debug("Send Result: "+hpr.getHTTPStatusMessage()+ " "+((hpr.getResult() != null)? hpr.getResult().toString() : "empty"));
+                logger.debug("Send Result: "+hpr.getHTTPStatusMessage());
                 // done processing :3 *happy calculation noises*
             }catch (HTTPException e){
                 IPBanManager.getInstance().flagIP(ip); // may change later as not every exception should trigger ab ip flag
@@ -300,7 +229,6 @@ public class APISocketHandler implements Runnable {
             close();
         }
     }
-
 
     /**
      * Used to send strings as different lines back to the client

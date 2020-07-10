@@ -16,7 +16,7 @@
 
 package de.netbeacon.jstorage.server.api.socket.processing.action;
 
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
+import de.netbeacon.jstorage.server.api.socket.processing.APIProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
@@ -53,7 +53,7 @@ import java.util.List;
  */
 public class UserAction_UserSettings implements ProcessingAction {
 
-    private HTTPProcessorResult result;
+    private APIProcessorResult result;
     private HashMap<String, String> args;
     private User user;
     private JSONObject data;
@@ -69,7 +69,7 @@ public class UserAction_UserSettings implements ProcessingAction {
     }
 
     @Override
-    public void setup(User user, HTTPProcessorResult result, HashMap<String, String> args) {
+    public void setup(User user, APIProcessorResult result, HashMap<String, String> args) {
         this.user = user;
         this.result = result;
         this.args = args;

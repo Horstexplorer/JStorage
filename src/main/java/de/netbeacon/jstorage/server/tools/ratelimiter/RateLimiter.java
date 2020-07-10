@@ -18,6 +18,11 @@ package de.netbeacon.jstorage.server.tools.ratelimiter;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This class is used to calculate if an action has been performed x times within a given time interval
+ *
+ * @author horstexplorer
+ */
 public class RateLimiter {
 
     private final long msWindowSize;

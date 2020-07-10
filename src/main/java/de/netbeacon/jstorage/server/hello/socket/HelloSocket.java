@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package de.netbeacon.jstorage.server.api.socket;
+package de.netbeacon.jstorage.server.hello.socket;
 
-import de.netbeacon.jstorage.server.api.socket.processing.APIProcessor;
+import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -35,15 +35,14 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Creates the socket for client connections
- * <p>
- * Supports SSL/TLS connections only due to security reasons
+ * Creates the socket used for "ping" responses
+ * This provides a message of what this is and provides easier access to logging and statistics
  *
  * @author horstexplorer
  */
-public class APISocket implements Runnable {
+public class HelloSocket implements Runnable{
 
-    private static APISocket instance;
+    private static HelloSocket instance;
 
     private Thread thread;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -53,18 +52,18 @@ public class APISocket implements Runnable {
 
     private ExecutorService overload;
     private SSLServerSocket sslServerSocket;
-    private final Logger logger = LoggerFactory.getLogger(APISocket.class);
+    private final Logger logger = LoggerFactory.getLogger(HelloSocket.class);
 
     /**
      * Used to create an instance of this class
      */
-    private APISocket(){}
+    private HelloSocket(){}
 
     /**
      * Used to get the instance of this class without forcing initialization
-     * @return APISocket
+     * @return HelloSocket
      */
-    public static APISocket getInstance(){
+    public static HelloSocket getInstance(){
         return getInstance(false);
     }
 
@@ -73,11 +72,11 @@ public class APISocket implements Runnable {
      * <p>
      * Can be used to initialize the class if this didnt happened yet
      * @param initializeIfNeeded boolean
-     * @return APISocket
+     * @return HelloSocket
      */
-    public static APISocket getInstance(boolean initializeIfNeeded){
+    public static HelloSocket getInstance(boolean initializeIfNeeded){
         if(instance == null && initializeIfNeeded){
-            instance = new APISocket();
+            instance = new HelloSocket();
         }
         return instance;
     }
@@ -112,19 +111,20 @@ public class APISocket implements Runnable {
         if(!running.get()){
             running.set(true);
 
-            int corePoolSize = 8;
-            int maxPoolSize = 16;
-            int maxQueueSize = 2048;
+            int corePoolSize = 2;
+            int maxPoolSize = 4;
+            int maxQueueSize = 128;
             int keepAliveTime = 5;
-            int port = 8888;
+            int port = 443;
+            boolean isActivated = true;
             String certPath = "./jstorage/cert/certificate.pem";
             String keyPath = "./jstorage/cert/key.pem";
 
-            logger.info("Setting Up API Socket");
+            logger.info("Setting Up Hello Socket");
             try{
                 File d = new File("./jstorage/config/");
                 if(!d.exists()){ d.mkdirs(); }
-                File f = new File("./jstorage/config/apisocket");
+                File f = new File("./jstorage/config/hellosocket");
                 if(!f.exists()){
                     JSONObject jsonObject = new JSONObject()
                             .put("port", port).put("certPath", certPath)
@@ -132,7 +132,8 @@ public class APISocket implements Runnable {
                             .put("corePoolSize", corePoolSize)
                             .put("maxPoolSize", maxPoolSize)
                             .put("maxQueueSize", maxQueueSize)
-                            .put("keepAliveTime", keepAliveTime);
+                            .put("keepAliveTime", keepAliveTime)
+                            .put("isActivated", isActivated);
                     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
                     writer.write(jsonObject.toString());
                     writer.newLine();
@@ -149,6 +150,7 @@ public class APISocket implements Runnable {
                         maxPoolSize = Math.max(jsonObject.getInt("maxPoolSize"), corePoolSize);
                         maxQueueSize = Math.max(jsonObject.getInt("maxQueueSize"), 1);
                         keepAliveTime = Math.max(jsonObject.getInt("keepAliveTime"), 1);
+                        isActivated = jsonObject.getBoolean("isActivated");
                     }
                 }
                 // start executors
@@ -156,58 +158,63 @@ public class APISocket implements Runnable {
                 workQueue = new ArrayBlockingQueue<>(maxQueueSize);
                 processing = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
             }catch (Exception e){
-                logger.error("Setting Up API Socket Failed. Trying To Continue", e);
+                logger.error("Setting Up Hello Socket Failed. Trying To Continue", e);
             }
-            logger.info("Starting API Socket");
-            try{
-                // load other dependencies & prepare processors
-                APIProcessor.setupActions();
+            if(isActivated){
+                logger.info("Starting Hello Socket");
+                try{
+                    // load other dependencies & prepare processors
+                    HelloProcessor.setupActions();
 
-                // setup
-                SSLContextFactory sslContextFactory = new SSLContextFactory();
-                sslContextFactory.addCertificate("jstorage", certPath, keyPath);
-                SSLContext sslContext = sslContextFactory.createSSLContext();
-                logger.info("Loaded SSLContext: "+sslContext.getProvider().getInfo());
-                sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
-                logger.info("API Socket Running At: "+sslServerSocket.getInetAddress()+":"+sslServerSocket.getLocalPort());
+                    // setup
+                    SSLContextFactory sslContextFactory = new SSLContextFactory();
+                    sslContextFactory.addCertificate("jstorage", certPath, keyPath);
+                    SSLContext sslContext = sslContextFactory.createSSLContext();
+                    logger.info("Loaded SSLContext: "+sslContext.getProvider().getInfo());
+                    sslServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(port);
+                    logger.info("Hello Socket Running At: "+sslServerSocket.getInetAddress()+":"+sslServerSocket.getLocalPort());
 
-                // running
-                while(true){
-                    SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-                    logger.debug("Incoming API Connection: "+sslSocket.getRemoteSocketAddress());
-                    try{
-                        // handshake
-                        sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
-                        sslSocket.startHandshake();
-                        // processing
+                    // running
+                    while(true){
+                        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
+                        logger.debug("Incoming Connection On Hello Socket: "+sslSocket.getRemoteSocketAddress());
                         try{
-                            processing.execute(new APISocketHandler(sslSocket));
-                        }catch (RejectedExecutionException e){
-                            logger.warn("Cannot Process Incoming Connection On API Socket - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
-                            overload.execute(() -> {
-                                try{
-                                    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(sslSocket.getOutputStream()));
-                                    bufferedWriter.write("HTTP/1.1 503 Service Unavailable\r\n\r\n");
-                                    bufferedWriter.flush();
-                                    bufferedWriter.close();
-                                    sslSocket.close();
-                                }catch (Exception ignore){}
-                            });
+                            // handshake
+                            sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
+                            sslSocket.startHandshake();
+                            // processing
+                            try{
+                                processing.execute(new HelloSocketHandler(sslSocket));
+                            }catch (RejectedExecutionException e){
+                                logger.warn("Cannot Process Incoming Connection On Hello Socket - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
+                                overload.execute(() -> {
+                                    try{
+                                        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(sslSocket.getOutputStream()));
+                                        bufferedWriter.write("HTTP/1.1 503 Service Unavailable\r\n\r\n");
+                                        bufferedWriter.flush();
+                                        bufferedWriter.close();
+                                        sslSocket.close();
+                                    }catch (Exception ignore){}
+                                });
+                            }
+                        }catch (Exception e){
+                            logger.debug("Error For Incoming Connection On Hello Socket : "+sslSocket.getRemoteSocketAddress(), e);
+                            try{sslSocket.close();}catch (Exception ignore){}
                         }
-                    }catch (Exception e){
-                        logger.debug("Error For Incoming Connection On API Socket: "+sslSocket.getRemoteSocketAddress(), e);
-                        try{sslSocket.close();}catch (Exception ignore){}
                     }
+                }catch(SocketException e){
+                    try{sslServerSocket.close();}catch (Exception ignore){}
+                    logger.debug("Stopped Hello Socket Due To Exception: ", e);
+                } catch (Exception e){
+                    try{sslServerSocket.close();}catch (Exception ignore){}
+                    logger.error("Stopped Hello Socket Due To Exception: ", e);
+                }finally {
+                    running.set(false);
                 }
-            }catch(SocketException e){
-                try{sslServerSocket.close();}catch (Exception ignore){}
-                logger.debug("Stopped API Socket Due To Exception: ", e);
-            } catch (Exception e){
-                try{sslServerSocket.close();}catch (Exception ignore){}
-                logger.error("Stopped API Socket Due To Exception: ", e);
-            }finally {
-                running.set(false);
+            }else{
+                logger.info("Hello Socket Is Deactivated");
             }
         }
     }
+
 }

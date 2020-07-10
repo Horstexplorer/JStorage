@@ -16,7 +16,7 @@
 
 package de.netbeacon.jstorage.server.api.socket.processing.action;
 
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
+import de.netbeacon.jstorage.server.api.socket.processing.APIProcessorResult;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
@@ -56,7 +56,7 @@ import java.util.List;
  */
 public class DataAction_DataSetInfo implements ProcessingAction{
 
-    private HTTPProcessorResult result;
+    private APIProcessorResult result;
     private HashMap<String, String> args;
     private User user;
 
@@ -71,7 +71,7 @@ public class DataAction_DataSetInfo implements ProcessingAction{
     }
 
     @Override
-    public void setup(User user, HTTPProcessorResult result, HashMap<String, String> args) {
+    public void setup(User user, APIProcessorResult result, HashMap<String, String> args) {
         this.user = user;
         this.result = result;
         this.args = args;

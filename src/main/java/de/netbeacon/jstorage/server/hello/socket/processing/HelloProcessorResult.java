@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.netbeacon.jstorage.server.api.socket.processing;
+package de.netbeacon.jstorage.server.hello.socket.processing;
 
 import org.json.JSONObject;
 
@@ -23,17 +23,16 @@ import org.json.JSONObject;
  *
  * @author horstexplorer
  */
-public class HTTPProcessorResult {
+public class HelloProcessorResult {
 
     private int HTTPStatusCode;
-    private String internalStatus;
-    private String additionalInformation;
-    private JSONObject result;
+    private String bodyPage;
+    private JSONObject bodyJSON;
 
     /**
-     * Instantiates a new Http processor result.
+     * Instantiates a new Hello processor result.
      */
-    protected HTTPProcessorResult(){}
+    protected HelloProcessorResult(){}
 
     /*                  SET                 */
 
@@ -47,33 +46,18 @@ public class HTTPProcessorResult {
     }
 
     /**
-     * Used to set the internal status which should be send back to the client
+     * Used to set the result if it is plain text
      *
-     * @param internalStatus internalStatus
+     * @param bodyPage result
      */
-    public void setInternalStatus(String internalStatus){ this.internalStatus = internalStatus; }
+    public void setBodyPage(String bodyPage){ this.bodyPage = bodyPage; }
 
     /**
-     * Used to add additional information about the result
+     * Used to set the result if it is json
      *
-     * @param additionalInformation String
+     * @param json result
      */
-    public void addAdditionalInformation(String additionalInformation){
-        this.additionalInformation = additionalInformation;
-    }
-
-    /**
-     * Used to set the result data
-     *
-     * @param jsonObject JSONObject
-     */
-    public void addResult(JSONObject jsonObject){
-        this.result = jsonObject;
-    }
-
-    /*                  GET                 */
-
-    // HEADER
+    public void setBodyJSON(JSONObject json){ this.bodyJSON = json; }
 
     /**
      * Returns the HTTP status code
@@ -85,11 +69,17 @@ public class HTTPProcessorResult {
     }
 
     /**
-     * Returns the internal status
-     *
-     * @return String string
+     * Used to get the plain text used in the result
+     * @return String
      */
-    public String getInternalStatus(){ return internalStatus; }
+    public String getBodyPage(){ return bodyPage; }
+
+    /**
+     * Used to get the JSONObject used in the result
+     *
+     * @return JSONObject
+     */
+    public JSONObject getBodyJSON() { return bodyJSON; }
 
     /**
      * Returns the corresponding message to the status code
@@ -239,27 +229,4 @@ public class HTTPProcessorResult {
                 return "Internal Server Error";
         }
     }
-
-    /**
-     * Returns additional information about the request result
-     * <p>
-     * Might be null if none have been added
-     *
-     * @return String string
-     */
-    public String getAdditionalInformation(){ return additionalInformation; }
-
-    // BODY / PAYLOAD
-
-    /**
-     * Returns the JSONObject for the body/payload
-     * <p>
-     * Might be null if no data has been inserted
-     *
-     * @return JSOObject json object
-     */
-    public JSONObject getResult(){
-        return result;
-    }
-
 }
