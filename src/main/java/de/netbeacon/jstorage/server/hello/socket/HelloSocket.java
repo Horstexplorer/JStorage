@@ -16,7 +16,6 @@
 
 package de.netbeacon.jstorage.server.hello.socket;
 
-import de.netbeacon.jstorage.server.api.socket.APISocket;
 import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
@@ -52,7 +51,7 @@ public class HelloSocket implements Runnable{
 
     private ExecutorService overload;
     private SSLServerSocket sslServerSocket;
-    private final Logger logger = LoggerFactory.getLogger(APISocket.class);
+    private final Logger logger = LoggerFactory.getLogger(HelloSocket.class);
 
     /**
      * Used to create an instance of this class
@@ -173,7 +172,7 @@ public class HelloSocket implements Runnable{
                 // running
                 while(true){
                     SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-                    logger.info("Incoming Connection On Hello Socket: "+sslSocket.getRemoteSocketAddress());
+                    logger.debug("Incoming Connection On Hello Socket: "+sslSocket.getRemoteSocketAddress());
                     try{
                         // handshake
                         sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
@@ -194,12 +193,13 @@ public class HelloSocket implements Runnable{
                             });
                         }
                     }catch (Exception e){
-                        logger.error("Error For Incoming Connection On Hello Socket : "+sslSocket.getRemoteSocketAddress(), e);
+                        logger.debug("Error For Incoming Connection On Hello Socket : "+sslSocket.getRemoteSocketAddress(), e);
                         try{sslSocket.close();}catch (Exception ignore){}
                     }
                 }
             }catch (Exception e){
                 try{sslServerSocket.close();}catch (Exception ignore){}
+                logger.error("Stopped Hello Socket Due To Exception: ", e);
             }finally {
                 running.set(false);
             }

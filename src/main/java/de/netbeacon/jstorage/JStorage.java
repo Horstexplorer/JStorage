@@ -17,6 +17,7 @@
 package de.netbeacon.jstorage;
 
 import de.netbeacon.jstorage.server.api.socket.APISocket;
+import de.netbeacon.jstorage.server.hello.socket.HelloSocket;
 import de.netbeacon.jstorage.server.internal.cachemanager.CacheManager;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
@@ -112,6 +113,7 @@ public class JStorage {
             try{ System.out.print("CacheManager..."); CacheManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
             try{ System.out.print("UserManager..."); UserManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
             try{ System.out.println("IPBanManager..."); IPBanManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
+            try{ System.out.println("HelloSocket..."); HelloSocket.getInstance(true).start(); System.out.println("started"); }catch (Exception e){System.out.println("error"); throw e;}
             try{ System.out.print("APISocket..."); APISocket.getInstance(true).start(); System.out.println("started"); }catch (Exception e){System.out.println("error"); throw e;}
         }catch (SetupException e){
             logger.error("Error Starting Components", e);
