@@ -16,6 +16,9 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.3.0_16 R
+- minor improvements
+- added hello socket
 ## v1.2.3_15 R
 - fixed npe occurring when the ip has been banned
 - changed and extended ratelimit headers
