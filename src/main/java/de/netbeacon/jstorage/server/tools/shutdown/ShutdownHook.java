@@ -20,6 +20,7 @@ import de.netbeacon.jstorage.server.api.socket.APISocket;
 import de.netbeacon.jstorage.server.internal.cachemanager.CacheManager;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
+import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -47,6 +48,7 @@ public class ShutdownHook {
     private void shutdownNow(){
         System.out.println("! ShutdownHook Executed !");
         try{System.out.print("APISocket..."); APISocket.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
+        try{System.out.print("IPBanManager..."); IPBanManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("UserManager..."); UserManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("DataManager..."); DataManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("CacheManager..."); CacheManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
