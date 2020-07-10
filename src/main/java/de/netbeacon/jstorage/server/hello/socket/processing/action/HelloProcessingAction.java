@@ -28,8 +28,6 @@ import java.util.HashMap;
  */
 public interface HelloProcessingAction {
 
-    /*                  PRESETUP                    */
-
     /**
      * Create new instance processing action.
      *

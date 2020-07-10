@@ -21,6 +21,9 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 
 import java.util.HashMap;
 
+/**
+ * This action returns a simple string (hello) for each request. This can be used to check if the service is on / token is correct etc
+ */
 public class HelloResponseAction implements HelloProcessingAction{
 
     User user;

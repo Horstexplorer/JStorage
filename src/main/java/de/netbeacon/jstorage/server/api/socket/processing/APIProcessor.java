@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Used to unify http result processing
+ * Used to unify API processing
  *
  * @author horstexplorer
  */
-public class HTTPProcessor {
+public class APIProcessor {
 
     private final String processingId;
     private final String requestMethod;
@@ -47,15 +47,15 @@ public class HTTPProcessor {
     private final JSONObject payload;
     private List<String> path;
     private HashMap<String, String> args;
-    private final HTTPProcessorResult result = new HTTPProcessorResult();
+    private final APIProcessorResult result = new APIProcessorResult();
     private boolean processed = false;
 
     private static final HashMap<String, Object> actions = new HashMap<>();
 
-    private final Logger logger = LoggerFactory.getLogger(HTTPProcessor.class);
+    private final Logger logger = LoggerFactory.getLogger(APIProcessor.class);
 
     /**
-     * Sets up a new HTTPGetProcessor for the given input
+     * Sets up a new APIProcessor for the given input
      *
      * @param user          the user which requested processing
      * @param userLoginMode describes the mode the user used to authenticate
@@ -63,14 +63,13 @@ public class HTTPProcessor {
      * @param requestURL    the request url
      * @param payload       data which might be send to the server within the body
      */
-    public HTTPProcessor(User user, int userLoginMode, String requestMethod, String requestURL, JSONObject payload){
+    public APIProcessor(User user, int userLoginMode, String requestMethod, String requestURL, JSONObject payload){
         this.user = user;
         this.userLoginMode = userLoginMode;
         this.requestMethod = requestMethod;
         this.requestURL = requestURL;
         this.payload = payload;
         this.processingId = UUID.randomUUID().toString();
-        logger.debug("Created New HTTPProcessor For User "+user+" (Processing ID: "+processingId+")");
     }
 
     /**
@@ -200,6 +199,7 @@ public class HTTPProcessor {
         }catch (Exception e){
             result.setHTTPStatusCode(500);
             result.addAdditionalInformation(e.getMessage());
+            logger.debug("Error Processing Request On API Socket: "+processingId+": ", e);
         }finally {
             processed = true;
             logger.debug("HTTPProcessor "+processingId+" Finished With Code "+result.getHTTPStatusCode());
@@ -211,7 +211,7 @@ public class HTTPProcessor {
      *
      * @return the result
      */
-    public HTTPProcessorResult getResult() {
+    public APIProcessorResult getResult() {
         if(processed){
             return result;
         }

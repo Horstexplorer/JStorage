@@ -16,7 +16,7 @@
 
 package de.netbeacon.jstorage.server.api.socket;
 
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessor;
+import de.netbeacon.jstorage.server.api.socket.processing.APIProcessor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -160,7 +160,7 @@ public class APISocket implements Runnable {
             logger.info("Starting API Socket");
             try{
                 // load other dependencies & prepare processors
-                HTTPProcessor.setupActions();
+                APIProcessor.setupActions();
 
                 // setup
                 SSLContextFactory sslContextFactory = new SSLContextFactory();

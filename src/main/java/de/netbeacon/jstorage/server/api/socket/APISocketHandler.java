@@ -16,8 +16,8 @@
 
 package de.netbeacon.jstorage.server.api.socket;
 
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessor;
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
+import de.netbeacon.jstorage.server.api.socket.processing.APIProcessor;
+import de.netbeacon.jstorage.server.api.socket.processing.APIProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
@@ -242,11 +242,11 @@ public class APISocketHandler implements Runnable {
                  */
 
                 // prepare
-                HTTPProcessor httpProcessor = new HTTPProcessor(user, user_loginMode, headers.get("http_method"), headers.get("http_url"), bodycontent);
+                APIProcessor httpProcessor = new APIProcessor(user, user_loginMode, headers.get("http_method"), headers.get("http_url"), bodycontent);
                 // process
                 httpProcessor.process();
                 // get result
-                HTTPProcessorResult hpr = httpProcessor.getResult();
+                APIProcessorResult hpr = httpProcessor.getResult();
 
                 /*
 

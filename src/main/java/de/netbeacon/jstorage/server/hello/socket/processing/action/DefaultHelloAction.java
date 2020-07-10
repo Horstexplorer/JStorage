@@ -22,6 +22,10 @@ import de.netbeacon.jstorage.server.tools.info.Info;
 
 import java.util.HashMap;
 
+/**
+ * This Action represents the default response if something is requested
+ * Returns a very basic site telling about this JStorage setup
+ */
 public class DefaultHelloAction implements HelloProcessingAction{
 
     private User user;

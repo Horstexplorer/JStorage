@@ -29,9 +29,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Used to unify hello result processing
+ *
+ * @author horstexplorer
+ */
 public class HelloProcessor {
     private final String processingId;
-    private final String requestMethod;
     private final String requestURL;
     private final User user;
     private List<String> path;
@@ -44,15 +48,21 @@ public class HelloProcessor {
 
     private final Logger logger = LoggerFactory.getLogger(HelloProcessor.class);
 
-    public HelloProcessor(User user, String requestMethod, String requestURL){
+    /**
+     * Sets up a new HelloProcessor for the given input
+     *
+     * @param user User - this can be null
+     * @param requestURL the request url
+     */
+    public HelloProcessor(User user, String requestURL){
         this.user = user;
-        this.requestMethod = requestMethod;
         this.requestURL = requestURL;
         this.processingId = UUID.randomUUID().toString();
-        logger.debug("Created New HelloProcessor (Processing ID: "+processingId+")");
     }
 
-
+    /**
+     * Process
+     */
     public void process(){
         try{
             // parse urls
@@ -96,6 +106,9 @@ public class HelloProcessor {
         return null;
     }
 
+    /**
+     * Setup actions.
+     */
     public static void setupActions(){
         addAction(Arrays.asList(), new DefaultHelloAction(), true);
         addAction(Arrays.asList(), new HelloResponseAction(), false);

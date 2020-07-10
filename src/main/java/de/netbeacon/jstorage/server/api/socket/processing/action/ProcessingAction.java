@@ -17,7 +17,7 @@
 
 package de.netbeacon.jstorage.server.api.socket.processing.action;
 
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessorResult;
+import de.netbeacon.jstorage.server.api.socket.processing.APIProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.exceptions.CryptException;
 import de.netbeacon.jstorage.server.tools.exceptions.DataStorageException;
@@ -59,7 +59,7 @@ public interface ProcessingAction {
      * @param result the result
      * @param args   the args
      */
-    void setup(User user, HTTPProcessorResult result, HashMap<String, String> args);
+    void setup(User user, APIProcessorResult result, HashMap<String, String> args);
 
     /**
      * Set payload.

@@ -43,7 +43,8 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
- * The type hello socket handler.
+ * This class takes care of evaluating incoming requests from the hello socket
+ *
  * @author horstexplorer
  */
 public class HelloSocketHandler implements Runnable {
@@ -170,7 +171,7 @@ public class HelloSocketHandler implements Runnable {
                  */
 
                 // prepare
-                HelloProcessor helloProcessor = new HelloProcessor(user, headers.get("http_method"), headers.get("http_url"));
+                HelloProcessor helloProcessor = new HelloProcessor(user, headers.get("http_url"));
                 // process
                 helloProcessor.process();
                 // get result

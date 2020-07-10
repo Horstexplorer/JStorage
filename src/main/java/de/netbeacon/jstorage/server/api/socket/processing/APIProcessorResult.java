@@ -23,7 +23,7 @@ import org.json.JSONObject;
  *
  * @author horstexplorer
  */
-public class HTTPProcessorResult {
+public class APIProcessorResult {
 
     private int HTTPStatusCode;
     private String internalStatus;
@@ -31,9 +31,9 @@ public class HTTPProcessorResult {
     private JSONObject result;
 
     /**
-     * Instantiates a new Http processor result.
+     * Instantiates a new API processor result.
      */
-    protected HTTPProcessorResult(){}
+    protected APIProcessorResult(){}
 
     /*                  SET                 */
 
