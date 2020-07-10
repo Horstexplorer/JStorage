@@ -18,13 +18,15 @@ package de.netbeacon.jstorage.server.hello.socket.processing.action;
 
 import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.tools.meta.SystemStats;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 
 /**
- * This action returns a simple string (hello) for each request. This can be used to check if the service is on / token is correct etc
+ * Used to get simplified system stats
  */
-public class HelloResponseAction implements HelloProcessingAction{
+public class SimpleStatisticsAction implements HelloProcessingAction{
 
     private User user;
     private HelloProcessorResult result;
@@ -32,12 +34,12 @@ public class HelloResponseAction implements HelloProcessingAction{
 
     @Override
     public HelloProcessingAction createNewInstance() {
-        return new HelloResponseAction();
+        return new SimpleStatisticsAction();
     }
 
     @Override
     public String getAction() {
-        return "hello";
+        return "simplestatistics";
     }
 
     @Override
@@ -49,6 +51,10 @@ public class HelloResponseAction implements HelloProcessingAction{
 
     @Override
     public void process() {
-        result.setBodyPage("hello");
+        JSONObject jsonObject = new JSONObject()
+                .put("api_load", SystemStats.getInstance().getAPILoad())
+                .put("host_load", SystemStats.getInstance().getSystemLoad());
+
+        result.setBodyJSON(jsonObject);
     }
 }

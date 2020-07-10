@@ -16,9 +16,7 @@
 
 package de.netbeacon.jstorage.server.hello.socket.processing;
 
-import de.netbeacon.jstorage.server.hello.socket.processing.action.DefaultHelloAction;
-import de.netbeacon.jstorage.server.hello.socket.processing.action.HelloProcessingAction;
-import de.netbeacon.jstorage.server.hello.socket.processing.action.HelloResponseAction;
+import de.netbeacon.jstorage.server.hello.socket.processing.action.*;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.tools.httpprocessing.HTTPProcessorHelper;
 import org.slf4j.Logger;
@@ -112,6 +110,8 @@ public class HelloProcessor {
     public static void setupActions(){
         addAction(Arrays.asList(), new DefaultHelloAction(), true);
         addAction(Arrays.asList(), new HelloResponseAction(), false);
+        addAction(Arrays.asList(), new SimpleStatisticsAction(), false);
+        addAction(Arrays.asList(), new AdvancedStatisticsAction(), false);
     }
 
     /**
