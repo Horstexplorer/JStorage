@@ -2,10 +2,13 @@
 
 ## Table of Content
 [Detailed Description](https://github.com/Horstexplorer/JStorage/tree/master/src/main/java/de/netbeacon/jstorage/server/api/socket/processing/action)
-- Cache Actions
-- Data Actions
-- User Actions
-- Other Actions
+- API Socket
+    - Cache Actions
+    - Data Actions
+    - User Actions
+    - Other Actions
+- Hello Socket
+    - Hello Actions 
 
 ## Cache Actions
 
@@ -58,3 +61,12 @@ Get Login Token | user/mng/getnewlogintoken |  Tries to create a new login token
 --- | --- | ---
 Basic Info | info/basic/info | Provides basic information about this JStorage installation |
 Statistics | info/stats/statistics | Provides usage statistics (from the last 10 minutes) of the selected object
+
+## Hello Actions
+[Detailed Description](https://github.com/Horstexplorer/JStorage/tree/master/src/main/java/de/netbeacon/jstorage/server/hello/socket/processing/action)
+
+| Action | Full Path | Description |
+--- | --- | ---
+hello | hello | Returns hello. Does not require auth. |
+simplestatistics | simplestatistics | Returns a simplified version of the system stats. Does not require auth |
+advancedstatistics | advancedstatistics | Returns an advanced version of the system stats. Requires auth via token & GlobalPerm.ViewAdvancedStatistics |
