@@ -48,7 +48,7 @@ public class ShutdownHook {
 
     private void shutdownNow(){
         System.out.println("! ShutdownHook Executed !");
-        try{System.out.println("HelloSocket..."); HelloSocket.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
+        try{System.out.print("HelloSocket..."); HelloSocket.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("APISocket..."); APISocket.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("IPBanManager..."); IPBanManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
         try{System.out.print("UserManager..."); UserManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}

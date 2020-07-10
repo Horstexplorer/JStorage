@@ -29,6 +29,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.OutputStreamWriter;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -201,7 +202,10 @@ public class HelloSocket implements Runnable{
                             try{sslSocket.close();}catch (Exception ignore){}
                         }
                     }
-                }catch (Exception e){
+                }catch(SocketException e){
+                    try{sslServerSocket.close();}catch (Exception ignore){}
+                    logger.debug("Stopped Hello Socket Due To Exception: ", e);
+                } catch (Exception e){
                     try{sslServerSocket.close();}catch (Exception ignore){}
                     logger.error("Stopped Hello Socket Due To Exception: ", e);
                 }finally {
