@@ -17,7 +17,6 @@
 package de.netbeacon.jstorage.server.api.socket;
 
 import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessor;
-import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -102,7 +101,6 @@ public class APISocket implements Runnable {
             try{processing.shutdownNow();}catch (Exception ignore){}
             try{overload.shutdownNow();}catch (Exception ignore){}
             try{sslServerSocket.close();}catch (Exception ignore){}
-            try{IPBanManager.shutdown();}catch (Exception ignore){}
             running.set(false);
             thread = null;
         }
@@ -162,7 +160,6 @@ public class APISocket implements Runnable {
             logger.info("Starting API Socket");
             try{
                 // load other dependencies & prepare processors
-                new IPBanManager();
                 HTTPProcessor.setupActions();
 
                 // setup
@@ -203,7 +200,6 @@ public class APISocket implements Runnable {
                 }
             }catch (Exception e){
                 try{sslServerSocket.close();}catch (Exception ignore){}
-                try{IPBanManager.shutdown();}catch (Exception ignore){}
             }finally {
                 running.set(false);
             }
