@@ -17,7 +17,7 @@
 package de.netbeacon.jstorage.server.hello.socket;
 
 import de.netbeacon.jstorage.server.api.socket.APISocket;
-import de.netbeacon.jstorage.server.api.socket.processing.HTTPProcessor;
+import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -61,7 +61,7 @@ public class HelloSocket implements Runnable{
 
     /**
      * Used to get the instance of this class without forcing initialization
-     * @return APISocket
+     * @return HelloSocket
      */
     public static HelloSocket getInstance(){
         return getInstance(false);
@@ -72,7 +72,7 @@ public class HelloSocket implements Runnable{
      * <p>
      * Can be used to initialize the class if this didnt happened yet
      * @param initializeIfNeeded boolean
-     * @return HelloSocketHandler
+     * @return HelloSocket
      */
     public static HelloSocket getInstance(boolean initializeIfNeeded){
         if(instance == null && initializeIfNeeded){
@@ -160,7 +160,7 @@ public class HelloSocket implements Runnable{
             logger.info("Starting Hello Socket");
             try{
                 // load other dependencies & prepare processors
-                HTTPProcessor.setupActions();
+                HelloProcessor.setupActions();
 
                 // setup
                 SSLContextFactory sslContextFactory = new SSLContextFactory();
@@ -173,7 +173,7 @@ public class HelloSocket implements Runnable{
                 // running
                 while(true){
                     SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-                    logger.info("Incoming Hello Connection: "+sslSocket.getRemoteSocketAddress());
+                    logger.info("Incoming Connection On Hello Socket: "+sslSocket.getRemoteSocketAddress());
                     try{
                         // handshake
                         sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
@@ -182,7 +182,7 @@ public class HelloSocket implements Runnable{
                         try{
                             processing.execute(new HelloSocketHandler(sslSocket));
                         }catch (RejectedExecutionException e){
-                            logger.warn("Cannot Process Incoming Hello Connection - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
+                            logger.warn("Cannot Process Incoming Connection On Hello Socket - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
                             overload.execute(() -> {
                                 try{
                                     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(sslSocket.getOutputStream()));
@@ -194,7 +194,7 @@ public class HelloSocket implements Runnable{
                             });
                         }
                     }catch (Exception e){
-                        logger.error("Error For Incoming Hello Connection: "+sslSocket.getRemoteSocketAddress(), e);
+                        logger.error("Error For Incoming Connection On Hello Socket : "+sslSocket.getRemoteSocketAddress(), e);
                         try{sslSocket.close();}catch (Exception ignore){}
                     }
                 }

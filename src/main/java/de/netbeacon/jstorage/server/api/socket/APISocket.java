@@ -182,7 +182,7 @@ public class APISocket implements Runnable {
                         try{
                             processing.execute(new APISocketHandler(sslSocket));
                         }catch (RejectedExecutionException e){
-                            logger.warn("Cannot Process Incoming API Connection - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
+                            logger.warn("Cannot Process Incoming Connection On API Socket - Too Busy: "+sslSocket.getReuseAddress()+" Increasing the queue size or number of processing threads might fix this. Ignore if this is the intended max.", e);
                             overload.execute(() -> {
                                 try{
                                     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(sslSocket.getOutputStream()));
@@ -194,7 +194,7 @@ public class APISocket implements Runnable {
                             });
                         }
                     }catch (Exception e){
-                        logger.error("Error For Incoming API Connection: "+sslSocket.getRemoteSocketAddress(), e);
+                        logger.error("Error For Incoming Connection On API Socket: "+sslSocket.getRemoteSocketAddress(), e);
                         try{sslSocket.close();}catch (Exception ignore){}
                     }
                 }
