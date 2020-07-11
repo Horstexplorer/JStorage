@@ -226,7 +226,7 @@ public class HelloSocketHandler implements Runnable {
             }
         }catch (SSLException e){
             // handshake failed or something else we dont really need to know
-            logger.warn("SSLException On Hello Socket: ", e);
+            logger.debug("SSLException On Hello Socket: ", e);
         }catch (Exception e){
             // return 500
             try{sendLines("HTTP/1.1 500 Internal Server Error"); endHeaders();}catch (Exception ignore){}
