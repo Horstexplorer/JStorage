@@ -83,6 +83,9 @@ public class APISocketHandler implements Runnable {
     public void run(){
         try{
             try{
+                // handshake
+                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                socket.startHandshake();
                 // get streams
                 bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));

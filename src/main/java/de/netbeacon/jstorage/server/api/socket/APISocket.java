@@ -227,8 +227,8 @@ public class APISocket implements Runnable {
                     logger.debug("Incoming API Connection: "+sslSocket.getRemoteSocketAddress());
                     try{
                         // handshake
-                        sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
-                        sslSocket.startHandshake();
+                        //sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
+                        //sslSocket.startHandshake();
                         // processing
                         try{
                             processing.execute(new APISocketHandler(sslSocket));
