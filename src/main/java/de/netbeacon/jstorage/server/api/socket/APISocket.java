@@ -17,6 +17,7 @@
 package de.netbeacon.jstorage.server.api.socket;
 
 import de.netbeacon.jstorage.server.api.socket.processing.APIProcessor;
+import de.netbeacon.jstorage.server.internal.executor.ScalingExecutor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -31,7 +32,10 @@ import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.net.SocketException;
 import java.nio.file.Files;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -48,8 +52,7 @@ public class APISocket implements Runnable {
     private Thread thread;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-    private BlockingQueue<Runnable> workQueue;
-    private ThreadPoolExecutor processing;
+    private ScalingExecutor processing;
 
     private ExecutorService overload;
     private SSLServerSocket sslServerSocket;
@@ -98,63 +101,12 @@ public class APISocket implements Runnable {
     public void shutdown(){
         if(running.get()){
             thread.interrupt();
-            try{workQueue.clear();}catch (Exception ignore){}
             try{processing.shutdownNow();}catch (Exception ignore){}
             try{overload.shutdownNow();}catch (Exception ignore){}
             try{sslServerSocket.close();}catch (Exception ignore){}
             running.set(false);
             thread = null;
         }
-    }
-
-    /**
-     * Used to calculate a load value between 0 and 20 for SystemStats
-     * @return int
-     */
-    public int getLoadValue(){
-        int wq = (1-(workQueue.remainingCapacity()/(workQueue.size()+workQueue.remainingCapacity())))*10;
-        int tp = (processing.getPoolSize()/processing.getMaximumPoolSize())*10;
-        return wq+tp;
-    }
-
-    /**
-     * Used to get the remaining capacity of the queue
-     * @return int
-     */
-    public int getWorkQueueRemainingCapacity(){
-        return workQueue.remainingCapacity();
-    }
-
-    /**
-     * Used to get the maximum capacity of the queue
-     * @return int
-     */
-    public int getWorkQueueMaxCapacity(){
-        return workQueue.remainingCapacity()+workQueue.size();
-    }
-
-    /**
-     * Used to get the current size of the thread pool
-     * @return int
-     */
-    public int getCurrentPoolSize(){
-        return processing.getPoolSize();
-    }
-
-    /**
-     * Used to get the size of the core pool
-     * @return int
-     */
-    public int getCorePoolSize(){
-        return processing.getCorePoolSize();
-    }
-
-    /**
-     * Used to get the max size of the thread pool
-     * @return int
-     */
-    public int getMaxPoolSize(){
-        return processing.getMaximumPoolSize();
     }
 
     @Override
@@ -164,7 +116,7 @@ public class APISocket implements Runnable {
 
             int corePoolSize = 8;
             int maxPoolSize = 16;
-            int maxQueueSize = 2048;
+            int scaleQueueSize = 2048;
             int keepAliveTime = 5;
             int port = 8888;
             String certPath = "./jstorage/cert/certificate.pem";
@@ -181,7 +133,7 @@ public class APISocket implements Runnable {
                             .put("keyPath", keyPath)
                             .put("corePoolSize", corePoolSize)
                             .put("maxPoolSize", maxPoolSize)
-                            .put("maxQueueSize", maxQueueSize)
+                            .put("scaleQueueSize", scaleQueueSize)
                             .put("keepAliveTime", keepAliveTime);
                     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
                     writer.write(jsonObject.toString());
@@ -197,14 +149,13 @@ public class APISocket implements Runnable {
                         keyPath = jsonObject.getString("keyPath");
                         corePoolSize = Math.max(jsonObject.getInt("corePoolSize"), 1);
                         maxPoolSize = Math.max(jsonObject.getInt("maxPoolSize"), corePoolSize);
-                        maxQueueSize = Math.max(jsonObject.getInt("maxQueueSize"), 1);
+                        scaleQueueSize = Math.max(jsonObject.getInt("scaleQueueSize"), 1);
                         keepAliveTime = Math.max(jsonObject.getInt("keepAliveTime"), 1);
                     }
                 }
                 // start executors
                 overload = Executors.newSingleThreadExecutor();
-                workQueue = new ArrayBlockingQueue<>(maxQueueSize);
-                processing = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
+                processing = new ScalingExecutor(corePoolSize, maxPoolSize, scaleQueueSize, keepAliveTime, TimeUnit.SECONDS);
             }catch (Exception e){
                 logger.error("Setting Up API Socket Failed. Trying To Continue", e);
             }
@@ -256,5 +207,17 @@ public class APISocket implements Runnable {
                 running.set(false);
             }
         }
+    }
+
+
+    /**
+     * Returns the shared executor.
+     * <br>
+     * This should only be used by the SystemStats tool for read only operations.
+     *
+     * @return ScalingExecutor
+     */
+    public ScalingExecutor getExecutor(){
+        return processing;
     }
 }
