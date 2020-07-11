@@ -16,6 +16,9 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.3.2_18 R
+- improved performance
+- improved statistics
 ## v1.3.1_17 R
 - added system stats to hello socket
 - added hello socket actions to readme
