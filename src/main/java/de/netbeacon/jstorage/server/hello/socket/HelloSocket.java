@@ -179,9 +179,6 @@ public class HelloSocket implements Runnable{
                         SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
                         logger.debug("Incoming Connection On Hello Socket: "+sslSocket.getRemoteSocketAddress());
                         try{
-                            // handshake
-                            sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
-                            sslSocket.startHandshake();
                             // processing
                             try{
                                 processing.execute(new HelloSocketHandler(sslSocket));
