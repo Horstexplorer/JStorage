@@ -16,7 +16,6 @@
 
 package de.netbeacon.jstorage.server.hello.socket.processing.action;
 
-import de.netbeacon.jstorage.server.api.socket.APISocket;
 import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessorResult;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
@@ -62,14 +61,15 @@ public class AdvancedStatisticsAction implements HelloProcessingAction{
         JSONObject jsonObject = new JSONObject();
 
         if(user.hasGlobalPermission(GlobalPermission.Admin) || user.hasGlobalPermission(GlobalPermission.ViewAdvancedStatistics)){
+            SystemStats systemStats = SystemStats.getInstance();
             jsonObject
                     .put("api_load", new JSONObject()
                             .put("simple", SystemStats.getInstance().getAPILoad())
-                            .put("queue_capacity_remaining", APISocket.getInstance().getWorkQueueRemainingCapacity())
-                            .put("queue_capacity_max",APISocket.getInstance().getWorkQueueMaxCapacity())
-                            .put("threadpool_current",APISocket.getInstance().getCurrentPoolSize())
-                            .put("threadpool_core",APISocket.getInstance().getCorePoolSize())
-                            .put("threadpool_max", APISocket.getInstance().getMaxPoolSize()))
+                            .put("queue_capacity_remaining", systemStats.getAPIQueueRemainingCapacity())
+                            .put("queue_capacity_max", systemStats.getAPIQueueMaxCapacity())
+                            .put("threadpool_current", systemStats.getAPICurrentPoolSize())
+                            .put("threadpool_core", systemStats.getAPICorePoolSize())
+                            .put("threadpool_max", systemStats.getAPIMaxPoolSize()))
                     .put("host_load", new JSONObject()
                             .put("simple", SystemStats.getInstance().getSystemLoad())
                             .put("cpu_avg", SystemStats.getInstance().getAVGLoad()))

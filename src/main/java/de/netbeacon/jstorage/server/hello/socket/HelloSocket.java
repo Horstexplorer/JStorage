@@ -17,6 +17,7 @@
 package de.netbeacon.jstorage.server.hello.socket;
 
 import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessor;
+import de.netbeacon.jstorage.server.internal.executor.ScalingExecutor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -31,7 +32,10 @@ import java.io.FileWriter;
 import java.io.OutputStreamWriter;
 import java.net.SocketException;
 import java.nio.file.Files;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -47,8 +51,7 @@ public class HelloSocket implements Runnable{
     private Thread thread;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
-    private BlockingQueue<Runnable> workQueue;
-    private ThreadPoolExecutor processing;
+    private ScalingExecutor processing;
 
     private ExecutorService overload;
     private SSLServerSocket sslServerSocket;
@@ -97,7 +100,6 @@ public class HelloSocket implements Runnable{
     public void shutdown(){
         if(running.get()){
             thread.interrupt();
-            try{workQueue.clear();}catch (Exception ignore){}
             try{processing.shutdownNow();}catch (Exception ignore){}
             try{overload.shutdownNow();}catch (Exception ignore){}
             try{sslServerSocket.close();}catch (Exception ignore){}
@@ -113,7 +115,7 @@ public class HelloSocket implements Runnable{
 
             int corePoolSize = 2;
             int maxPoolSize = 4;
-            int maxQueueSize = 128;
+            int scaleQueueSize = 128;
             int keepAliveTime = 5;
             int port = 443;
             boolean isActivated = true;
@@ -130,8 +132,8 @@ public class HelloSocket implements Runnable{
                             .put("port", port).put("certPath", certPath)
                             .put("keyPath", keyPath)
                             .put("corePoolSize", corePoolSize)
-                            .put("maxPoolSize", maxPoolSize)
-                            .put("maxQueueSize", maxQueueSize)
+                            .put("scalePoolSize", maxPoolSize)
+                            .put("scaleQueueSize", scaleQueueSize)
                             .put("keepAliveTime", keepAliveTime)
                             .put("isActivated", isActivated);
                     BufferedWriter writer = new BufferedWriter(new FileWriter(f));
@@ -147,16 +149,15 @@ public class HelloSocket implements Runnable{
                         certPath = jsonObject.getString("certPath");
                         keyPath = jsonObject.getString("keyPath");
                         corePoolSize = Math.max(jsonObject.getInt("corePoolSize"), 1);
-                        maxPoolSize = Math.max(jsonObject.getInt("maxPoolSize"), corePoolSize);
-                        maxQueueSize = Math.max(jsonObject.getInt("maxQueueSize"), 1);
+                        maxPoolSize = Math.max(jsonObject.getInt("scalePoolSize"), corePoolSize);
+                        scaleQueueSize = Math.max(jsonObject.getInt("scaleQueueSize"), 1);
                         keepAliveTime = Math.max(jsonObject.getInt("keepAliveTime"), 1);
                         isActivated = jsonObject.getBoolean("isActivated");
                     }
                 }
                 // start executors
                 overload = Executors.newSingleThreadExecutor();
-                workQueue = new ArrayBlockingQueue<>(maxQueueSize);
-                processing = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveTime, TimeUnit.SECONDS, workQueue);
+                processing = new ScalingExecutor(corePoolSize, maxPoolSize, scaleQueueSize, keepAliveTime, TimeUnit.SECONDS);
             }catch (Exception e){
                 logger.error("Setting Up Hello Socket Failed. Trying To Continue", e);
             }
@@ -179,9 +180,6 @@ public class HelloSocket implements Runnable{
                         SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
                         logger.debug("Incoming Connection On Hello Socket: "+sslSocket.getRemoteSocketAddress());
                         try{
-                            // handshake
-                            sslSocket.setEnabledCipherSuites(sslSocket.getSupportedCipherSuites());
-                            sslSocket.startHandshake();
                             // processing
                             try{
                                 processing.execute(new HelloSocketHandler(sslSocket));

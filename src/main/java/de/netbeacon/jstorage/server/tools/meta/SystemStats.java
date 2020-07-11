@@ -91,6 +91,8 @@ public class SystemStats {
 
     /**
      * Used to get the avg cpu load
+     * <br>
+     * Returns -1 on error
      * @return long
      */
     public double getAVGLoad(){
@@ -113,6 +115,65 @@ public class SystemStats {
         return Runtime.getRuntime().freeMemory();
     }
 
+    /**
+     * Used to get the number of threads within the core pool
+     * <br>
+     * Returns -1 if the executor is null
+     * @return int
+     */
+    public int getAPICorePoolSize(){
+        return (APISocket.getInstance().getExecutor() != null) ? APISocket.getInstance().getExecutor().getCorePoolSize() : -1;
+    }
+
+    /**
+     * Used to get the maximum number of threads
+     * <br>
+     * Returns -1 if the executor is null
+     * @return int
+     */
+    public int getAPIMaxPoolSize(){
+        return (APISocket.getInstance().getExecutor() != null) ? APISocket.getInstance().getExecutor().getMaxPoolSize() : -1;
+    }
+
+    /**
+     * Used to get the current number of threads
+     * <br>
+     * Returns -1 if the executor is null
+     * @return int
+     */
+    public int getAPICurrentPoolSize(){
+        return (APISocket.getInstance().getExecutor() != null) ? APISocket.getInstance().getExecutor().getCurrentPoolSize() : -1;
+    }
+
+    /**
+     * Used to get the number of currently active threads
+     * <br>
+     * Returns -1 if the executor is null
+     * @return int
+     */
+    public int getAPIActiveThreads(){
+        return (APISocket.getInstance().getExecutor() != null) ? APISocket.getInstance().getExecutor().getActiveThreads() : -1;
+    }
+
+    /**
+     * Used to get the remaining capacity of the queue
+     * <br>
+     * Returns -1 if the executor is null
+     * @return int
+     */
+    public int getAPIQueueRemainingCapacity(){
+        return (APISocket.getInstance().getExecutor() != null) ? APISocket.getInstance().getExecutor().getRemainingQueueCapacity() : -1;
+    }
+
+    /**
+     * Used to get the max capacity if the queue
+     * <br>
+     * Returns -1 if the executor is null
+     * @return int
+     */
+    public int getAPIQueueMaxCapacity(){
+        return (APISocket.getInstance().getExecutor() != null) ? APISocket.getInstance().getExecutor().getMaxQueueCapacity() : -1;
+    }
 
     /**
      * Creates and starts the analysis task
@@ -121,8 +182,8 @@ public class SystemStats {
         task = scheduledExecutorService.scheduleAtFixedRate(()->{
             // system load
             int sl = 0;
-            sl += ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage()*10;
-            sl += (1-(Runtime.getRuntime().freeMemory()/Runtime.getRuntime().totalMemory()))*10;
+            sl += Math.max(ManagementFactory.getOperatingSystemMXBean().getSystemLoadAverage()*10, 0);
+            sl += Math.max((1-(Runtime.getRuntime().freeMemory()/(double)Runtime.getRuntime().totalMemory()))*10, 0);
             if(sl < 2){
                 systemLoad = Load.Idle;
             }else if(sl < 5){
@@ -133,17 +194,20 @@ public class SystemStats {
                 systemLoad = Load.High;
             }
             // api load
-            int al = APISocket.getInstance().getLoadValue();
-            if(al < 2){
+            int al = 0;
+            al += Math.max(1-(getAPIQueueRemainingCapacity()/(double)getAPIQueueMaxCapacity())*10, 0);
+            al += Math.max(1-(getAPIActiveThreads()/(double)getAPIMaxPoolSize())*10, 0);
+            al += Math.max((getAPICurrentPoolSize()-getAPICorePoolSize())/(double)(getAPIMaxPoolSize()-getAPICorePoolSize())*5, 0);
+            if(al < 3){
                 apiLoad = Load.Idle;
-            }else if(al < 5){
+            }else if(al < 7){
                 apiLoad = Load.Low;
-            }else if(al < 10)
+            }else if(al < 13)
                 apiLoad = Load.Medium;
             else{
                 apiLoad = Load.High;
             }
-        }, 1, 30, TimeUnit.SECONDS);
+        }, 1, 1, TimeUnit.SECONDS);
     }
 
     /**

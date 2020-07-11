@@ -27,6 +27,7 @@ import de.netbeacon.jstorage.server.tools.ratelimiter.RateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSocket;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -76,6 +77,9 @@ public class HelloSocketHandler implements Runnable {
     public void run() {
         try{
             try{
+                // handshake
+                socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
+                socket.startHandshake();
                 // get streams
                 bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
@@ -220,10 +224,13 @@ public class HelloSocketHandler implements Runnable {
                 }
                 endHeaders(); // "server: I finished sending headers"
             }
+        }catch (SSLException e){
+            // handshake failed or something else we dont really need to know
+            logger.debug("SSLException On Hello Socket: ", e);
         }catch (Exception e){
             // return 500
             try{sendLines("HTTP/1.1 500 Internal Server Error"); endHeaders();}catch (Exception ignore){}
-            e.printStackTrace();
+            logger.error("Exception On Hello Socket: ", e);
         }finally {
             logger.debug("Finished Processing Of "+socket.getRemoteSocketAddress());
             close();
