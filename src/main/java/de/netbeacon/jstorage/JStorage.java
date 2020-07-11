@@ -32,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Scanner;
 
 /**
  * This class contains the default execution functions
@@ -96,15 +95,6 @@ public class JStorage {
                 modeDefault(runEncryptSetup);
                 break;
         }
-
-        Scanner scanner = new Scanner(System.in);
-        while(true){
-            String line = scanner.nextLine();
-            if(line.toLowerCase().equals("exit")){
-                break;
-            }
-        }
-        System.exit(0);
     }
 
     private static void modeDefault(boolean runEncryptSetup){
