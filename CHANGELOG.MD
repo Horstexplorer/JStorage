@@ -16,6 +16,8 @@ Types which may be used:
 - T - Testing
 - R - Release
 
+## v1.3.2_19 R
+- no real changes
 ## v1.3.2_18 R
 - improved performance
 - improved statistics

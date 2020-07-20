@@ -1,11 +1,8 @@
 /.gradle
-/gradle
 /.idea
 /build
 /out
 /classes
-gradlew
-gradlew.bat
 /jstorage
 /docs
 *.key

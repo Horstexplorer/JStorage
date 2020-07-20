@@ -17,7 +17,7 @@
 package de.netbeacon.jstorage.server.hello.socket;
 
 import de.netbeacon.jstorage.server.hello.socket.processing.HelloProcessor;
-import de.netbeacon.jstorage.server.internal.executor.ScalingExecutor;
+import de.netbeacon.jstorage.server.tools.executor.ScalingExecutor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;

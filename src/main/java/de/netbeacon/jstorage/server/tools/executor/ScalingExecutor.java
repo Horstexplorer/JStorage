@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package de.netbeacon.jstorage.server.internal.executor;
+package de.netbeacon.jstorage.server.tools.executor;
 
 import java.util.ArrayList;
 import java.util.List;
