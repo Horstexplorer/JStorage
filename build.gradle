@@ -7,7 +7,7 @@ plugins {
 compileJava.options.encoding = 'UTF-8'
 group 'de.netbeacon'
 version '1.0'
-mainClassName = 'de.netbeacon.jstorage.Jstorage'
+mainClassName = 'de.netbeacon.jstorage.JStorage'
 
 sourceCompatibility = 13
 
