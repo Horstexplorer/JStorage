@@ -29,9 +29,7 @@ import de.netbeacon.jstorage.server.tools.shutdown.ShutdownHook;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.util.HashMap;
-import java.util.Objects;
 
 /**
  * This class contains the default execution functions
@@ -63,19 +61,6 @@ public class JStorage {
                 arguments.put(s.substring(1, s.indexOf(":")).toLowerCase(), s.substring(s.indexOf(":")+1));
             }catch (Exception e){
                 logger.error("Invalid Argument Format: "+s);
-            }
-        }
-        // check if the jar is called from the same level directory
-        System.out.print("DirCheck...");
-        if(arguments.containsKey("dircheck") && "disable".equalsIgnoreCase(arguments.get("dircheck"))){
-            System.out.println("ok (disabled)");
-        }else{
-            if(System.getProperty("user.dir").equalsIgnoreCase(new File(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource(".")).getPath()).getAbsolutePath())){
-                System.out.println("ok");
-            }else{
-                System.out.println("failed");
-                System.err.println("Working Dir ("+System.getProperty("user.dir")+")Does Not Match Jar Dir ("+new File(Objects.requireNonNull(ClassLoader.getSystemClassLoader().getResource(".")).getPath()).getAbsolutePath()+")");
-                System.exit(-1);
             }
         }
         // check if encryption should be set up
