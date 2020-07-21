@@ -5,72 +5,71 @@ This list contains most of the changes which have been made such as bug fixes, n
 > major.minor.patch_counter type
 
 ```
-major - a lot of breaking changes  
-minor - might break things a little  
-patch - should not break things; might add new features  
-counter - shows the number of total changes
+major - major changes (lots of new features)  
+minor - minor changes (new features)  
+patch - bug fixes  
+counter - number of total changes
 ```
 
-Types which may be used:
-- D - Development
-- T - Testing
-- R - Release
-
-## v1.3.2_19 R
+## v1.4.0_20
+This version does not contain new features.
+- simplified versioning (@1.4.0)
+- improved build env
+## v1.3.2_19
 - no real changes
-## v1.3.2_18 R
+## v1.3.2_18
 - improved performance
 - improved statistics
-## v1.3.1_17 R
+## v1.3.1_17
 - added system stats to hello socket
 - added hello socket actions to readme
-## v1.3.0_16 R
+## v1.3.0_16
 - minor improvements
 - added hello socket
-## v1.2.3_15 R
+## v1.2.3_15
 - fixed npe occurring when the ip has been banned
 - changed and extended ratelimit headers
 - unified responses
-## v1.2.2_14 R
+## v1.2.2_14
 - minor improvements, response now should always contain a response body
-## v1.2.1_13 R
+## v1.2.1_13
 - minor improvements
-## v1.2.0_12 R
+## v1.2.0_12
 - improved actions (defined by path, shorter names possible)
 - small bug fixes
-## v1.1.4_11 D
+## v1.1.4_11
 - connections get now accepted by a ThreadPoolExecutor
-## v1.1.3_10 R
+## v1.1.3_10
 - some internal optimizations
-## v1.1.2_9 D
+## v1.1.2_9
 - removed tests to rewrite them
 - updated usage statistics to work properly
 - some minor improvements
 - fixed a missing lock
-## v1.1.1_8 R
+## v1.1.1_8
 - fixed null byte padding of encryption
 - fixed api permissions
 - some other fixes
-## v1.1.0_7 D
+## v1.1.0_7
 - supports database encryption
-## v1.0.5_6 D
+## v1.0.5_6
 - added usage statistics
 - some improvements
-## v1.0.4_5 R
+## v1.0.4_5
 - added feature to optimize sharding
 - minor improvements
-## v1.0.3_4 R
+## v1.0.3_4
 - improved linkage between objects
 - added support to limit objects to s given structure within the same table
 - creating password for admin users by default
 - minor improvements
-## v1.0.2_3 R
+## v1.0.2_3
 - fixed the issue where no end of headers would be sent
 - changed login-mode for InfoAction_BasicInfo to all
-## v1.0.1_2 R
+## v1.0.1_2
 - actions which were supposed to use UPDATE as http method now use PUT
 - fixed the issue where reading of the headers also read the content of the body
-## v1.0.0_1 R
+## v1.0.0_1
 Initial Release
-## v0.0.0 D
+## v0.0.0
 Note: This version is used as placeholder during initial development
