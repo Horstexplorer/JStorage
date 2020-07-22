@@ -46,7 +46,6 @@ Actions requiring JSON payload/data
 ### Start Parameters
 Param | Description
 --- | ---
--dircheck:disable | disables the check if the jar gets executed from the same directory it is in
 -encryptsetup:<true/false> | tries to set up encryption
 -mode:<default> | changes the mode of this instance
 
