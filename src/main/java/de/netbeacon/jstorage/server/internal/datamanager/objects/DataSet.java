@@ -368,7 +368,7 @@ public class DataSet{
                 return false;
             }
             // check if structure matches
-            if(table.fixedStructure()){
+            if(table.hasDefaultStructure()){
                 if(!JSONMatcher.structureMatch(table.getDefaultStructure().getJSONObject(dataType), data.getJSONObject(dataType))){
                     logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": DataType Not Contain Required Structure");
                     statistics.accept(UsageStatistics.Usage.update_failure);
@@ -422,7 +422,7 @@ public class DataSet{
                 return false;
             }
             // check if required / allowed by structure
-            if(table.fixedStructure() && !table.getDefaultStructure().has(dataType)){
+            if(table.hasDefaultStructure() && !table.getDefaultStructure().has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Required By Default Structure");
                 statistics.accept(UsageStatistics.Usage.insert_failure);
                 return false;
@@ -478,7 +478,7 @@ public class DataSet{
                 return false;
             }
             // check if required / allowed by structure
-            if(table.fixedStructure()){
+            if(table.hasDefaultStructure()){
                 if(!table.getDefaultStructure().has(dataType)){
                     logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Not Required By Default Structure");
                     statistics.accept(UsageStatistics.Usage.insert_failure);
@@ -539,7 +539,7 @@ public class DataSet{
                 return false;
             }
             // check if not required by structure
-            if(table.fixedStructure() && table.getDefaultStructure().has(dataType)){
+            if(table.hasDefaultStructure() && table.getDefaultStructure().has(dataType)){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+" ) - Insert Operation Failed for DataType "+dataType+": DataType Required By Default Structure");
                 statistics.accept(UsageStatistics.Usage.delete_failure);
                 return false;

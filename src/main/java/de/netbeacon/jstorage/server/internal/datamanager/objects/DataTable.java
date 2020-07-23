@@ -45,30 +45,30 @@ import static java.util.stream.Collectors.toMap;
  * @author horstexplorer
  */
 public class DataTable {
-
+    // id
     private final DataBase dataBase;
     private final String identifier;
-
+    // data
     private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
     private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
     private final ConcurrentHashMap<String, UsageStatistics> statisticsPool = new ConcurrentHashMap<>();
-
+    // settings
     private JSONObject defaultStructure = new JSONObject();
     private final AtomicBoolean adaptiveLoad = new AtomicBoolean(false);
     private final AtomicBoolean autoOptimization = new AtomicBoolean(false);
     private final AtomicInteger autoResolveDataInconsistency = new AtomicInteger(-1);
     private final AtomicBoolean dataInconsistency = new AtomicBoolean(false);
     private final UsageStatistics usageStatistic = new UsageStatistics();
-
+    // status
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
-
+    // internal
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ScheduledExecutorService sES = Executors.newScheduledThreadPool(1);
     private Future<?> sESUnloadTask;
     private Future<?> sESSnapshotTask;
     private Future<?> sESBackgroundTask;
-
+    // logger
     private final Logger logger = LoggerFactory.getLogger(DataTable.class);
 
     /**
@@ -210,6 +210,15 @@ public class DataTable {
     }
 
     /**
+     * Returns a serialized copy of the default structure ready to be used in an dataset
+     * @param identifier identifier of the dataset
+     * @return JSONObject
+     */
+    public JSONObject getPreparedDefaultStructure(String identifier){
+        return getDefaultStructure().put("database", dataBase.getIdentifier()).put("table", this.getIdentifier()).put("identifier", identifier.toLowerCase());
+    }
+
+    /**
      * Used to check whether a given dataset meets the requirements of the table
      *
      * @param dataSet DataSet
@@ -217,7 +226,7 @@ public class DataTable {
      */
     private boolean matchesDefaultStructure(DataSet dataSet){
         if(!defaultStructure.isEmpty()){
-            return JSONMatcher.structureMatch(defaultStructure.put("database", "").put("table", "").put("identifier", ""), dataSet.getFullData());
+            return JSONMatcher.structureMatch(getDefaultStructure().put("database", "").put("table", "").put("identifier", ""), dataSet.getFullData());
         }
         return true;
     }
@@ -227,7 +236,7 @@ public class DataTable {
      *
      * @return boolean
      */
-    public boolean fixedStructure(){
+    public boolean hasDefaultStructure(){
         return !defaultStructure.isEmpty();
     }
 
@@ -318,7 +327,7 @@ public class DataTable {
                 throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
             }
             // check if the object matches a specific structure
-            if(fixedStructure() && !matchesDefaultStructure(dataSet)){
+            if(hasDefaultStructure() && !matchesDefaultStructure(dataSet)){
                 logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
                 throw new DataStorageException(221, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
             }
