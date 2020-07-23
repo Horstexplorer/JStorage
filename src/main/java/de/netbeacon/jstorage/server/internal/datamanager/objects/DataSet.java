@@ -283,7 +283,7 @@ public class DataSet{
      * Returns a serialized copy of the data for a specific dataType key, offers the possibility to lock this type for updating purposes
      * <p>
      * If acquire is set to true the dataType then an attempt is made to lock the data type for the next ~10 seconds to a specific token
-     * Should this be successful the response contains the additional key "utoken" with the token as string. If this was not successful the key will be missing.
+     * Should this be successful the response contains the additional key "utoken" with the token as string. If this was not successful or the table does not force secure inserts the key will be missing.
      * Every String type input will be converted to lowercase only to simplify handling.
      * <p>
      * May return null if the object does not contain the specific dataType or this type is currently locked for updating purposes
@@ -308,7 +308,7 @@ public class DataSet{
             }
             lock.readLock().unlock();
             // check acquire
-            if(acquire){
+            if(acquire && table.hasSecureInsertEnabled()){
                 updatePermissionLock.lock();
                 if(!updatePermissions.containsKey(dataType) && !(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database"))){
                     String uToken = new String(Base64.getEncoder().encode(String.valueOf(new SecureRandom().nextLong()).getBytes()));
@@ -338,6 +338,7 @@ public class DataSet{
      * Used to insert/update data of a specific dataType
      * <p>
      * The data must include the matching dataType and utoken to verify if this action is allowed.
+     * The utoken is only neccessary if the table forces secure inserts
      * Will return null if the dataType cant be updated or the token is invalid, false of the data does not match this object, is for an invalid dataType or the data does not contain the dataType, true on success.
      * Every String type input will be converted to lowercase only to simplify handling.
      *
@@ -348,13 +349,20 @@ public class DataSet{
     public Boolean update(String dataType, JSONObject data){
         dataType = dataType.toLowerCase();
         try{
-            // check if dataType & uToken is valid & data already has this type of data stored & token matches the token within the object
-            if(!updatePermissions.containsKey(dataType) || !updatePermissions.get(dataType).getuToken().equals(data.getString("utoken")) || !this.data.has(dataType)){
+            if(table.hasSecureInsertEnabled()){
+                // check if utoken is valid
+                if(!updatePermissions.containsKey(dataType) || !updatePermissions.get(dataType).getuToken().equals(data.getString("utoken"))){
+                    statistics.accept(UsageStatistics.Usage.update_failure);
+                    return null;
+                }
+                // remove scheduled task
+                updatePermissions.get(dataType).getScheduledFuture().cancel(true);
+            }
+            // check if dataset already has this type of data stored
+            if(!this.data.has(dataType)){
                 statistics.accept(UsageStatistics.Usage.update_failure);
                 return null;
             }
-            // remove scheduled task
-            updatePermissions.get(dataType).getScheduledFuture().cancel(true);
             // check for invalid types
             if(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database")){
                 logger.debug("DataSet ( Chain "+this.database.getIdentifier()+", "+this.table+", "+this.identifier+"; Hash "+hashCode()+" ) - Update Operation Failed for DataType "+dataType+": Modification Of Critical Types");

@@ -130,12 +130,16 @@ public class DataAction_DataTableSettings implements ProcessingAction{
             t.setAutoResolveDataInconsistency(data.getInt("autoResolveDataInconsistency"));
         }
 
+        if(data.has("secureInsert")){
+            t.setSecureInsert(data.getBoolean("secureInsert"));
+        }
+
         if(args.containsKey("optimize") && Boolean.parseBoolean(args.get("optimize"))){
             // optimize table now
             t.optimize();
         }
 
-        if(args.containsKey("resolveDataInconsistency")){
+        if(args.containsKey("resolvedatainconsistency")){
             // resolve data inconsistency
             t.resolveDataInconsistency(Integer.parseInt(args.get("resolveDataInconsistency")));
         }
@@ -145,7 +149,8 @@ public class DataAction_DataTableSettings implements ProcessingAction{
                 .put("adaptiveLoading", t.isAdaptive())
                 .put("defaultStructure", t.getDefaultStructure())
                 .put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode())
-                .put("autoOptimize", t.autoOptimizationEnabled());
+                .put("autoOptimize", t.autoOptimizationEnabled())
+                .put("secureInsert", t.hasSecureInsertEnabled());
         JSONObject customResponseData = new JSONObject()
                 .put("database", d.getIdentifier())
                 .put("identifier", t.getIdentifier())

@@ -58,6 +58,7 @@ public class DataTable {
     private final AtomicBoolean autoOptimization = new AtomicBoolean(false);
     private final AtomicInteger autoResolveDataInconsistency = new AtomicInteger(-1);
     private final AtomicBoolean dataInconsistency = new AtomicBoolean(false);
+    private final AtomicBoolean secureInsert = new AtomicBoolean(false);
     private final UsageStatistics usageStatistic = new UsageStatistics();
     // status
     private final AtomicBoolean ready = new AtomicBoolean(false);
@@ -106,6 +107,20 @@ public class DataTable {
     public String getIdentifier(){ return identifier; }
 
     /**
+     * Returns is this object is ready to be used
+     *
+     * @return boolean boolean
+     */
+    public boolean isReady(){ return ready.get(); }
+
+    /**
+     * Returns is this object has been shut down
+     *
+     * @return boolean boolean
+     */
+    public boolean isShutdown(){ return shutdown.get(); }
+
+    /**
      * Returns if this object supports adaptive loading
      *
      * @return boolean boolean
@@ -120,20 +135,6 @@ public class DataTable {
     public void setAdaptiveLoading(boolean value){
         adaptiveLoad.set(value);
     }
-
-    /**
-     * Returns is this object is ready to be used
-     *
-     * @return boolean boolean
-     */
-    public boolean isReady(){ return ready.get(); }
-
-    /**
-     * Returns is this object has been shut down
-     *
-     * @return boolean boolean
-     */
-    public boolean isShutdown(){ return shutdown.get(); }
 
     /**
      * Used to enable or disable auto optimization
@@ -238,6 +239,22 @@ public class DataTable {
      */
     public boolean hasDefaultStructure(){
         return !defaultStructure.isEmpty();
+    }
+
+    /**
+     * Used to enable or disable secure insert mode
+     * @param value boolean
+     */
+    public void setSecureInsert(boolean value){
+        secureInsert.set(value);
+    }
+
+    /**
+     * Used to determine if secure insert mode is enabled
+     * @return boolean
+     */
+    public boolean hasSecureInsertEnabled(){
+        return secureInsert.get();
     }
 
     /*                  ACCESS                  */
@@ -756,6 +773,7 @@ public class DataTable {
                         defaultStructure = jsonObject.getJSONObject("defaultStructure");
                         adaptiveLoad.set(jsonObject.getBoolean("adaptiveLoad"));
                         autoOptimization.set(jsonObject.getBoolean("autoOptimize"));
+                        secureInsert.set(jsonObject.getBoolean("secureInsert"));
                         int a = jsonObject.getInt("autoResolveDataInconsistency");
                         autoResolveDataInconsistency.set( (-1 <= a && a < 4) ? a : -1);
                         if(dataBase.getIdentifier().equals(dbn) && identifier.equals(tbn)){
@@ -824,6 +842,7 @@ public class DataTable {
                         .put("adaptiveLoad", adaptiveLoad.get())
                         .put("defaultStructure", defaultStructure)
                         .put("autoOptimize", autoOptimization.get())
+                        .put("secureInsert", secureInsert.get())
                         .put("autoResolveDataInconsistency", autoResolveDataInconsistency.get());
                 JSONArray shards = new JSONArray();
                 shardPool.forEach((key, value) -> {
