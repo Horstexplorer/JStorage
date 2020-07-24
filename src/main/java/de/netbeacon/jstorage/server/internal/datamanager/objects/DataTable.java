@@ -45,30 +45,31 @@ import static java.util.stream.Collectors.toMap;
  * @author horstexplorer
  */
 public class DataTable {
-
+    // id
     private final DataBase dataBase;
     private final String identifier;
-
+    // data
     private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
     private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
     private final ConcurrentHashMap<String, UsageStatistics> statisticsPool = new ConcurrentHashMap<>();
-
+    // settings
     private JSONObject defaultStructure = new JSONObject();
     private final AtomicBoolean adaptiveLoad = new AtomicBoolean(false);
     private final AtomicBoolean autoOptimization = new AtomicBoolean(false);
     private final AtomicInteger autoResolveDataInconsistency = new AtomicInteger(-1);
     private final AtomicBoolean dataInconsistency = new AtomicBoolean(false);
+    private final AtomicBoolean secureInsert = new AtomicBoolean(false);
     private final UsageStatistics usageStatistic = new UsageStatistics();
-
+    // status
     private final AtomicBoolean ready = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
-
+    // internal
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ScheduledExecutorService sES = Executors.newScheduledThreadPool(1);
     private Future<?> sESUnloadTask;
     private Future<?> sESSnapshotTask;
     private Future<?> sESBackgroundTask;
-
+    // logger
     private final Logger logger = LoggerFactory.getLogger(DataTable.class);
 
     /**
@@ -106,6 +107,20 @@ public class DataTable {
     public String getIdentifier(){ return identifier; }
 
     /**
+     * Returns is this object is ready to be used
+     *
+     * @return boolean boolean
+     */
+    public boolean isReady(){ return ready.get(); }
+
+    /**
+     * Returns is this object has been shut down
+     *
+     * @return boolean boolean
+     */
+    public boolean isShutdown(){ return shutdown.get(); }
+
+    /**
      * Returns if this object supports adaptive loading
      *
      * @return boolean boolean
@@ -120,20 +135,6 @@ public class DataTable {
     public void setAdaptiveLoading(boolean value){
         adaptiveLoad.set(value);
     }
-
-    /**
-     * Returns is this object is ready to be used
-     *
-     * @return boolean boolean
-     */
-    public boolean isReady(){ return ready.get(); }
-
-    /**
-     * Returns is this object has been shut down
-     *
-     * @return boolean boolean
-     */
-    public boolean isShutdown(){ return shutdown.get(); }
 
     /**
      * Used to enable or disable auto optimization
@@ -210,6 +211,15 @@ public class DataTable {
     }
 
     /**
+     * Returns a serialized copy of the default structure ready to be used in an dataset
+     * @param identifier identifier of the dataset
+     * @return JSONObject
+     */
+    public JSONObject getPreparedDefaultStructure(String identifier){
+        return getDefaultStructure().put("database", dataBase.getIdentifier()).put("table", this.getIdentifier()).put("identifier", identifier.toLowerCase());
+    }
+
+    /**
      * Used to check whether a given dataset meets the requirements of the table
      *
      * @param dataSet DataSet
@@ -217,7 +227,7 @@ public class DataTable {
      */
     private boolean matchesDefaultStructure(DataSet dataSet){
         if(!defaultStructure.isEmpty()){
-            return JSONMatcher.structureMatch(defaultStructure.put("database", "").put("table", "").put("identifier", ""), dataSet.getFullData());
+            return JSONMatcher.structureMatch(getDefaultStructure().put("database", "").put("table", "").put("identifier", ""), dataSet.getFullData());
         }
         return true;
     }
@@ -227,8 +237,24 @@ public class DataTable {
      *
      * @return boolean
      */
-    public boolean fixedStructure(){
+    public boolean hasDefaultStructure(){
         return !defaultStructure.isEmpty();
+    }
+
+    /**
+     * Used to enable or disable secure insert mode
+     * @param value boolean
+     */
+    public void setSecureInsert(boolean value){
+        secureInsert.set(value);
+    }
+
+    /**
+     * Used to determine if secure insert mode is enabled
+     * @return boolean
+     */
+    public boolean hasSecureInsertEnabled(){
+        return secureInsert.get();
     }
 
     /*                  ACCESS                  */
@@ -318,7 +344,7 @@ public class DataTable {
                 throw new DataStorageException(211, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Already Existing.");
             }
             // check if the object matches a specific structure
-            if(fixedStructure() && !matchesDefaultStructure(dataSet)){
+            if(hasDefaultStructure() && !matchesDefaultStructure(dataSet)){
                 logger.debug("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
                 throw new DataStorageException(221, "DataShard: "+dataBase.getIdentifier()+">"+identifier+": DataSet "+dataSet.getIdentifier()+" Does Not Match Required Structure");
             }
@@ -601,17 +627,53 @@ public class DataTable {
         }
     }
 
-    /*
-
-        public void fixDefault(){
-
-        // future feature:
-        //
-        // used to normalize all datassets to match default preset
-
+    /**
+     * Used to automatically upgrade all datasets to match the pattern of the default structure
+     * ! Using this function may result in data loss due to storage errors. Manual correction recommended.
+     */
+    public void upgradeToDefaultStructure(){
+        lock.writeLock().lock();
+        try{
+            logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Upgrading Structure - This May Result In Data Loss");
+            JSONObject defaultStructure = new JSONObject(getDefaultStructure()).put("database", "").put("table", "").put("identifier", "");
+            for(Map.Entry<String, DataShard> entry : shardPool.entrySet()){
+                Map<String, DataSet> oldDs = entry.getValue().getDataPool();
+                ArrayList<DataSet> newDs = new ArrayList<>();
+                for(Map.Entry<String, DataSet> entry1 : oldDs.entrySet()){
+                    try{
+                        DataSet newDataSet = new DataSet(dataBase, this, entry1.getKey(), JSONMatcher.structureUpgrade(defaultStructure, entry1.getValue().getFullData()));
+                        newDs.add(newDataSet);
+                    }catch (Exception e){
+                        logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Upgrading DataSet "+entry1.getKey()+" : "+e.getMessage()+" - Dropping This DataSet");
+                    }
+                }
+                // delete all datasets in this shard
+                for(Map.Entry<String, DataSet> entry1 : entry.getValue().getDataPool().entrySet()){
+                    try{entry1.getValue().onUnload();}catch (Exception ignore){}
+                }
+                entry.getValue().getDataPool().clear();
+                // insert new datasets
+                for(DataSet dataSet : newDs){
+                    try{
+                        entry.getValue().insertDataSet(dataSet);
+                    }catch (DataStorageException e){
+                        logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Inserting New DataSet "+dataSet.getIdentifier()+" : "+e.getMessage()+" - Dropping This DataSet");
+                    }
+                }
+                // store em
+                try{
+                    entry.getValue().unloadData(adaptiveLoad.get(), true, false);
+                }catch (DataStorageException e){
+                    logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Storing New DataSets To Drive "+entry.getKey()+" : "+e.getMessage()+" - Data May Be Lost");
+                }
+            }
+            logger.info("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Finished Upgrading Structure");
+        }catch (Exception e){
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Upgrading Structure Failed - Data May Be Lost");
+        }finally {
+            lock.writeLock().unlock();
+        }
     }
-
-     */ // fixDefault() -> placeholder for upcoming feature
 
     /**
      * Optimizes utilisation of shards by grouping frequently used data sets
@@ -747,6 +809,7 @@ public class DataTable {
                         defaultStructure = jsonObject.getJSONObject("defaultStructure");
                         adaptiveLoad.set(jsonObject.getBoolean("adaptiveLoad"));
                         autoOptimization.set(jsonObject.getBoolean("autoOptimize"));
+                        secureInsert.set(jsonObject.getBoolean("secureInsert"));
                         int a = jsonObject.getInt("autoResolveDataInconsistency");
                         autoResolveDataInconsistency.set( (-1 <= a && a < 4) ? a : -1);
                         if(dataBase.getIdentifier().equals(dbn) && identifier.equals(tbn)){
@@ -815,6 +878,7 @@ public class DataTable {
                         .put("adaptiveLoad", adaptiveLoad.get())
                         .put("defaultStructure", defaultStructure)
                         .put("autoOptimize", autoOptimization.get())
+                        .put("secureInsert", secureInsert.get())
                         .put("autoResolveDataInconsistency", autoResolveDataInconsistency.get());
                 JSONArray shards = new JSONArray();
                 shardPool.forEach((key, value) -> {

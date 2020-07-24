@@ -45,10 +45,10 @@ import java.util.List;
  * action: settings <br>
  * http_method: put <br>
  * login-mode: token <br>
- * payload: yes - optional: adaptiveLoading(boolean), defaultStructure(JSONObject), autoOptimize(Boolean), autoResolveDataInconsistency(Integer in range -1 to 3) <br>
+ * payload: yes - optional: adaptiveLoading(boolean), defaultStructure(JSONObject), autoOptimize(Boolean), autoResolveDataInconsistency(Integer in range -1 to 3), secureInsert (Boolean) <br>
  * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator <br>
  * required_arguments: database(String, databaseIdentifier), identifier(String, tableIdentifier) <br>
- * optional_arguments: optimize(Boolean), resolveDataInconsistency(Integer in range -1 to 3) <br>
+ * optional_arguments: optimize(Boolean), resolvedatainconsistency(Integer in range -1 to 3), upgradestructure (Boolean) <br>
  *
  * @author horstexplorer
  */
@@ -130,14 +130,25 @@ public class DataAction_DataTableSettings implements ProcessingAction{
             t.setAutoResolveDataInconsistency(data.getInt("autoResolveDataInconsistency"));
         }
 
+        if(data.has("secureInsert")){
+            t.setSecureInsert(data.getBoolean("secureInsert"));
+        }
+
         if(args.containsKey("optimize") && Boolean.parseBoolean(args.get("optimize"))){
             // optimize table now
             t.optimize();
         }
 
-        if(args.containsKey("resolveDataInconsistency")){
+        if(args.containsKey("resolvedatainconsistency")){
             // resolve data inconsistency
-            t.resolveDataInconsistency(Integer.parseInt(args.get("resolveDataInconsistency")));
+            t.resolveDataInconsistency(Integer.parseInt(args.get("resolvedatainconsistency")));
+        }
+
+        if(args.containsKey("upgradestructure")){
+            // upgrade structure
+            if(Boolean.parseBoolean(args.get("upgradestructure"))){
+                t.upgradeToDefaultStructure();
+            }
         }
 
         // return info
@@ -145,7 +156,8 @@ public class DataAction_DataTableSettings implements ProcessingAction{
                 .put("adaptiveLoading", t.isAdaptive())
                 .put("defaultStructure", t.getDefaultStructure())
                 .put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode())
-                .put("autoOptimize", t.autoOptimizationEnabled());
+                .put("autoOptimize", t.autoOptimizationEnabled())
+                .put("secureInsert", t.hasSecureInsertEnabled());
         JSONObject customResponseData = new JSONObject()
                 .put("database", d.getIdentifier())
                 .put("identifier", t.getIdentifier())

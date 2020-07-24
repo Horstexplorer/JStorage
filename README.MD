@@ -1,6 +1,6 @@
 # JStorage
 ###### JSON based data storage & cache system with web api access
-> Version: 1.4.0_20
+> Version: 1.5.0_21
 
 
 ## Table of Content
@@ -46,7 +46,6 @@ Actions requiring JSON payload/data
 ### Start Parameters
 Param | Description
 --- | ---
--dircheck:disable | disables the check if the jar gets executed from the same directory it is in
 -encryptsetup:<true/false> | tries to set up encryption
 -mode:<default> | changes the mode of this instance
 

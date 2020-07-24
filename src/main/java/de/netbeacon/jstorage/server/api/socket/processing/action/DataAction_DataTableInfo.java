@@ -109,9 +109,15 @@ public class DataAction_DataTableInfo implements ProcessingAction{
             customResponseData
                     .put("database", d.getIdentifier())
                     .put("identifier", t.getIdentifier())
-                    .put("adaptiveLoading", t.isAdaptive())
-                    .put("datasets", jsonArray)
-                    .put("shards", t.getDataPool().size());
+                    .put("settings", new JSONObject()
+                            .put("adaptiveLoading", t.isAdaptive())
+                            .put("defaultStructure", t.getDefaultStructure())
+                            .put("autoResolveDataInconsistency", t.autoResolveDataInconsistencyMode())
+                            .put("autoOptimize", t.autoOptimizationEnabled())
+                            .put("secureInsert", t.hasSecureInsertEnabled()))
+                    .put("stats", new JSONObject()
+                            .put("datasets", jsonArray)
+                            .put("shards", t.getDataPool().size()));
         }else{
             JSONArray jsonArray = new JSONArray();
             d.getDataPool().values().forEach(v->jsonArray.put(v.getIdentifier()));

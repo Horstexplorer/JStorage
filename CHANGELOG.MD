@@ -11,6 +11,10 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.5.0_21
+- some bug fixes
+- added feature to enable or disable secure dataset modifications
+- added feature to upgrade all dataset within the same table to match the default structure
 ## v1.4.0_20
 This version does not contain new features.
 - simplified versioning (@1.4.0)

@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-package de.netbeacon.jstorage.server.tools.info;
+package de.netbeacon.jstorage.server.tools.jsonmatcher;
 
 /**
- * This class contains basic information
- *
- * @author horstexplorer
+ * This class helps to determine which objects to delete from a JSONArray
  */
-public class Info {
-
-    public static final String VERSION = "1.5.0_21";
-
-}
+public class RemoveThis {}
