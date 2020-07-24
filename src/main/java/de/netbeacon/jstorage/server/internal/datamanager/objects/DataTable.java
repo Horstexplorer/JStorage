@@ -627,17 +627,53 @@ public class DataTable {
         }
     }
 
-    /*
-
-        public void fixDefault(){
-
-        // future feature:
-        //
-        // used to normalize all datassets to match default preset
-
+    /**
+     * Used to automatically upgrade all datasets to match the pattern of the default structure
+     * ! Using this function may result in data loss due to storage errors. Manual correction recommended.
+     */
+    public void upgradeToDefaultStructure(){
+        lock.writeLock().lock();
+        try{
+            logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Upgrading Structure - This May Result In Data Loss");
+            JSONObject defaultStructure = new JSONObject(getDefaultStructure()).put("database", "").put("table", "").put("identifier", "");
+            for(Map.Entry<String, DataShard> entry : shardPool.entrySet()){
+                Map<String, DataSet> oldDs = entry.getValue().getDataPool();
+                ArrayList<DataSet> newDs = new ArrayList<>();
+                for(Map.Entry<String, DataSet> entry1 : oldDs.entrySet()){
+                    try{
+                        DataSet newDataSet = new DataSet(dataBase, this, entry1.getKey(), JSONMatcher.structureUpgrade(defaultStructure, entry1.getValue().getFullData()));
+                        newDs.add(newDataSet);
+                    }catch (Exception e){
+                        logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Upgrading DataSet "+entry1.getKey()+" : "+e.getMessage()+" - Dropping This DataSet");
+                    }
+                }
+                // delete all datasets in this shard
+                for(Map.Entry<String, DataSet> entry1 : entry.getValue().getDataPool().entrySet()){
+                    try{entry1.getValue().onUnload();}catch (Exception ignore){}
+                }
+                entry.getValue().getDataPool().clear();
+                // insert new datasets
+                for(DataSet dataSet : newDs){
+                    try{
+                        entry.getValue().insertDataSet(dataSet);
+                    }catch (DataStorageException e){
+                        logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Inserting New DataSet "+dataSet.getIdentifier()+" : "+e.getMessage()+" - Dropping This DataSet");
+                    }
+                }
+                // store em
+                try{
+                    entry.getValue().unloadData(adaptiveLoad.get(), true, false);
+                }catch (DataStorageException e){
+                    logger.warn("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Error Storing New DataSets To Drive "+entry.getKey()+" : "+e.getMessage()+" - Data May Be Lost");
+                }
+            }
+            logger.info("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Finished Upgrading Structure");
+        }catch (Exception e){
+            logger.error("Table ( Chain "+this.dataBase.getIdentifier()+", "+this.identifier+"; Hash "+hashCode()+") Upgrading Structure Failed - Data May Be Lost");
+        }finally {
+            lock.writeLock().unlock();
+        }
     }
-
-     */ // fixDefault() -> placeholder for upcoming feature
 
     /**
      * Optimizes utilisation of shards by grouping frequently used data sets
