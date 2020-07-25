@@ -11,6 +11,8 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.5.1_22
+- fixed some ssl cert related issue (I hope so at least)
 ## v1.5.0_21
 - some bug fixes
 - added feature to enable or disable secure dataset modifications

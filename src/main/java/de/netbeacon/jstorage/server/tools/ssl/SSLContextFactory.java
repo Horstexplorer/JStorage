@@ -16,17 +16,19 @@
 
 package de.netbeacon.jstorage.server.tools.ssl;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.io.ByteArrayInputStream;
+import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyFactory;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.SecureRandom;
+import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -48,6 +50,10 @@ public class SSLContextFactory {
      * Creates a new SSLContextFactory
      */
     public SSLContextFactory(){
+        if(Security.getProvider("BC") == null){
+            Security.addProvider(new BouncyCastleProvider());
+        }
+
         try{
             keyStore = KeyStore.getInstance("JKS");
             keyStore.load(null);
@@ -62,7 +68,7 @@ public class SSLContextFactory {
     /**
      * Used to add certificates and their private key
      * <p>
-     * Requires an Base64 encoded X509 certificate and Base64 encoded RSA key
+     * Requires an Base64 encoded X509 certificate and Base64 encoded RSA or EC key
      *
      * @param alias            preferred alias for this certificate. Something like: some.domain.tld
      * @param pathToCert       path to the certificate. Something like ./dir/to/cert.pem
@@ -75,18 +81,36 @@ public class SSLContextFactory {
             String certs = new String(cert);
             certs = certs.substring(certs.indexOf("-----BEGIN CERTIFICATE-----")+27, certs.indexOf("-----END CERTIFICATE-----"));
             certs = certs.replaceAll("\n", "");
+            certs = certs.replaceAll("\r", "");
             cert = Base64.getDecoder().decode(certs);
-            byte[] key = Files.readAllBytes(Path.of(pathToPrivateKey));
-            String keys = new String(key);
-            keys = keys.substring(keys.indexOf("-----BEGIN PRIVATE KEY-----")+27, keys.indexOf("-----END PRIVATE KEY-----"));
-            keys = keys.replaceAll("\n", "");
-            key = Base64.getDecoder().decode(keys);
 
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             X509Certificate certificate = (X509Certificate)certFactory.generateCertificate(new ByteArrayInputStream(cert));
 
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            PrivateKey privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(key));
+            PrivateKey privateKey = null;
+
+            byte[] key = Files.readAllBytes(Path.of(pathToPrivateKey));
+            String keys = new String(key);
+            if(keys.startsWith("-----BEGIN PRIVATE KEY-----")){
+
+                keys = keys.substring(keys.indexOf("-----BEGIN PRIVATE KEY-----")+27, keys.indexOf("-----END PRIVATE KEY-----"));
+                keys = keys.replaceAll("\n", "");
+                keys = keys.replaceAll("\r", "");
+                key = Base64.getDecoder().decode(keys);
+                KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+                privateKey = keyFactory.generatePrivate(new PKCS8EncodedKeySpec(key));
+
+            }else if(keys.startsWith("-----BEGIN EC PRIVATE KEY-----")){
+
+                PEMParser pemParser = new PEMParser(new StringReader(keys));
+                Object object = pemParser.readObject();
+                JcaPEMKeyConverter converter = new JcaPEMKeyConverter().setProvider("BC");
+                KeyPair kp = converter.getKeyPair((PEMKeyPair) object);
+                privateKey = kp.getPrivate();
+
+            }else{
+                throw new Exception("Unknown Key");
+            }
 
             keyStore.setCertificateEntry(alias+"_cert", certificate);
             keyStore.setKeyEntry(alias+"_key", privateKey, keyStorePass.toCharArray(), new Certificate[] {certificate});
@@ -94,6 +118,7 @@ public class SSLContextFactory {
             logger.debug("Successfully Add Certificate With Alias "+alias);
             return true;
         }catch (Exception e){
+            e.printStackTrace();
             logger.error("Failed To Add Certificate With Alias "+alias);
             return false;
         }
@@ -124,4 +149,5 @@ public class SSLContextFactory {
             return null;
         }
     }
+
 }
