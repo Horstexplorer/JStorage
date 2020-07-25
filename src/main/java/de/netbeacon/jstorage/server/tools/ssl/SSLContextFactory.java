@@ -51,7 +51,6 @@ public class SSLContextFactory {
      */
     public SSLContextFactory(){
         if(Security.getProvider("BC") == null){
-            System.out.println("Added Bouncy Castle");
             Security.addProvider(new BouncyCastleProvider());
         }
 
