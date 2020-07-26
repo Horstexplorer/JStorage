@@ -25,10 +25,10 @@ import java.util.concurrent.TimeUnit;
  */
 public class RateLimiter {
 
-    private final long msWindowSize;
+    private final long nsWindowSize;
     private long filler;
     private long maxUsages;
-    private long msPerUsage;
+    private long nsPerUsage;
 
     /**
      * This creates a new RateLimiter object
@@ -37,7 +37,7 @@ public class RateLimiter {
      * @param refillUnitNumbers number of timeunits it should take to fully refill the bucket
      */
     public RateLimiter(TimeUnit refillUnit, long refillUnitNumbers){
-        msWindowSize = refillUnit.toMillis(Math.abs(refillUnitNumbers));
+        nsWindowSize = refillUnit.toNanos(Math.abs(refillUnitNumbers));
     }
 
     /*                  GET                 */
@@ -57,21 +57,21 @@ public class RateLimiter {
      * @return long
      */
     public long getRemainingUsages(){
-        long current = System.currentTimeMillis();
+        long current = System.nanoTime();
         if(filler < current){
             filler = current;
         }
-        long div = Math.max(current + msWindowSize - filler, 0);
-        return (div / msPerUsage);
+        long div = Math.max(current + nsWindowSize - filler, 0);
+        return (div / nsPerUsage);
     }
 
     /**
-     * Returns an estimate in ms on how long it would take to completely refill the bucket
+     * Returns an estimated timestamp at which the bucket should be completely refilled
      *
      * @return long
      */
     public long getRefillTime(){
-        return msWindowSize-(getRemainingUsages()*msPerUsage);
+        return System.currentTimeMillis()-((nsWindowSize-(getRemainingUsages()*nsPerUsage))/1000000);
     }
 
     /*                  SET                 */
@@ -83,7 +83,7 @@ public class RateLimiter {
      */
     public void setMaxUsages(long maxUsages){
         this.maxUsages = maxUsages;
-        msPerUsage = msWindowSize / maxUsages;
+        nsPerUsage = nsWindowSize / maxUsages;
     }
 
     /*                  CHECK                   */
@@ -96,19 +96,19 @@ public class RateLimiter {
      * @return boolean
      */
     public boolean takeNice(){
-        long current = System.currentTimeMillis();
+        long current = System.nanoTime();
         // lower limit
         if(filler < current){
             filler = current;
         }
         // add take to filler
-        filler += msPerUsage;
+        filler += nsPerUsage;
         // upper limit
-        if(filler > current+(msWindowSize*2)){
-            filler = current+(msWindowSize*2);
+        if(filler > current+(nsWindowSize*2)){
+            filler = current+(nsWindowSize*2);
         }
         // check if filler fits inside the window
-        return (current+msWindowSize) >= filler;
+        return (current+nsWindowSize) >= filler;
     }
 
     /**
@@ -119,19 +119,19 @@ public class RateLimiter {
      * @throws RateLimitException if the usage wont fit into the limit
      */
     public void take() throws RateLimitException {
-        long current = System.currentTimeMillis();
+        long current = System.nanoTime();
         // lower limit
         if(filler < current){
             filler = current;
         }
         // add take to filler
-        filler += msPerUsage;
+        filler += nsPerUsage;
         // upper limit
-        if(filler > current+(msWindowSize*2)){
-            filler = current+(msWindowSize*2);
+        if(filler > current+(nsWindowSize*2)){
+            filler = current+(nsWindowSize*2);
         }
         // check if filler fits inside the window
-        if((current+msWindowSize) < filler){
+        if((current+nsWindowSize) < filler){
             throw new RateLimitException("Ratelimit Exceeded");
         }
     }
