@@ -193,12 +193,12 @@ public class APIProcessor {
                     result.setHTTPStatusCode(500);
                 }
             }else{
-                result.setHTTPStatusCode(400);
+                result.setHTTPStatusCode(404);
                 result.addAdditionalInformation("Invalid Action / Path");
             }
         }catch (Exception e){
-            result.setHTTPStatusCode(500);
-            result.addAdditionalInformation(e.getMessage());
+            result.setHTTPStatusCode(400);
+            result.addAdditionalInformation("Bad Request");
             logger.debug("Error Processing Request On API Socket: "+processingId+": ", e);
         }finally {
             processed = true;

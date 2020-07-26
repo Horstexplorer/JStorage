@@ -128,30 +128,26 @@ public class DataAction_MultiSelect implements ProcessingAction{
         JSONArray resultArray = new JSONArray();
         JSONObject customResponse = new JSONObject().put("selection", resultArray);
         // parse data
-        try{
-            JSONArray selections = data.getJSONArray("selection");
-            for(int i = 0; i < selections.length(); i++) {
-                try{
-                    JSONObject jsonObject = selections.getJSONObject(i);
-                    if(!userHasPermission(jsonObject.getString("database"))){
-                        continue;
-                    }
-                    DataBase d = DataManager.getInstance().getDataBase(jsonObject.getString("database"));
-                    DataTable t = d.getTable(jsonObject.getString("table"));
-                    DataSet ds = t.getDataSet(jsonObject.getString("dataset"));
-                    if(jsonObject.has("datatype")){
-                        if(jsonObject.has("acquire")){
-                            resultArray.put(ds.get(jsonObject.getString("datatype"), jsonObject.getBoolean("acquire")));
-                        }else{
-                            resultArray.put(ds.get(jsonObject.getString("datatype"), false));
-                        }
+        JSONArray selections = data.getJSONArray("selection");
+        for(int i = 0; i < selections.length(); i++) {
+            try{
+                JSONObject jsonObject = selections.getJSONObject(i);
+                if(!userHasPermission(jsonObject.getString("database"))){
+                    continue;
+                }
+                DataBase d = DataManager.getInstance().getDataBase(jsonObject.getString("database"));
+                DataTable t = d.getTable(jsonObject.getString("table"));
+                DataSet ds = t.getDataSet(jsonObject.getString("dataset"));
+                if(jsonObject.has("datatype")){
+                    if(jsonObject.has("acquire")){
+                        resultArray.put(ds.get(jsonObject.getString("datatype"), jsonObject.getBoolean("acquire")));
                     }else{
-                        resultArray.put(ds.getFullData());
+                        resultArray.put(ds.get(jsonObject.getString("datatype"), false));
                     }
-                }catch (Exception ignore){}
-            }
-        }catch (Exception e){
-            throw new GenericObjectException(0, "Payload Error");
+                }else{
+                    resultArray.put(ds.getFullData());
+                }
+            }catch (Exception ignore){}
         }
         // set result
         result.addResult(getDefaultResponse(customResponse));
