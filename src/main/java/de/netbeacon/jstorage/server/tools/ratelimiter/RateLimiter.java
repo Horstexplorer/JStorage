@@ -71,7 +71,7 @@ public class RateLimiter {
      * @return long
      */
     public long getRefillTime(){
-        return System.currentTimeMillis()-((nsWindowSize-(getRemainingUsages()*nsPerUsage))/1000000);
+        return System.currentTimeMillis()+((nsWindowSize-(getRemainingUsages()*nsPerUsage))/1000000);
     }
 
     /*                  SET                 */

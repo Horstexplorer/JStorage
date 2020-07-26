@@ -220,7 +220,7 @@ public class User {
      *
      * @return long
      */
-    public long getBucketRefillTime() {return System.currentTimeMillis()+rateLimiter.getRefillTime(); }
+    public long getBucketRefillTime() {return rateLimiter.getRefillTime(); }
 
     /*                  ACCESS               */
 

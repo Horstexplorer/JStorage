@@ -198,7 +198,7 @@ public class HelloSocketHandler implements Runnable {
                 if(user != null){
                     sendLines("Ratelimit-Limit: "+user.getMaxBucket(),"Ratelimit-Remaining: "+user.getRemainingBucket(), "Ratelimit-Reset: "+user.getBucketRefillTime());
                 }else{
-                    sendLines("Ratelimit-Limit: "+ipRateLimiter.get(ip).getMaxUsages(),"Ratelimit-Remaining: "+ipRateLimiter.get(ip).getRemainingUsages(), "Ratelimit-Reset: "+System.currentTimeMillis()+ipRateLimiter.get(ip).getRefillTime());
+                    sendLines("Ratelimit-Limit: "+ipRateLimiter.get(ip).getMaxUsages(),"Ratelimit-Remaining: "+ipRateLimiter.get(ip).getRemainingUsages(), "Ratelimit-Reset: "+ipRateLimiter.get(ip).getRefillTime());
                 }
                 // send data
                 if(hpr.getBodyPage() != null){
