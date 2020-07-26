@@ -11,6 +11,9 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.6.0_24
+- added 2 new actions
+- minor changes to error handling
 ## v1.5.2_23
 - switched from ms to ns scale to calculate rate limits
 ## v1.5.1_22
