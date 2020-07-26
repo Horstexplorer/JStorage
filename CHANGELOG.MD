@@ -11,6 +11,8 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.5.2_23
+- switched from ms to ns scale to calculate rate limits
 ## v1.5.1_22
 - fixed some ssl cert related issue (I hope so at least)
 ## v1.5.0_21
