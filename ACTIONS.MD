@@ -44,7 +44,7 @@ Delete DataType | data/db/table/dataset/datatype/delete | Tries to delete a spec
 Get DataSet | data/db/table/dataset/get | Tries to get and return a specific dataset datatable within the selected table from a database |
 Get DataType | data/db/table/dataset/datatype/get | Tries to get the data from a specific datatype within the selected dataset |
 Update DataType | data/db/table/dataset/datatype/update | Tries to update the data behind a specific datatype key
-Multi Select | data/tool | Tries to select multiple datasets from diferent databases / tables
+Multi Select | data/tool | Tries to select multiple datasets from different databases / tables
 ## User Actions
 
 | Action | Full Path | Description |
