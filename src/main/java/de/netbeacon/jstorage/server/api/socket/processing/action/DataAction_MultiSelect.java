@@ -68,7 +68,7 @@ public class DataAction_MultiSelect implements ProcessingAction{
 
     @Override
     public String getAction() {
-        return "multiget";
+        return "multiselect";
     }
 
     @Override
