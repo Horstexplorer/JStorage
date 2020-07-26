@@ -225,7 +225,6 @@ public class APIProcessor {
      */
     public static void setupActions(){
         if(actions.isEmpty()){
-
             // data actions
             addAction(Arrays.asList("data", "db"), new DataAction_CreateDataBase());
             addAction(Arrays.asList("data", "db", "table"), new DataAction_CreateDataTable());
@@ -242,6 +241,8 @@ public class APIProcessor {
             addAction(Arrays.asList("data", "db", "table"), new DataAction_DataTableSettings());
             addAction(Arrays.asList("data", "db", "table", "dataset"), new DataAction_DataSetSettings());
             addAction(Arrays.asList("data", "db", "table", "dataset"), new DataAction_GetDataSet());
+            addAction(Arrays.asList("data", "tool"), new DataAction_MultiSelect());
+            addAction(Arrays.asList("data", "db", "table", "dataset", "datatype"), new DataAction_UpdateDataType());
             // cache actions
             addAction(Arrays.asList("cache"), new CacheAction_CacheSettings());
             addAction(Arrays.asList("cache"), new CacheAction_CacheInfo());
