@@ -100,5 +100,6 @@ public class DataAction_CreateDataBase implements ProcessingAction{
                 .put("identifier", d.getIdentifier());
         // set result
         result.addResult(this.getDefaultResponse(customResponseData));
+        // do not notify
     }
 }

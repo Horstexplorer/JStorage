@@ -20,6 +20,8 @@ import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
 import de.netbeacon.jstorage.server.internal.datamanager.objects.DataTable;
+import de.netbeacon.jstorage.server.internal.notificationmanager.NotificationManager;
+import de.netbeacon.jstorage.server.internal.notificationmanager.objects.DataNotification;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
@@ -122,5 +124,11 @@ public class DataAction_CreateDataSet implements ProcessingAction{
         JSONObject customResponseData = ds.getFullData();
         // set result
         result.addResult(this.getDefaultResponse(customResponseData));
+        // notify
+        try{
+            NotificationManager.getInstance().notify(
+                    new DataNotification(user, d.getIdentifier(), t.getIdentifier(),args.get("identifier"), null, DataNotification.Content.created)
+            );
+        }catch (Exception ignore){}
     }
 }

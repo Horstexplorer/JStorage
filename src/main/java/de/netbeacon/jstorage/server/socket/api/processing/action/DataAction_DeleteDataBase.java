@@ -100,5 +100,6 @@ public class DataAction_DeleteDataBase implements ProcessingAction{
                 .put("identifier", args.get("identifier").toLowerCase());
         // set result
         result.addResult(this.getDefaultResponse(customResponseData));
+        // do not notify
     }
 }

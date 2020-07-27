@@ -21,10 +21,7 @@ import de.netbeacon.jstorage.server.socket.notification.NotificationSocketHandle
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.exceptions.ShutdownException;
 import de.netbeacon.jstorage.server.tools.nullc.Null;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -64,61 +61,17 @@ public class NotificationManager {
         return instance;
     }
 
-    /**
-     * Used to add a notification
-     *
-     * @param dataNotification notification
-     */
-    public void notify(DataNotification dataNotification){
-        notificationQueue.add(dataNotification);
+
+    public void notify(DataNotification notification){
+
     }
 
-    /**
-     * Used to register or unregister a notification listener
-     *
-     * @param notificationSocketHandler the listener
-     * @param enable or disable it
-     */
-    public void register(NotificationSocketHandler notificationSocketHandler, boolean enable){
-        if(enable){
-            registeredClients.put(notificationSocketHandler, Null.class);
-        }else{
-            registeredClients.remove(notificationSocketHandler);
-        }
-    }
-
-
-    /**
-     * Used for initial setup of the DataManager
-     * @throws ShutdownException on any error.
-     */
     public void setup() throws SetupException{
-        notificationDispatcher = new Thread(()->{
-            Logger logger = LoggerFactory.getLogger("Notification_Dispatcher");
-            try{
-                while(true){
-                    try{
-                        DataNotification dataNotification = notificationQueue.take();
-                        for(Map.Entry<NotificationSocketHandler, Class<Null>> entry : registeredClients.entrySet()){
-                            entry.getKey().addNotification(dataNotification);
-                        }
-                    }catch (InterruptedException e){
-                        throw e;
-                    }catch (Exception e){
-                        logger.debug("An Error Occurred While Dispatching A Notification To A Client");
-                    }
-                }
-            }catch (InterruptedException e){
-                logger.warn("Notification Dispatcher Exited Due To Interrupt");
-            }
-        });
+
     }
 
-    /**
-     * Used to store content on shutdown
-     * @throws ShutdownException on any error.
-     */
+
     public void shutdown() throws ShutdownException{
-        try{notificationDispatcher.interrupt();}catch (Exception ignore){}
+
     }
 }

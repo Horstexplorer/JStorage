@@ -16,40 +16,50 @@
 
 package de.netbeacon.jstorage.server.internal.notificationmanager.objects;
 
-import de.netbeacon.jstorage.server.internal.datamanager.objects.DataBase;
-import de.netbeacon.jstorage.server.internal.datamanager.objects.DataSet;
-import de.netbeacon.jstorage.server.internal.datamanager.objects.DataTable;
+import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import org.json.JSONObject;
 
 public class DataNotification {
 
     public enum Content{
-        HeatBeat,
-        Created,
-        Updated,
-        Deleted
+        heartbeat,
+        created,
+        updated,
+        deleted
     }
 
-    private DataBase dataBase;
-    private DataTable dataTable;
-    private DataSet dataSet;
-    private String dataType;
-    private Content content;
+    private final User user;
+    private final String dataBase;
+    private final String dataTable;
+    private final String dataSet;
+    private final String dataType;
+    private final Content content;
+
+    public DataNotification(User user, String dataBase, String dataTable, String dataSet, String dataType, Content content){
+        this.user = user;
+        this.dataBase = dataBase.toLowerCase();
+        this.dataTable = dataTable.toLowerCase();
+        this.dataSet = dataSet.toLowerCase();
+        this.dataType = dataType.toLowerCase();
+        this.content = content;
+    }
+
+    public User getOriginUser(){
+        return user;
+    }
 
     public String getOriginDB(){
-        return dataBase.getIdentifier();
+        return dataBase;
     }
 
     public String getOriginTable(){
-        return dataTable.getIdentifier();
-    }
-
-    public String getOriginDataSet(){
-        return dataSet.getIdentifier();
+        return dataTable;
     }
 
     public JSONObject asJSON(){
-        JSONObject jsonObject = new JSONObject().put("notification_type", content);
+        JSONObject jsonObject = new JSONObject()
+                .put("notification_type", content)
+                .put("timestamp", System.currentTimeMillis());
         if(dataBase == null){
             return jsonObject;
         }
