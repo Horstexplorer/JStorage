@@ -16,7 +16,7 @@
 
 package de.netbeacon.jstorage.server.tools.meta;
 
-import de.netbeacon.jstorage.server.api.socket.APISocket;
+import de.netbeacon.jstorage.server.socket.api.APISocket;
 
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.Executors;

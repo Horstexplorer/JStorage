@@ -16,11 +16,11 @@
 
 package de.netbeacon.jstorage;
 
-import de.netbeacon.jstorage.server.api.socket.APISocket;
-import de.netbeacon.jstorage.server.hello.socket.HelloSocket;
 import de.netbeacon.jstorage.server.internal.cachemanager.CacheManager;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
+import de.netbeacon.jstorage.server.socket.api.APISocket;
+import de.netbeacon.jstorage.server.socket.hello.HelloSocket;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.info.Info;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
