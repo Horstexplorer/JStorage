@@ -158,7 +158,9 @@ public class NotificationSocketHandler implements Runnable{
                         requestedNotifications.get(db).add(table);
                     }
                 }
-
+                if(requestedNotifications.isEmpty()){
+                    throw new HTTPException(400);
+                }
                 // send ok
                 sendLines("HTTP/1.1 200 OK");
                 endHeaders();
