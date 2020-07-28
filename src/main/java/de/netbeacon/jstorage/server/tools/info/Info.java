@@ -23,6 +23,6 @@ package de.netbeacon.jstorage.server.tools.info;
  */
 public class Info {
 
-    public static final String VERSION = "1.6.0_24";
+    public static final String VERSION = "1.7.0_25";
 
 }
