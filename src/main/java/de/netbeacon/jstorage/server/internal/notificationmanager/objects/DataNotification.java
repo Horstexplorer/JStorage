@@ -56,6 +56,10 @@ public class DataNotification {
         return dataTable;
     }
 
+    public Content getContent() {
+        return content;
+    }
+
     public JSONObject asJSON(){
         JSONObject jsonObject = new JSONObject()
                 .put("notification_type", content)

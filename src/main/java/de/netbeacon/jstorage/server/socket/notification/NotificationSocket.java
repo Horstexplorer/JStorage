@@ -16,7 +16,6 @@
 
 package de.netbeacon.jstorage.server.socket.notification;
 
-import de.netbeacon.jstorage.server.socket.hello.HelloSocket;
 import de.netbeacon.jstorage.server.socket.hello.processing.HelloProcessor;
 import de.netbeacon.jstorage.server.tools.ssl.SSLContextFactory;
 import org.json.JSONObject;
@@ -46,7 +45,7 @@ public class NotificationSocket implements Runnable{
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     private SSLServerSocket sslServerSocket;
-    private final Logger logger = LoggerFactory.getLogger(HelloSocket.class);
+    private final Logger logger = LoggerFactory.getLogger(NotificationSocket.class);
 
     /**
      * Used to create an instance of this class
@@ -103,7 +102,7 @@ public class NotificationSocket implements Runnable{
         if(!running.get()) {
             running.set(true);
 
-            int port = 443;
+            int port = 8887;
             boolean isActivated = true;
 
             String certPath = "./jstorage/cert/certificate.pem";
@@ -178,7 +177,7 @@ public class NotificationSocket implements Runnable{
                     running.set(false);
                 }
             }else{
-                logger.info("Hello Notification Socket Is Deactivated");
+                logger.info("Notification Socket Is Deactivated");
             }
         }
     }

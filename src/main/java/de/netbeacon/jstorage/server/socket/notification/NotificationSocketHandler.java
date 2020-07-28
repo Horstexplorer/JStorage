@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
 import de.netbeacon.jstorage.server.internal.usermanager.object.DependentPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.GlobalPermission;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
+import de.netbeacon.jstorage.server.socket.notification.object.NotificationListener;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.exceptions.HTTPException;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
@@ -37,21 +38,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.*;
 
 public class NotificationSocketHandler implements Runnable{
 
-    private SSLSocket socket;
-    private String ip;
+    private final SSLSocket socket;
+    private final String ip;
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
-    private final HashMap<String, String> requestedNotifications = new HashMap<>();
-    private final BlockingQueue<DataNotification> dataNotificationQueue = new LinkedBlockingQueue<>();
+
+    private NotificationListener notificationListener;
 
     private static final int maxheadersize = 8; // 8kb
 
@@ -61,13 +57,6 @@ public class NotificationSocketHandler implements Runnable{
         this.socket = sslSocket;
         this.ip = socket.getRemoteSocketAddress().toString().substring(1, socket.getRemoteSocketAddress().toString().indexOf(":"));
     }
-
-    public void addNotification(DataNotification dataNotification){
-        if((requestedNotifications.containsKey(dataNotification.getOriginDB()) && requestedNotifications.get(dataNotification.getOriginDB()).isEmpty()) || (requestedNotifications.containsKey(dataNotification.getOriginDB()) && requestedNotifications.get(dataNotification.getOriginDB()).equals(dataNotification.getOriginTable()))){
-            dataNotificationQueue.add(dataNotification);
-        }
-    }
-
 
     @Override
     public void run() {
@@ -84,11 +73,9 @@ public class NotificationSocketHandler implements Runnable{
                     IPBanManager.getInstance().extendBan(ip, 60*10); // increase ban by 10 minutes
                     throw new HTTPException(403);
                 }
-            /*
-
-               HEADERS
-
-            */
+                /*
+                    HEADERS
+                 */
                 // get header (8kbit max, throw 413 else), get body if exists
                 int b;
                 ByteBuffer byteBuffer = ByteBuffer.allocate(1024*maxheadersize);
@@ -118,7 +105,7 @@ public class NotificationSocketHandler implements Runnable{
                     }
                 });
                 // check headers
-                if(!headers.containsKey("requested-notification")){
+                if(!headers.containsKey("givemenotifications") || !headers.containsKey("requested-notification")){
                     throw new HTTPException(400);
                 }
                 // get user from logintoken
@@ -142,6 +129,7 @@ public class NotificationSocketHandler implements Runnable{
 
                 // analyze client headers
                 // requested-notification: db db:table db:table db:table
+                HashMap<String, HashSet<String>> requestedNotifications = new HashMap<>();
                 String reqnots = headers.get("requested-notification");
                 String[] reqsar = reqnots.split("\\s");
                 for(String s : reqsar){
@@ -158,17 +146,23 @@ public class NotificationSocketHandler implements Runnable{
                         throw new HTTPException(403);
                     }
                     // if it is fine
-                    requestedNotifications.put(db, table);
+                    if(!requestedNotifications.containsKey(db)){
+                        requestedNotifications.put(db, new HashSet<String>());
+                    }
+                    if(!table.isBlank()){
+                        requestedNotifications.get(db).add(table);
+                    }
                 }
 
                 // send ok
                 sendLines("HTTP/1.1 200 OK");
                 endHeaders();
                 // register
-                NotificationManager.getInstance().register(this, true);
+                notificationListener = new NotificationListener(user, requestedNotifications);
+                NotificationManager.getInstance().register(notificationListener, true);
                 // listen to notifications
                 while(true){
-                    DataNotification notification = dataNotificationQueue.take();
+                    DataNotification notification = notificationListener.getNotification();
                     JSONObject jsonObject = notification.asJSON();
                     bufferedWriter.write(jsonObject.toString());
                     bufferedWriter.newLine();
@@ -231,7 +225,7 @@ public class NotificationSocketHandler implements Runnable{
      */
     private void close(){
         try{
-            NotificationManager.getInstance().register(this, false);
+            NotificationManager.getInstance().register(notificationListener, false);
         }catch (Exception ignore){}
         try{bufferedReader.close();}catch (Exception ignore){}
         try{bufferedWriter.close();}catch (Exception ignore){}
