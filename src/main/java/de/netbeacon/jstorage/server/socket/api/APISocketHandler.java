@@ -322,6 +322,10 @@ public class APISocketHandler implements Runnable {
         bufferedWriter.flush();
     }
 
+    /**
+     * Used to send a new line after the headers had been sent
+     * @throws Exception
+     */
     private void endHeaders() throws Exception{
         bufferedWriter.newLine();
         bufferedWriter.flush();

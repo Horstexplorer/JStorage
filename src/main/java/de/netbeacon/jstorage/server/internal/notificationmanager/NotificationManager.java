@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/**
+ * This class takes care of receiving and handling incoming and outgoing notifications
+ */
 public class NotificationManager {
 
     private static NotificationManager instance;

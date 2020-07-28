@@ -19,6 +19,9 @@ package de.netbeacon.jstorage.server.internal.notificationmanager.objects;
 import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import org.json.JSONObject;
 
+/**
+ * A helper class representing a notification
+ */
 public class DataNotification {
 
     public enum Content{
@@ -34,7 +37,17 @@ public class DataNotification {
     private final String dataSet;
     private final String dataType;
     private final Content content;
+    private final Long timestamp;
 
+    /**
+     * Used to create new instances of this class
+     * @param user the user causing this notification
+     * @param dataBase the affected db (might be null)
+     * @param dataTable the affected table (might be null)
+     * @param dataSet the affected dataset (might be null)
+     * @param dataType the affected datatype (might be null)
+     * @param content what happened
+     */
     public DataNotification(User user, String dataBase, String dataTable, String dataSet, String dataType, Content content){
         this.user = user;
         this.dataBase = dataBase.toLowerCase();
@@ -42,28 +55,49 @@ public class DataNotification {
         this.dataSet = dataSet.toLowerCase();
         this.dataType = dataType.toLowerCase();
         this.content = content;
+        this.timestamp = System.currentTimeMillis();
     }
 
+    /**
+     * Used to get the user causing this notification
+     * @return User
+     */
     public User getOriginUser(){
         return user;
     }
 
+    /**
+     * Used to get the affected db
+     * @return String or null
+     */
     public String getOriginDB(){
         return dataBase;
     }
 
+    /**
+     * Used to get the affected table
+     * @return String or null
+     */
     public String getOriginTable(){
         return dataTable;
     }
 
+    /**
+     * Used to get the content of the notification
+     * @return Content
+     */
     public Content getContent() {
         return content;
     }
 
+    /**
+     * Returns this notification as json with a timestamp
+     * @return JSONObject
+     */
     public JSONObject asJSON(){
         JSONObject jsonObject = new JSONObject()
                 .put("notification_type", content)
-                .put("timestamp", System.currentTimeMillis());
+                .put("timestamp", timestamp);
         if(dataBase == null){
             return jsonObject;
         }

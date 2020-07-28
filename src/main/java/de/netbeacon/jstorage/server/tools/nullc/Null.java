@@ -16,6 +16,9 @@
 
 package de.netbeacon.jstorage.server.tools.nullc;
 
+/**
+ * Helper class for situations where an object is required as placeholder
+ */
 public class Null {
 
     private static final Null instance = new Null();

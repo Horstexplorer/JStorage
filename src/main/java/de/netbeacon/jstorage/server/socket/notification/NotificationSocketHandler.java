@@ -40,6 +40,11 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+/**
+ * This class takes care of evaluating incoming requests from the notification socket
+ *
+ * @author horstexplorer
+ */
 public class NotificationSocketHandler implements Runnable{
 
     private final SSLSocket socket;
@@ -204,6 +209,10 @@ public class NotificationSocketHandler implements Runnable{
         bufferedWriter.flush();
     }
 
+    /**
+     * Used to send a new line after the headers had been sent
+     * @throws Exception
+     */
     private void endHeaders() throws Exception{
         bufferedWriter.newLine();
         bufferedWriter.flush();
@@ -225,7 +234,9 @@ public class NotificationSocketHandler implements Runnable{
      */
     private void close(){
         try{
-            NotificationManager.getInstance().register(notificationListener, false);
+            if(notificationListener != null){
+                NotificationManager.getInstance().register(notificationListener, false);
+            }
         }catch (Exception ignore){}
         try{bufferedReader.close();}catch (Exception ignore){}
         try{bufferedWriter.close();}catch (Exception ignore){}

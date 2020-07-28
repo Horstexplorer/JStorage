@@ -24,17 +24,33 @@ import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * This class takes care of handling the notification transport between the NotificationManager and the NotificationSocket
+ */
 public class NotificationListener {
 
     private final User user;
     private final HashMap<String, HashSet<String>> requestedNotifications;
     private final BlockingQueue<DataNotification> notificationQueue = new LinkedBlockingQueue<>();
 
+    /**
+     * Creates a new instance of this class
+     * @param user the user owning this listener
+     * @param requestedNotifications wanted notifications
+     */
     public NotificationListener(User user, HashMap<String, HashSet<String>> requestedNotifications){
         this.user = user;
         this.requestedNotifications = requestedNotifications;
     }
 
+    /**
+     * Used to offer a notification to this listener
+     * <br>
+     * This will only be queued if it the notification did not come from the same user and the notification comes from a wanted origin
+     *
+     * @param notification the notification
+     * @throws InterruptedException on exception
+     */
     public void offerNotification(DataNotification notification) throws InterruptedException {
         if(notification.getOriginUser() != null && notification.getOriginUser() == this.user){
             return;
@@ -48,6 +64,13 @@ public class NotificationListener {
         }
     }
 
+    /**
+     * Used to get the next notification from the queue.
+     * <br>
+     * This basically just wraps blockingQueue.take()
+     * @return DataNotification
+     * @throws InterruptedException on exception
+     */
     public DataNotification getNotification() throws InterruptedException {
         return notificationQueue.take();
     }
