@@ -110,7 +110,7 @@ public class NotificationSocketHandler implements Runnable{
                     }
                 });
                 // check headers
-                if(!headers.containsKey("givemenotifications") || !headers.containsKey("requested-notification")){
+                if(!headers.containsKey("requested-notification")){
                     throw new HTTPException(400);
                 }
                 // get user from logintoken
