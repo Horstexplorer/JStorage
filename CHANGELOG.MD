@@ -11,6 +11,8 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.7.1_26
+- minor change in handling connection request for notification socket
 ## v1.7.0_25
 - added notification handling
 ## v1.6.0_24
