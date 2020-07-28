@@ -53,6 +53,11 @@ public enum GlobalPermission {
     CacheAdmin,                 // manage all caches
 
     /**
+     * Allows to use the notification socket
+     */
+    UseNotifications,
+
+    /**
      * Used to let the user access the advanced statistics on the hello socket
      */
     ViewAdvancedStatistics;

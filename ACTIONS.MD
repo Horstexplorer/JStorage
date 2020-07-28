@@ -8,9 +8,14 @@
     - User Actions
     - Other Actions
 - Hello Socket
-    - Hello Actions 
+    - Hello Actions
+- Notification Socket
+    - How to use
 
-## Cache Actions
+
+## API-Socket
+
+### Cache Actions
 
 | Action | Full Path | Description |
 --- | --- | ---
@@ -23,7 +28,7 @@ Get Cached Data | cache/data/get | Tries to get the selected data from the speci
 Delete Cached Data | cache/data/delete | Tries to delete the selected data from the specified cache |
 Create Cached Data | cache/data/create | Tries to create a specific dataset within the selected cache |
 
-## Data Actions
+### Data Actions
 
 | Action | Full Path | Description |
 --- | --- | ---
@@ -45,7 +50,8 @@ Get DataSet | data/db/table/dataset/get | Tries to get and return a specific dat
 Get DataType | data/db/table/dataset/datatype/get | Tries to get the data from a specific datatype within the selected dataset |
 Update DataType | data/db/table/dataset/datatype/update | Tries to update the data behind a specific datatype key
 Multi Select | data/tool/multiselect | Tries to select multiple datasets from different databases / tables
-## User Actions
+
+### User Actions
 
 | Action | Full Path | Description |
 --- | --- | ---
@@ -56,14 +62,16 @@ Delete User | user/mng/delete |  Tries to delete a user |
 Change Password | user/mng/changepw | Tries to change the password of the current or selected user |
 Get Login Token | user/mng/getnewlogintoken |  Tries to create a new login token for the current or selected user |
 
-## Other Actions
+### Other Actions
 
 | Action | Full Path | Description |
 --- | --- | ---
 Basic Info | info/basic/info | Provides basic information about this JStorage installation |
 Statistics | info/stats/statistics | Provides usage statistics (from the last 10 minutes) of the selected object
 
-## Hello Actions
+## Hello Socket
+
+### Hello Actions
 [Detailed Description](https://github.com/Horstexplorer/JStorage/tree/master/src/main/java/de/netbeacon/jstorage/server/hello/socket/processing/action)
 
 | Action | Full Path | Description |
@@ -71,3 +79,17 @@ Statistics | info/stats/statistics | Provides usage statistics (from the last 10
 hello | hello | Returns hello. Does not require auth. |
 simplestatistics | simplestatistics | Returns a simplified version of the system stats. Does not require auth |
 advancedstatistics | advancedstatistics | Returns an advanced version of the system stats. Requires auth via token & GlobalPerm.ViewAdvancedStatistics |
+
+## Notification Socket
+
+### How to use
+Steps:
+C: client, S: server
+```
+C: open connection
+C: send requested-notification & token header, then end of headers
+S: checks user, checks requests; returns http status code (200 or error)
+S: on success will now start sending notifications and a heartbeat every 2 seconds until conection is closed
+```
+requested-notification header contains a whitespace separated list of databases and tables; example:
+`requested-notification: database1 database2 database3:table1 database3:table2`

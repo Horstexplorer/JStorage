@@ -11,6 +11,8 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.7.0_25
+- added notification handling
 ## v1.6.0_24
 - added 2 new actions
 - minor changes to error handling

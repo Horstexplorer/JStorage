@@ -16,13 +16,17 @@
 
 package de.netbeacon.jstorage.server.tools.shutdown;
 
-import de.netbeacon.jstorage.server.api.socket.APISocket;
-import de.netbeacon.jstorage.server.hello.socket.HelloSocket;
 import de.netbeacon.jstorage.server.internal.cachemanager.CacheManager;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
+import de.netbeacon.jstorage.server.internal.notificationmanager.NotificationManager;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
+import de.netbeacon.jstorage.server.socket.api.APISocket;
+import de.netbeacon.jstorage.server.socket.hello.HelloSocket;
+import de.netbeacon.jstorage.server.socket.notification.NotificationSocket;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
 import de.netbeacon.jstorage.server.tools.meta.SystemStats;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,6 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ShutdownHook {
 
     private static final AtomicBoolean inserted = new AtomicBoolean(false);
+    private final Logger logger = LoggerFactory.getLogger(ShutdownHook.class);
 
     /**
      * Insert this as ShutdownHook
@@ -48,13 +53,87 @@ public class ShutdownHook {
     }
 
     private void shutdownNow(){
-        System.out.println("! ShutdownHook Executed !");
-        try{System.out.print("HelloSocket..."); HelloSocket.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("APISocket..."); APISocket.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("IPBanManager..."); IPBanManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("UserManager..."); UserManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("DataManager..."); DataManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("CacheManager..."); CacheManager.getInstance().shutdown(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
-        try{System.out.print("SystemStats..."); SystemStats.getInstance().stopAnalysis(); System.out.println("ok");}catch (NullPointerException e){System.out.println("not initialized");}catch (Exception e){System.out.println(e.getCause()+"   "+e.getMessage());}
+        logger.info("! ShutdownHook Executed !");
+        try{
+            logger.info("Shutting Down HelloSocket...");
+            HelloSocket.getInstance().shutdown();
+            logger.info("HelloSocket Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down HelloSocket Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down HelloSocket Failed", e);
+        }
+        try{
+            logger.info("Shutting Down APISocket...");
+            APISocket.getInstance().shutdown();
+            logger.info("Down APISocket Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down APISocket Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down APISocket Failed", e);
+        }
+        try{
+            logger.info("Shutting Down NotificationSocket...");
+            NotificationSocket.getInstance().shutdown();
+            logger.info("NotificationSocket Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down NotificationSocket Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down NotificationSocket Failed", e);
+        }
+        try{
+            logger.info("Shutting Down IPBanManager...");
+            IPBanManager.getInstance().shutdown();
+            logger.info("IPBanManager Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down IPBanManager Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down IPBanManager Failed", e);
+        }
+        try{
+            logger.info("Shutting Down UserManager...");
+            UserManager.getInstance().shutdown();
+            logger.info("UserManager Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down UserManager Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down UserManager Failed", e);
+        }
+        try{
+            logger.info("Shutting Down DataManager...");
+            DataManager.getInstance().shutdown();
+            logger.info("DataManager Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down DataManager Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down DataManager Failed", e);
+        }
+        try{
+            logger.info("Shutting Down CacheManager...");
+            CacheManager.getInstance().shutdown();
+            logger.info("CacheManager Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down CacheManager Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down CacheManager Failed", e);
+        }
+        try{
+            logger.info("Shutting Down NotificationManager...");
+            NotificationManager.getInstance().shutdown();
+            logger.info("CacheManager Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down NotificationManager Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down NotificationManager Failed", e);
+        }
+        try{
+            logger.info("Shutting Down SystemStats...");
+            SystemStats.getInstance().stopAnalysis();
+            logger.info("SystemStats Not Initialized");
+        }catch (NullPointerException e){
+            logger.info("Shutting Down SystemStats Finished");
+        }catch (Exception e){
+            logger.error("Shutting Down SystemStats Failed", e);
+        }
     }
 }

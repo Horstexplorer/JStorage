@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package de.netbeacon.jstorage.server.tools.info;
+package de.netbeacon.jstorage.server.tools.nullc;
 
 /**
- * This class contains basic information
- *
- * @author horstexplorer
+ * Helper class for situations where an object is required as placeholder
  */
-public class Info {
+public class Null {
 
-    public static final String VERSION = "1.7.0_25";
+    private static final Null instance = new Null();
+
+    private Null(){}
+
+    public static Null getInstance(){
+        return instance;
+    }
 
 }

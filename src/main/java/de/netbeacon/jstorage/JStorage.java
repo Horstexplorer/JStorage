@@ -16,11 +16,13 @@
 
 package de.netbeacon.jstorage;
 
-import de.netbeacon.jstorage.server.api.socket.APISocket;
-import de.netbeacon.jstorage.server.hello.socket.HelloSocket;
 import de.netbeacon.jstorage.server.internal.cachemanager.CacheManager;
 import de.netbeacon.jstorage.server.internal.datamanager.DataManager;
+import de.netbeacon.jstorage.server.internal.notificationmanager.NotificationManager;
 import de.netbeacon.jstorage.server.internal.usermanager.UserManager;
+import de.netbeacon.jstorage.server.socket.api.APISocket;
+import de.netbeacon.jstorage.server.socket.hello.HelloSocket;
+import de.netbeacon.jstorage.server.socket.notification.NotificationSocket;
 import de.netbeacon.jstorage.server.tools.exceptions.SetupException;
 import de.netbeacon.jstorage.server.tools.info.Info;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
@@ -84,17 +86,89 @@ public class JStorage {
 
     private static void modeDefault(boolean runEncryptSetup){
         try{
-            try{ System.out.print("ShutdownHook..."); new ShutdownHook(); System.out.println("ok"); }catch (Exception e){System.out.println("error"); throw e;} // should not throw
-            try{ System.out.print("DataManager..."); DataManager.getInstance(true).setup(runEncryptSetup); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            try{ System.out.print("CacheManager..."); CacheManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            try{ System.out.print("UserManager..."); UserManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            try{ System.out.println("IPBanManager..."); IPBanManager.getInstance(true).setup(); System.out.println("ok"); }catch (SetupException e){System.out.println("error"); throw e;}
-            try{ System.out.println("HelloSocket..."); HelloSocket.getInstance(true).start(); System.out.println("started"); }catch (Exception e){System.out.println("error"); throw e;}
-            try{ System.out.print("APISocket..."); APISocket.getInstance(true).start(); System.out.println("started"); }catch (Exception e){System.out.println("error"); throw e;}
-            try{ System.out.print("SystemStats..."); SystemStats.getInstance(true).startAnalysis(); System.out.println("started"); }catch (Exception e){System.out.println("error"); throw e;}
+            try{
+                logger.info("Initializing ShutdownHook...");
+                new ShutdownHook();
+                logger.info("Initializing ShutdownHook finished");
+            }catch (Exception e){
+                logger.info("Initializing ShutdownHook failed");
+                throw e;
+            } // should not throw
+            try{
+                logger.info("Initializing DataManager...");
+                DataManager.getInstance(true).setup(runEncryptSetup);
+                logger.info("Initializing DataManager finished");
+            }catch (SetupException e){
+                logger.info("Initializing DataManager failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing CacheManager...");
+                CacheManager.getInstance(true).setup();
+                logger.info("Initializing CacheManager finished");
+            }catch (SetupException e){
+                logger.info("Initializing CacheManager failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing UserManager...");
+                UserManager.getInstance(true).setup();
+                logger.info("Initializing UserManager finished");
+            }catch (SetupException e){
+                logger.info("Initializing UserManager failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing IPBanManager...");
+                IPBanManager.getInstance(true).setup();
+                logger.info("Initializing IPBanManager finished");
+            }catch (SetupException e){
+                logger.info("Initializing IPBanManager failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing NotificationManager...");
+                NotificationManager.getInstance(true).setup();
+                logger.info("Initializing Notification finished");
+            }catch (Exception e){
+                logger.info("Initializing Notification failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing HelloSocket...");
+                HelloSocket.getInstance(true).start();
+                logger.info("Initializing HelloSocket finished");
+            }catch (Exception e){
+                logger.info("Initializing HelloSocket failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing APISocket...");
+                APISocket.getInstance(true).start();
+                logger.info("Initializing APISocket finished");
+            }catch (Exception e){
+                logger.info("Initializing APISocket failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing NotificationSocket...");
+                NotificationSocket.getInstance(true).start();
+                logger.info("Initializing NotificationSocket finished");
+            }catch (Exception e){
+                logger.info("Initializing NotificationSocket failed");
+                throw e;
+            }
+            try{
+                logger.info("Initializing SystemStats...");
+                SystemStats.getInstance(true).startAnalysis();
+                logger.info("Initializing SystemStats finished");
+            }catch (Exception e){
+                logger.info("Initializing SystemStats failed");
+                throw e;
+            }
         }catch (SetupException e){
-            logger.error("Error Starting Components", e);
-            System.exit(0);
+            logger.error("Error Starting Components. Exiting.", e);
+            System.exit(-1);
         }
     }
 }
