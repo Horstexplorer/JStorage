@@ -11,6 +11,8 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.7.2_27
+- fixed messages on shutdown
 ## v1.7.1_26
 - minor change in handling connection request for notification socket
 - added logging to file
