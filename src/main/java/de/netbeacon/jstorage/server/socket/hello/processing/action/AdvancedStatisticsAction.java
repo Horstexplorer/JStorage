@@ -31,7 +31,6 @@ public class AdvancedStatisticsAction implements HelloProcessingAction{
 
     private User user;
     private HelloProcessorResult result;
-    private HashMap<String, String> args;
 
 
     @Override
@@ -53,7 +52,6 @@ public class AdvancedStatisticsAction implements HelloProcessingAction{
     public void setup(User user, HelloProcessorResult result, HashMap<String, String> args) {
         this.user = user;
         this.result = result;
-        this.args = args;
     }
 
     @Override

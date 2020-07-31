@@ -71,7 +71,7 @@ public class DataSet{
     private final static AtomicLong dataSets = new AtomicLong(0);
     private final static AtomicInteger maxSTPEThreads = new AtomicInteger(256);
     // statistics
-    private final Consumer<UsageStatistics.Usage> statistics = new Consumer<UsageStatistics.Usage>() {
+    private final Consumer<UsageStatistics.Usage> statistics = new Consumer<>() {
         @Override
         public void accept(UsageStatistics.Usage usage) {
             UsageStatistics dsms = table.getStatisticsFor(identifier);
@@ -314,11 +314,8 @@ public class DataSet{
                 if(!updatePermissions.containsKey(dataType) && !(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database"))){
                     String uToken = new String(Base64.getEncoder().encode(String.valueOf(new SecureRandom().nextLong()).getBytes()));
                     String finalDataType = dataType;
-                    updatePermissions.put(dataType, new DataUpdateObject(uToken, updatePMSES.schedule(new Runnable() {
-                        @Override
-                        public void run() {
-                            updatePermissions.remove(finalDataType);
-                        }
+                    updatePermissions.put(dataType, new DataUpdateObject(uToken, updatePMSES.schedule(() -> {
+                        updatePermissions.remove(finalDataType);
                     }, 11, TimeUnit.SECONDS)));
                     responseData.put("utoken", uToken);
                     statistics.accept(UsageStatistics.Usage.acquire_success);

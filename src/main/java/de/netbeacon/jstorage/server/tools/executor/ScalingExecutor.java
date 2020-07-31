@@ -42,7 +42,7 @@ public class ScalingExecutor {
      * @param timeUnit unit of keepAliveTime
      */
     public ScalingExecutor(int baseThreads, int additionalThreads, int maxWaitingTasks, int keepAliveTime, TimeUnit timeUnit){
-        taskQueue = new ArrayBlockingQueue<Runnable>(maxWaitingTasks);
+        taskQueue = new ArrayBlockingQueue<>(maxWaitingTasks);
         this.baseExecutor = new ThreadPoolExecutor(baseThreads,baseThreads, keepAliveTime, timeUnit, new ArrayBlockingQueue<>(1));
         this.baseExecutor.prestartAllCoreThreads();
         this.scalingExecutor = new ThreadPoolExecutor(additionalThreads, additionalThreads, keepAliveTime, timeUnit, taskQueue);

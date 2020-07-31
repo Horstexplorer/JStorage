@@ -324,7 +324,7 @@ public class DataBase {
                 JSONObject jsonObject = new JSONObject()
                         .put("database", identifier);
                 JSONArray jsonArray = new JSONArray();
-                dataTablePool.forEach((k, v)->{ jsonArray.put(v.getIdentifier()); });
+                dataTablePool.forEach((k, v)-> jsonArray.put(v.getIdentifier()));
                 jsonObject.put("tables", jsonArray).put("encrypted", encrypted.get());
                 // write to file
                 File d = new File("./jstorage/data/db/"+identifier);
@@ -354,9 +354,7 @@ public class DataBase {
         shutdown.set(true);
         ready.set(false);
         // shutdown & clear everything
-        dataTablePool.forEach((k, v)-> {
-            v.delete();
-        });
+        dataTablePool.forEach((k, v)-> v.delete());
         dataTablePool.clear();
         // delete files
         try{

@@ -497,7 +497,7 @@ public class DataShard {
                 // check for delete - ignore others
                 if(delete){
                     // clear content
-                    dataSetPool.forEach((key, value) -> {value.onUnload();});
+                    dataSetPool.forEach((key, value) -> value.onUnload());
                     dataSetPool.clear();
                     occupiedIDs.remove(this.shardID);
                     // remove file if exists
@@ -529,13 +529,13 @@ public class DataShard {
                     writer.close();
                     if(unload){
                         // clear content
-                        dataSetPool.forEach((key, value) -> {value.onUnload();});
+                        dataSetPool.forEach((key, value) -> value.onUnload());
                         dataSetPool.clear();
                     }
                 }else{
                     if(unload){
                         // clear content
-                        dataSetPool.forEach((key, value) -> {value.onUnload();});
+                        dataSetPool.forEach((key, value) -> value.onUnload());
                         dataSetPool.clear();
                     }
                 }
@@ -548,7 +548,7 @@ public class DataShard {
                 status.set(1); // set unloading
                 logger.debug("Shard ( Chain "+this.dataBase.getIdentifier()+", "+this.table.getIdentifier()+"#"+this.shardID+"; Hash "+hashCode()+" ) Unloading Data With Params: u="+unload+" s="+saveToFile+" d="+delete);
                 // clear content
-                dataSetPool.forEach((key, value) -> {value.onUnload();});
+                dataSetPool.forEach((key, value) -> value.onUnload());
                 dataSetPool.clear();
                 occupiedIDs.remove(this.shardID);
                 // remove file if exists

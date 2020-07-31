@@ -338,14 +338,11 @@ public class Cache {
      */
     public void loadDataAsync(){
         if(status.get() <= 0){
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        loadData();
-                    } catch (DataStorageException e) {
-                        e.printStackTrace();
-                    }
+            Thread t = new Thread(() -> {
+                try {
+                    loadData();
+                } catch (DataStorageException e) {
+                    e.printStackTrace();
                 }
             });
             t.setDaemon(true);
@@ -439,14 +436,11 @@ public class Cache {
      */
     public void unloadDataAsync(boolean unload, boolean saveToFile, boolean deleteTable){
         if(status.get() == 3){
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        unloadData(unload, saveToFile, deleteTable);
-                    } catch (DataStorageException e) {
-                        e.printStackTrace();
-                    }
+            Thread t = new Thread(() -> {
+                try {
+                    unloadData(unload, saveToFile, deleteTable);
+                } catch (DataStorageException e) {
+                    e.printStackTrace();
                 }
             });
             t.setDaemon(true);

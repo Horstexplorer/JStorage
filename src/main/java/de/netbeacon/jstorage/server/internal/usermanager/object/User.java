@@ -261,7 +261,7 @@ public class User {
     public void addDependentPermission(String dependingOn, DependentPermission ... permissions){
         dependingOn = dependingOn.toLowerCase();
         if(!dependentPermission.containsKey(dependingOn)){
-            dependentPermission.put(dependingOn, new HashSet<DependentPermission>());
+            dependentPermission.put(dependingOn, new HashSet<>());
         }
         dependentPermission.get(dependingOn).addAll(Arrays.asList(permissions));
     }

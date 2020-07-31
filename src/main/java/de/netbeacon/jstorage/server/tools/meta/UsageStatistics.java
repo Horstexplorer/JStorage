@@ -36,7 +36,7 @@ public class UsageStatistics {
         update_success, update_failure,
         delete_success, delete_failure,
         acquire_success, acquire_failure
-    };
+    }
 
     private static final ScheduledExecutorService ses = Executors.newScheduledThreadPool(4);
     private final ConcurrentHashMap<Usage, AtomicLong> map = new ConcurrentHashMap<>();
