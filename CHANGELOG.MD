@@ -11,6 +11,10 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.7.3_28
+- added a timestamp to update & insert operations (datasets)
+- fixed a npe of the notification system
+- some code cleanup
 ## v1.7.2_27
 - fixed messages on shutdown
 ## v1.7.1_26
