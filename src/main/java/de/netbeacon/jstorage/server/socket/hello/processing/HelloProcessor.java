@@ -22,7 +22,7 @@ import de.netbeacon.jstorage.server.tools.httpprocessing.HTTPProcessorHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -108,10 +108,10 @@ public class HelloProcessor {
      * Setup actions.
      */
     public static void setupActions(){
-        addAction(Arrays.asList(), new DefaultHelloAction(), true);
-        addAction(Arrays.asList(), new HelloResponseAction(), false);
-        addAction(Arrays.asList(), new SimpleStatisticsAction(), false);
-        addAction(Arrays.asList(), new AdvancedStatisticsAction(), false);
+        addAction(Collections.emptyList(), new DefaultHelloAction(), true);
+        addAction(Collections.emptyList(), new HelloResponseAction(), false);
+        addAction(Collections.emptyList(), new SimpleStatisticsAction(), false);
+        addAction(Collections.emptyList(), new AdvancedStatisticsAction(), false);
     }
 
     /**

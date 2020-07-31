@@ -50,10 +50,10 @@ public class DataNotification {
      */
     public DataNotification(User user, String dataBase, String dataTable, String dataSet, String dataType, Content content){
         this.user = user;
-        this.dataBase = dataBase.toLowerCase();
-        this.dataTable = dataTable.toLowerCase();
-        this.dataSet = dataSet.toLowerCase();
-        this.dataType = dataType.toLowerCase();
+        this.dataBase = (dataBase != null)?dataBase.toLowerCase():null;
+        this.dataTable = (dataTable != null)?dataTable.toLowerCase():null;
+        this.dataSet = (dataSet != null)?dataSet.toLowerCase():null;
+        this.dataType = (dataType != null)?dataType.toLowerCase():null;
         this.content = content;
         this.timestamp = System.currentTimeMillis();
     }

@@ -46,10 +46,10 @@ import java.util.function.Consumer;
  * { "database":STRING, "table":STRING, "identifier":STRING, "uToken":STRING, DATATYPE:{ DATA } } // may or may not contain uToken - depending on result of acquire
  * insert() requires
  * dataType not already inserted
- * dataType, { "database":STRING, "table":STRING, "identifier":STRING, NEWDATATYPE:{ NEWDATA } }
+ * dataType, { "database":STRING, "table":STRING, "identifier":STRING, "timestamp":LONG, NEWDATATYPE:{ NEWDATA } }
  * update() requires
  * dataType already existing
- * dataType, { "database":STRING, "table":STRING, "identifier":STRING, "uToken":STRING, DATATYPE:{ NEWDATA } }
+ * dataType, { "database":STRING, "table":STRING, "identifier":STRING, ("uToken":STRING), "timestamp":LONG, DATATYPE:{ NEWDATA } }
  *
  * @author horstexplorer
  */
@@ -64,13 +64,14 @@ public class DataSet{
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReentrantLock updatePermissionLock = new ReentrantLock();
     private final ConcurrentHashMap<String, DataUpdateObject> updatePermissions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Long> updateTimestamps = new ConcurrentHashMap<>();
     private final static ScheduledThreadPoolExecutor scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(1);
     private final static ScheduledExecutorService updatePMSES = scheduledThreadPoolExecutor;
     private final static AtomicInteger dataSetsPerThread = new AtomicInteger(7500);
     private final static AtomicLong dataSets = new AtomicLong(0);
     private final static AtomicInteger maxSTPEThreads = new AtomicInteger(256);
     // statistics
-    private final Consumer<UsageStatistics.Usage> statistics = new Consumer<UsageStatistics.Usage>() {
+    private final Consumer<UsageStatistics.Usage> statistics = new Consumer<>() {
         @Override
         public void accept(UsageStatistics.Usage usage) {
             UsageStatistics dsms = table.getStatisticsFor(identifier);
@@ -313,11 +314,8 @@ public class DataSet{
                 if(!updatePermissions.containsKey(dataType) && !(dataType.equals("identifier") || dataType.equals("table") || dataType.equals("database"))){
                     String uToken = new String(Base64.getEncoder().encode(String.valueOf(new SecureRandom().nextLong()).getBytes()));
                     String finalDataType = dataType;
-                    updatePermissions.put(dataType, new DataUpdateObject(uToken, updatePMSES.schedule(new Runnable() {
-                        @Override
-                        public void run() {
-                            updatePermissions.remove(finalDataType);
-                        }
+                    updatePermissions.put(dataType, new DataUpdateObject(uToken, updatePMSES.schedule(() -> {
+                        updatePermissions.remove(finalDataType);
                     }, 11, TimeUnit.SECONDS)));
                     responseData.put("utoken", uToken);
                     statistics.accept(UsageStatistics.Usage.acquire_success);
@@ -349,6 +347,7 @@ public class DataSet{
     public Boolean update(String dataType, JSONObject data){
         dataType = dataType.toLowerCase();
         try{
+            // check if secure inserts are enabled
             if(table.hasSecureInsertEnabled()){
                 // check if utoken is valid
                 if(!updatePermissions.containsKey(dataType) || !updatePermissions.get(dataType).getuToken().equals(data.getString("utoken"))){
@@ -382,6 +381,13 @@ public class DataSet{
                     statistics.accept(UsageStatistics.Usage.update_failure);
                     return false;
                 }
+            }
+            // check if the timestamp is valid
+            if(!data.has("timestamp")){
+                return null;
+            }
+            if(!checkUpdateTimeStampsAuthorizeAndUpdate(dataType, data.getLong("timestamp"))){
+                return null;
             }
             // lock
             lock.writeLock().lock();
@@ -435,6 +441,8 @@ public class DataSet{
                 statistics.accept(UsageStatistics.Usage.insert_failure);
                 return false;
             }
+            // update timestamp
+            updateTimestamp(dataType, System.currentTimeMillis());
             // lock
             lock.writeLock().lock();
             // insert
@@ -499,6 +507,13 @@ public class DataSet{
                     }
                 }
             }
+            // check timestamps
+            if(!data.has("timestamp")){
+                return null;
+            }
+            if(!checkUpdateTimeStampsAuthorizeAndUpdate(dataType, data.getLong("timestamp"))){
+                return null;
+            }
             // lock
             lock.writeLock().lock();
             // insert
@@ -552,6 +567,8 @@ public class DataSet{
                 statistics.accept(UsageStatistics.Usage.delete_failure);
                 return false;
             }
+            // update timestamps
+            updateTimestamp(dataType, System.currentTimeMillis()); // this should deny previous queued inserts
             // lock
             lock.writeLock().lock();
             // remove
@@ -595,6 +612,37 @@ public class DataSet{
         if(Math.min(Math.max((dataSets.get()/dataSetsPerThread.get()),1),maxSTPEThreads.get()) != scheduledThreadPoolExecutor.getCorePoolSize()){
             scheduledThreadPoolExecutor.setCorePoolSize((int) Math.min(Math.max((dataSets.get()/dataSetsPerThread.get()),1),maxSTPEThreads.get())); // min 1 - max 256 threads (0 to 960000 datasets - larger values still share the same number of threads)
         }
+    }
+
+    /**
+     * Check update timestamps, authorize and update timestamps
+     *
+     * @param dataType the selected datatype
+     * @param timestamp the timestamp of the update
+     * @return boolean true if allow, false if not
+     */
+    private boolean checkUpdateTimeStampsAuthorizeAndUpdate(String dataType, long timestamp){
+        if(System.currentTimeMillis() < timestamp){return false;}
+        if(!updateTimestamps.containsKey(dataType.toLowerCase())){
+            updateTimestamps.put(dataType, timestamp);
+            return true;
+        }else{
+            if(updateTimestamps.get(dataType.toLowerCase()) <= timestamp){
+                updateTimestamps.put(dataType, timestamp);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Used to update the timestamp to a set value
+     *
+     * @param dataType datatype
+     * @param timestamp timestamp
+     */
+    private void updateTimestamp(String dataType, long timestamp){
+        updateTimestamps.put(dataType.toLowerCase(), timestamp);
     }
 
     /**

@@ -324,7 +324,7 @@ public class APISocketHandler implements Runnable {
 
     /**
      * Used to send a new line after the headers had been sent
-     * @throws Exception
+     * @throws Exception on exception
      */
     private void endHeaders() throws Exception{
         bufferedWriter.newLine();

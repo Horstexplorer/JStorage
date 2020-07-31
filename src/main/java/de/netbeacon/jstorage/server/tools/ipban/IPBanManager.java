@@ -396,28 +396,18 @@ public class IPBanManager {
             }
             // create clean & flag task
             ses = Executors.newScheduledThreadPool(2);
-            cleanTask = ses.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    banlist.forEach((key, value)->{
-                        if(!value.isValid()){
-                            banlist.remove(key); // should not throw an exception while iterating cuz this is a concurrenthashmap
-                        }
-                    });
+            cleanTask = ses.scheduleAtFixedRate(() -> banlist.forEach((key, value)->{
+                if(!value.isValid()){
+                    banlist.remove(key); // should not throw an exception while iterating cuz this is a concurrenthashmap
                 }
-            }, 1, 1, TimeUnit.SECONDS);
-            flagTask = ses.scheduleAtFixedRate(new Runnable() {
-                @Override
-                public void run() {
-                    flaglist.forEach((key, value)->{
-                        if(value.get()-1 > 0){
-                           value.set(value.get()-1);
-                        }else{
-                            flaglist.remove(key);
-                        }
-                    });
+            }), 1, 1, TimeUnit.SECONDS);
+            flagTask = ses.scheduleAtFixedRate(() -> flaglist.forEach((key, value)->{
+                if(value.get()-1 > 0){
+                   value.set(value.get()-1);
+                }else{
+                    flaglist.remove(key);
                 }
-            }, 1, 1, TimeUnit.MINUTES);
+            }), 1, 1, TimeUnit.MINUTES);
             logger.debug("Setup Successful");
         }catch (Exception e){
             logger.error("Setup Failed", e);
@@ -446,9 +436,9 @@ public class IPBanManager {
                 JSONObject jsonObject = new JSONObject()
                         .put("banAfterFlags", banAfterFlags);
                 JSONArray jsonArray = new JSONArray();
-                banlist.forEach((k, v)->{jsonArray.put(v.export());});
+                banlist.forEach((k, v)-> jsonArray.put(v.export()));
                 JSONArray jsonArray2 = new JSONArray();
-                flaglist.forEach((k,v)->{jsonArray2.put(new JSONObject().put("ip", k).put("flags", v));});
+                flaglist.forEach((k,v)-> jsonArray2.put(new JSONObject().put("ip", k).put("flags", v)));
                 JSONArray jsonArray3 = new JSONArray();
                 whitelist.forEach(jsonArray3::put);
                 jsonObject

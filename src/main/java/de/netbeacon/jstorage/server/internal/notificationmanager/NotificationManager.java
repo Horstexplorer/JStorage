@@ -137,7 +137,7 @@ public class NotificationManager {
 
     /**
      * Used to shut down execution
-     * @throws ShutdownException
+     * @throws ShutdownException on exception
      */
     public void shutdown() throws ShutdownException{
         if(notificationDispatcher != null){

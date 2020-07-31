@@ -49,8 +49,8 @@ public class DataTable {
     private final DataBase dataBase;
     private final String identifier;
     // data
-    private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<String, String>();
-    private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<String, DataShard>();
+    private final ConcurrentHashMap<String, String> indexPool = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, DataShard> shardPool = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, UsageStatistics> statisticsPool = new ConcurrentHashMap<>();
     // settings
     private JSONObject defaultStructure = new JSONObject();
@@ -142,7 +142,7 @@ public class DataTable {
      * @param value value
      */
     public void setAutoOptimization(boolean value){
-        autoOptimization.set(true);
+        autoOptimization.set(value);
     }
 
     /**
@@ -535,7 +535,7 @@ public class DataTable {
                     // rebuild index from loaded shards & all files inside the storage dir
                     HashMap<String, DataSet> dataSets = new HashMap<>();
                     // get all dataSets from all running dataShards
-                    shardPool.entrySet().stream().filter(e->e.getValue().getStatus() == 3).forEach(e-> {e.getValue().getDataPool().forEach((key, value) -> dataSets.put(value.getIdentifier(),value));});
+                    shardPool.entrySet().stream().filter(e->e.getValue().getStatus() == 3).forEach(e-> e.getValue().getDataPool().forEach((key, value) -> dataSets.put(value.getIdentifier(),value)));
                     // get all datasets from existing files except those with ids in processedShardIDs
                     File d = new File("./jstorage/data/"+dataBase.getIdentifier());
                     if(!d.exists()){ d.mkdirs(); }

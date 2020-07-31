@@ -114,7 +114,7 @@ public class NotificationSocketHandler implements Runnable{
                     throw new HTTPException(400);
                 }
                 // get user from logintoken
-                User user = null;
+                User user;
                 if(headers.containsKey("token")){
                     try{ user = UserManager.getInstance().getUserByLoginToken(headers.get("token")); }
                     catch (GenericObjectException e){
@@ -138,7 +138,7 @@ public class NotificationSocketHandler implements Runnable{
                 String reqnots = headers.get("requested-notification");
                 String[] reqsar = reqnots.split("\\s");
                 for(String s : reqsar){
-                    String db = "";
+                    String db;
                     String table = "";
                     if(s.contains(":")){
                         db = s.substring(0, s.indexOf(":")).toLowerCase();
@@ -152,7 +152,7 @@ public class NotificationSocketHandler implements Runnable{
                     }
                     // if it is fine
                     if(!requestedNotifications.containsKey(db)){
-                        requestedNotifications.put(db, new HashSet<String>());
+                        requestedNotifications.put(db, new HashSet<>());
                     }
                     if(!table.isBlank()){
                         requestedNotifications.get(db).add(table);
@@ -213,7 +213,7 @@ public class NotificationSocketHandler implements Runnable{
 
     /**
      * Used to send a new line after the headers had been sent
-     * @throws Exception
+     * @throws Exception on exception
      */
     private void endHeaders() throws Exception{
         bufferedWriter.newLine();
