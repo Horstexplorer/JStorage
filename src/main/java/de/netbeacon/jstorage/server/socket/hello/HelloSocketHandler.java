@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.socket.hello.processing.HelloProcessor;
 import de.netbeacon.jstorage.server.socket.hello.processing.HelloProcessorResult;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.exceptions.HTTPException;
+import de.netbeacon.jstorage.server.tools.info.Info;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
 import de.netbeacon.jstorage.server.tools.ratelimiter.RateLimiter;
 import org.slf4j.Logger;
@@ -39,8 +40,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -56,6 +57,10 @@ public class HelloSocketHandler implements Runnable {
     private final String ip;
 
     private static final int maxheadersize = 8; // 8kb
+    private static final long timeoutms = 3000; // 3s
+    private final AtomicBoolean canceled = new AtomicBoolean(false);
+    private ScheduledFuture<?> timeoutTask;
+    private static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
     private static final ConcurrentHashMap<String, RateLimiter> ipRateLimiter = new ConcurrentHashMap<>();
 
@@ -77,6 +82,8 @@ public class HelloSocketHandler implements Runnable {
     public void run() {
         try{
             try{
+                // start timeout task initially (to make sure the connection is not just opened for fun)
+                startTimeoutTask(2500);
                 // handshake
                 socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                 socket.startHandshake();
@@ -95,7 +102,8 @@ public class HelloSocketHandler implements Runnable {
                     HEADERS AND DATA INPUT
 
                  */
-
+                // (re)start timeout task; this will be used to wait for the header finishing to transmit
+                startTimeoutTask(timeoutms);
                 // get header (8kbit max, throw 413 else), get body if exists
                 int b;
                 ByteBuffer byteBuffer = ByteBuffer.allocate(1024*maxheadersize);
@@ -124,6 +132,8 @@ public class HelloSocketHandler implements Runnable {
                         }
                     }
                 });
+                // stop timeout
+                stopTimeout();
                 // analyse headers
                 // check if all required headers exist
                 if(!headers.containsKey("http_method") || !headers.containsKey("http_url")){
@@ -277,5 +287,36 @@ public class HelloSocketHandler implements Runnable {
         try{bufferedReader.close();}catch (Exception ignore){}
         try{bufferedWriter.close();}catch (Exception ignore){}
         try{socket.close();}catch (Exception ignore){}
+    }
+
+    /**
+     * Used to start a timeout for the connection
+     * <br>
+     * This will close the connection after a given time if not stopped
+     * If the task is already running it will be canceled and restarted
+     *
+     * @param timeout timeout in ms
+     */
+    private void startTimeoutTask(long timeout){
+        if(timeoutTask != null){
+            timeoutTask.cancel(true);
+        }
+        timeoutTask = ses.schedule(()->{
+            canceled.set(true);
+            try {
+                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_API/"+ Info.VERSION, "Connection: close");
+                endHeaders();
+            } catch (Exception ignore) {}
+            close();
+        }, timeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Used to stop the timeout task
+     */
+    private void stopTimeout(){
+        if(timeoutTask != null){
+            timeoutTask.cancel(true);
+        }
     }
 }
