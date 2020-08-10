@@ -25,6 +25,8 @@ import java.util.HashMap;
 
 /**
  * Used to get simplified system stats
+ *
+ * @author horstexplorer
  */
 public class SimpleStatisticsAction implements HelloProcessingAction{
 

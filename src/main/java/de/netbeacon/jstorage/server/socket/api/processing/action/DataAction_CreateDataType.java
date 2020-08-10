@@ -37,21 +37,21 @@ import java.util.List;
 
 /**
  * Data Action - Create Data Type
- * <p>
- * --- Does --- <br>
- * Tries to create a specific datatype identifier within the selected dataset <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * dataset basics, datatype data <br>
- * --- Requirements --- <br>
- * path: data/db/table/dataset/datatype <br>
- * action: create <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: optional <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), dataset(String, datasetIdentifier), identifier(String, dataType) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to create a specific datatype identifier within the selected dataset </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * dataset basics, datatype data </br>
+ * --- Requirements --- </br>
+ * path: data/db/table/dataset/datatype </br>
+ * action: create </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: optional </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify </br>
+ * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), dataset(String, datasetIdentifier), identifier(String, dataType) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

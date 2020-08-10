@@ -25,6 +25,7 @@ public class Base64 {
 
     /**
      * Used to encode bytes as base64
+     *
      * @param bytes input
      * @return base64 encoded output
      */
@@ -34,6 +35,7 @@ public class Base64 {
 
     /**
      * Used to decode base64 encoded bytes
+     *
      * @param bytes base64 encoded input
      * @return decoded output
      */

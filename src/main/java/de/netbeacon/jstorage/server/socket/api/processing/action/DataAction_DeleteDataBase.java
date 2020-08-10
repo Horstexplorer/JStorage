@@ -33,21 +33,21 @@ import java.util.List;
 
 /**
  * Data Action - Delete Data Base
- * <p>
- * --- Does --- <br>
- * Tries to delete a specific database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database <br>
- * --- Requirements --- <br>
- * path: data/db <br>
- * action: delete <br>
- * http_method: delete <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator <br>
- * required_arguments: identifier(String, databaseIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to delete a specific database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database </br>
+ * --- Requirements --- </br>
+ * path: data/db </br>
+ * action: delete </br>
+ * http_method: delete </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator </br>
+ * required_arguments: identifier(String, databaseIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

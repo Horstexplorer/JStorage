@@ -84,6 +84,10 @@ public class JStorage {
         }
     }
 
+    /**
+     * Used to start everything in default mode
+     * @param runEncryptSetup force the encryption setup to run
+     */
     private static void modeDefault(boolean runEncryptSetup){
         try{
             try{

@@ -36,21 +36,21 @@ import java.util.List;
 
 /**
  * Data Action - Delete Data Set
- * <p>
- * --- Does --- <br>
- * Tries to delete a specific dataset datatable within the selected table from a database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database, table, dataset <br>
- * --- Requirements --- <br>
- * path: data/db/table/dataset <br>
- * action: delete <br>
- * http_method: delete <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to delete a specific dataset datatable within the selected table from a database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database, table, dataset </br>
+ * --- Requirements --- </br>
+ * path: data/db/table/dataset </br>
+ * action: delete </br>
+ * http_method: delete </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify </br>
+ * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

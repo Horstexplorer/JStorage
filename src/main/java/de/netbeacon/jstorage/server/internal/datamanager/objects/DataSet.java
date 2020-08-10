@@ -38,18 +38,18 @@ import java.util.function.Consumer;
 
 /**
  * Instances of this class can be used to store data in JSON format. It also provides a save environment to perform changes to the data
- * <p>
- * Information on data management:
- * data has always to be stored in this format
- * { "database":STRING, "table":STRING, "identifier":STRING, DATATYPE:{ DATA }, DATATYPE:{ ... }, ... }
- * get() returns
- * { "database":STRING, "table":STRING, "identifier":STRING, "uToken":STRING, DATATYPE:{ DATA } } // may or may not contain uToken - depending on result of acquire
- * insert() requires
- * dataType not already inserted
- * dataType, { "database":STRING, "table":STRING, "identifier":STRING, "timestamp":LONG, NEWDATATYPE:{ NEWDATA } }
- * update() requires
- * dataType already existing
- * dataType, { "database":STRING, "table":STRING, "identifier":STRING, ("uToken":STRING), "timestamp":LONG, DATATYPE:{ NEWDATA } }
+ *
+ * Information on data management: </br>
+ * data has always to be stored in this format </br>
+ * { "database":STRING, "table":STRING, "identifier":STRING, DATATYPE:{ DATA }, DATATYPE:{ ... }, ... } </br>
+ * get() returns </br>
+ * { "database":STRING, "table":STRING, "identifier":STRING, "uToken":STRING, DATATYPE:{ DATA } } // may or may not contain uToken - depending on result of acquire </br>
+ * insert() requires </br>
+ * dataType not already inserted </br>
+ * dataType, { "database":STRING, "table":STRING, "identifier":STRING, "timestamp":LONG, NEWDATATYPE:{ NEWDATA } } </br>
+ * update() requires </br>
+ * dataType already existing </br>
+ * dataType, { "database":STRING, "table":STRING, "identifier":STRING, ("uToken":STRING), "timestamp":LONG, DATATYPE:{ NEWDATA } } </br>
  *
  * @author horstexplorer
  */
@@ -86,8 +86,8 @@ public class DataSet{
 
     /**
      * Creates a new DataSet
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param database   the superordinate DataBase {@link DataBase} object
      * @param table      the parent DataTable {@link DataTable} object
@@ -112,9 +112,9 @@ public class DataSet{
 
     /**
      * Creates a new DataSet object with the given parameter
-     * <p>
-     * This function allows you to insert data on object creation but will throw a SetupException if the data doesnt match the given database, table or identifier parameter.
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * This function allows you to insert data on object creation but will throw a SetupException if the data doesnt match the given database, table or identifier parameter. </br>
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param database   the name of the superordinate DataBase {@link DataBase} object
      * @param table      the name of the parent DataTable {@link DataTable} object
@@ -163,9 +163,9 @@ public class DataSet{
 
     /**
      * Sets the limit of threads the update scheduler may use.
-     * <p>
-     * The update scheduler is shared between all existing DataObjects
-     * Allowed values are between 1 to n where 0 can be used to easily restore the default value (256)
+     *
+     * The update scheduler is shared between all existing DataObjects </br>
+     * Allowed values are between 1 to n where 0 can be used to easily restore the default value (256) </br>
      *
      * @param value maximum number of threads
      */
@@ -181,8 +181,8 @@ public class DataSet{
 
     /**
      * Sets the number of datasets processed by each thread.
-     * <p>
-     * Allowed values are between 1 to n where 0 can be used to easily restore the default value (5000)
+     *
+     * Allowed values are between 1 to n where 0 can be used to easily restore the default value (5000) </br>
      *
      * @param value number of datasets per thread
      */
@@ -226,9 +226,9 @@ public class DataSet{
 
     /**
      * Used to set the dataset count to a specific value
-     * <p>
-     * THIS IS MEANT TO BE USED FOR INTERNAL ACTIONS CORRECTING THE COUNT AT RUNTIME ONLY
-     * This will take the absolute value of the input
+     *
+     * THIS IS MEANT TO BE USED FOR INTERNAL ACTIONS CORRECTING THE COUNT AT RUNTIME ONLY </br>
+     * This will take the absolute value of the input </br>
      *
      * @param value int
      */
@@ -282,12 +282,11 @@ public class DataSet{
 
     /**
      * Returns a serialized copy of the data for a specific dataType key, offers the possibility to lock this type for updating purposes
-     * <p>
-     * If acquire is set to true the dataType then an attempt is made to lock the data type for the next ~10 seconds to a specific token
-     * Should this be successful the response contains the additional key "utoken" with the token as string. If this was not successful or the table does not force secure inserts the key will be missing.
-     * Every String type input will be converted to lowercase only to simplify handling.
-     * <p>
-     * May return null if the object does not contain the specific dataType or this type is currently locked for updating purposes
+     *
+     * If acquire is set to true the dataType then an attempt is made to lock the data type for the next ~10 seconds to a specific token </br>
+     * Should this be successful the response contains the additional key "utoken" with the token as string. If this was not successful or the table does not force secure inserts the key will be missing. </br>
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
+     * May return null if the object does not contain the specific dataType or this type is currently locked for updating purposes </br>
      *
      * @param dataType represents the key of a json object
      * @param acquire  tries to lock the requested dataType to perform updates to the data within the next ~10 seconds
@@ -334,11 +333,11 @@ public class DataSet{
 
     /**
      * Used to insert/update data of a specific dataType
-     * <p>
-     * The data must include the matching dataType and utoken to verify if this action is allowed.
-     * The utoken is only neccessary if the table forces secure inserts
-     * Will return null if the dataType cant be updated or the token is invalid, false of the data does not match this object, is for an invalid dataType or the data does not contain the dataType, true on success.
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * The data must include the matching dataType and utoken to verify if this action is allowed. </br>
+     * The utoken is only neccessary if the table forces secure inserts </br>
+     * Will return null if the dataType cant be updated or the token is invalid, false of the data does not match this object, is for an invalid dataType or the data does not contain the dataType, true on success. </br>
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param dataType represents the key of a json object
      * @param data     JSONObject containing the specific data. See {@link DataSet} for the expected format.
@@ -413,9 +412,9 @@ public class DataSet{
 
     /**
      * Used to add new dataTypes
-     * <p>
-     * Will return null if the dataType already exists, false if its invalid and true on success
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Will return null if the dataType already exists, false if its invalid and true on success </br>
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param dataType represents the key of a json object
      * @return Boolean boolean
@@ -464,9 +463,9 @@ public class DataSet{
 
     /**
      * Used to add new dataTypes and insert data to it
-     * <p>
-     * Will return null if the dataType already exists, false if the type or the data are invalid and true on success
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Will return null if the dataType already exists, false if the type or the data are invalid and true on success </br>
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param dataType represents the key of a json object
      * @param data     the data
@@ -535,8 +534,8 @@ public class DataSet{
 
     /**
      * Used to delete a specific dataType with its underlying data
-     * <p>
-     * Will return null if the dataType does not exist, false if its an invalid dataType and true on success.
+     *
+     * Will return null if the dataType does not exist, false if its an invalid dataType and true on success. </br>
      *
      * @param dataType represents the key of a json object
      * @return Boolean boolean
@@ -647,8 +646,8 @@ public class DataSet{
 
     /**
      * Used for storing information to queued updates of dataTypes
-     * <p>
-     * This class contains no further documentation as this gets rather replaced than modified
+     *
+     * This class contains no further documentation as this gets rather replaced than modified </br>
      */
     private static class DataUpdateObject{
         private final String uToken;

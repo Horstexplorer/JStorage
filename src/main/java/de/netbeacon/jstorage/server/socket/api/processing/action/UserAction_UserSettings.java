@@ -33,21 +33,21 @@ import java.util.List;
 
 /**
  * User Action - User Settings
- * <p>
- * --- Does --- <br>
- * Tries to change settings for the current or selected user <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * userID, userName, bucketSize, globalPermission, dependentPermission as JSONObject <br>
- * --- Requirements --- <br>
- * path: user <br>
- * action: settings <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: yes - optional: bucketSize(int), dependentPermission(JSON), globalPermission(JSON) <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin <br>
- * required_arguments: <br>
- * optional_arguments: identifier(String, userID) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to change settings for the current or selected user </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * userID, userName, bucketSize, globalPermission, dependentPermission as JSONObject </br>
+ * --- Requirements --- </br>
+ * path: user </br>
+ * action: settings </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: yes - optional: bucketSize(int), dependentPermission(JSON), globalPermission(JSON) </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin </br>
+ * required_arguments: </br>
+ * optional_arguments: identifier(String, userID) </br>
  *
  * @author horstexplorer
  */

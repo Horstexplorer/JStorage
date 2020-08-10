@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Can be used to execute a specific task after a given amount of time
+ *
+ * @author horstexplorer
  */
 public class TimeoutExecutor {
 
@@ -41,9 +43,9 @@ public class TimeoutExecutor {
 
     /**
      * Used to start a timeout for the connection
-     * <br>
-     * This will close the connection after a given time if not stopped
-     * If the task is already running it will be canceled and restarted
+     *
+     * This will close the connection after a given time if not stopped </br>
+     * If the task is already running it will be canceled and restarted </br>
      *
      * @param timeout timeout in ms
      */

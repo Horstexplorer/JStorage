@@ -26,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Contains the current stats of the system
+ *
+ * @author horstexplorer
  */
 public class SystemStats {
 
@@ -52,6 +54,7 @@ public class SystemStats {
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return SystemStats
      */
     public static SystemStats getInstance(){
@@ -60,8 +63,9 @@ public class SystemStats {
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return SystemStats
      */
@@ -75,6 +79,7 @@ public class SystemStats {
 
     /**
      * Used to get an enum indicating the api load
+     *
      * @return Load
      */
     public Load getAPILoad(){
@@ -83,6 +88,7 @@ public class SystemStats {
 
     /**
      * Used to get an enum indicating the system load
+     *
      * @return Load
      */
     public Load getSystemLoad(){
@@ -91,8 +97,9 @@ public class SystemStats {
 
     /**
      * Used to get the avg cpu load
-     * <br>
-     * Returns -1 on error
+     *
+     * Returns -1 on error </br>
+     *
      * @return long
      */
     public double getAVGLoad(){
@@ -101,6 +108,7 @@ public class SystemStats {
 
     /**
      * Used to get the amount of total memory
+     *
      * @return long
      */
     public double getTotalMemory(){
@@ -109,6 +117,7 @@ public class SystemStats {
 
     /**
      * Used to get the amount of free memory
+     *
      * @return long
      */
     public long getFreeMemory(){
@@ -117,8 +126,9 @@ public class SystemStats {
 
     /**
      * Used to get the number of threads within the core pool
-     * <br>
-     * Returns -1 if the executor is null
+     *
+     * Returns -1 if the executor is null </br>
+     *
      * @return int
      */
     public int getAPICorePoolSize(){
@@ -127,8 +137,9 @@ public class SystemStats {
 
     /**
      * Used to get the maximum number of threads
-     * <br>
-     * Returns -1 if the executor is null
+     *
+     * Returns -1 if the executor is null </br>
+     *
      * @return int
      */
     public int getAPIMaxPoolSize(){
@@ -137,8 +148,9 @@ public class SystemStats {
 
     /**
      * Used to get the current number of threads
-     * <br>
-     * Returns -1 if the executor is null
+     *
+     * Returns -1 if the executor is null </br>
+     *
      * @return int
      */
     public int getAPICurrentPoolSize(){
@@ -147,8 +159,9 @@ public class SystemStats {
 
     /**
      * Used to get the number of currently active threads
-     * <br>
-     * Returns -1 if the executor is null
+     *
+     * Returns -1 if the executor is null </br>
+     *
      * @return int
      */
     public int getAPIActiveThreads(){
@@ -157,8 +170,9 @@ public class SystemStats {
 
     /**
      * Used to get the remaining capacity of the queue
-     * <br>
-     * Returns -1 if the executor is null
+     *
+     * Returns -1 if the executor is null </br>
+     *
      * @return int
      */
     public int getAPIQueueRemainingCapacity(){
@@ -167,8 +181,9 @@ public class SystemStats {
 
     /**
      * Used to get the max capacity if the queue
-     * <br>
-     * Returns -1 if the executor is null
+     *
+     * Returns -1 if the executor is null </br>
+     *
      * @return int
      */
     public int getAPIQueueMaxCapacity(){

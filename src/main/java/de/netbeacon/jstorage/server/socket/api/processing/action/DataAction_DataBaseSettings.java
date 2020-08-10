@@ -33,21 +33,21 @@ import java.util.List;
 
 /**
  * Data Action - Data Base Settings
- * <p>
- * --- Does --- <br>
- * Tries to change settings for a specific database<br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database, settings <br>
- * --- Requirements --- <br>
- * path: data/db <br>
- * action: settings <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: yes - optional: encryption(boolean) <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator <br>
- * required_arguments: identifier(String, databaseIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to change settings for a specific database</br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database, settings </br>
+ * --- Requirements --- </br>
+ * path: data/db </br>
+ * action: settings </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: yes - optional: encryption(boolean) </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator </br>
+ * required_arguments: identifier(String, databaseIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */
@@ -104,7 +104,7 @@ public class DataAction_DataBaseSettings implements ProcessingAction{
     }
 
     @Override
-    public void process() throws DataStorageException, GenericObjectException, CryptException, CryptException, NullPointerException {
+    public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
         DataBase d = DataManager.getInstance().getDataBase(args.get("database"));
 
         if(data.has("encryption")){

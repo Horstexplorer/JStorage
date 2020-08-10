@@ -40,8 +40,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This class takes care of preparing and accessing all DataBase objects
- * <p>
- * The user should only access the objects through this class but should be able to create them outside of it
+ *
+ * The user should only access the objects through this class but should be able to create them outside of it </br>
  *
  * @author horstexplorer
  */
@@ -66,6 +66,7 @@ public class DataManager {
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return DataManager
      */
     public static DataManager getInstance(){
@@ -74,8 +75,9 @@ public class DataManager {
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return DataManager
      */
@@ -91,8 +93,8 @@ public class DataManager {
 
     /**
      * Used to get a DataBase with the matching identifier from the DataManager
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataBase
      * @return DataBase data base
@@ -118,8 +120,8 @@ public class DataManager {
 
     /**
      * Used to create a DataBase within the DataManager
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the new DataBase
      * @return DataBase data base
@@ -147,8 +149,8 @@ public class DataManager {
 
     /**
      * Used to delete a DataBase from the DataManager
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataBase
      * @throws DataStorageException on various errors such as the object not existing
@@ -175,8 +177,8 @@ public class DataManager {
 
     /**
      * Used to check if the DataManager contains a specific DataBase
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier identifier of the DataBase. See {@link DataBase} for further information.
      * @return boolean boolean
@@ -228,8 +230,8 @@ public class DataManager {
 
     /**
      * Used for initial setup of the DataManager
-     * <p>
-     * Creates all listed DataBase objects. See {@link DataBase}
+     *
+     * Creates all listed DataBase objects. See {@link DataBase} </br>
      *
      * @throws SetupException on error
      */

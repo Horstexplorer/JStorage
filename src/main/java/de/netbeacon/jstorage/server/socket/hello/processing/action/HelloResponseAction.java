@@ -23,6 +23,8 @@ import java.util.HashMap;
 
 /**
  * This action returns a simple string (hello) for each request. This can be used to check if the service is on / token is correct etc
+ *
+ * @author horstexplorer
  */
 public class HelloResponseAction implements HelloProcessingAction{
 

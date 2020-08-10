@@ -36,8 +36,8 @@ import java.util.regex.Pattern;
 
 /**
  * Manages banned IPs
- * <p>
- * Supports banned, flagged and whitelisted states
+ *
+ * Supports banned, flagged and whitelisted states  </br>
  *
  * @author horstexplorer
  */
@@ -69,6 +69,7 @@ public class IPBanManager {
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return IPBanManager
      */
     public static IPBanManager getInstance(){
@@ -77,8 +78,9 @@ public class IPBanManager {
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return IPBanManager
      */
@@ -93,8 +95,8 @@ public class IPBanManager {
 
     /**
      * Used to change the number of flags until an IP is getting banned
-     * <p>
-     * If value <= 0 then it will reset to default (5)
+     *
+     * If value <= 0 then it will reset to default (5) </br>
      *
      * @param value value
      */
@@ -108,8 +110,8 @@ public class IPBanManager {
 
     /**
      * Used to add an IP to the whitelist
-     * <p>
-     * This will exclude an ip from getting flagged or banned
+     *
+     * This will exclude an ip from getting flagged or banned </br>
      *
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean, false if the ip is already whitelisted or is invalid
@@ -146,8 +148,8 @@ public class IPBanManager {
 
     /**
      * Used to check if the string is a valid IPv4 or v6
-     * <p>
-     * This may only be used to check the pattern
+     *
+     * This may only be used to check the pattern </br>
      *
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
@@ -171,9 +173,9 @@ public class IPBanManager {
 
     /**
      * Used to check if a certain IP is flagged or not
-     * <p>
-     * Returns the number of flags an ip currently has.
-     * Will return -1 if not flagged or ip in the wrong format
+     *
+     * Returns the number of flags an ip currently has. </br>
+     * Will return -1 if not flagged or ip in the wrong format </br>
      *
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return int int
@@ -204,8 +206,8 @@ public class IPBanManager {
 
     /**
      * Used to remove an IP from the ban list
-     * <p>
-     * Will return false if ip is not banned
+     *
+     * Will return false if ip is not banned </br>
      *
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
@@ -223,9 +225,9 @@ public class IPBanManager {
 
     /**
      * Used to add an IP to the ban list
-     * <p>
-     * Returns false if ip is already banned
-     * Ignores Whitelisted IPs (returns false)
+     *
+     * Returns false if ip is already banned </br>
+     * Ignores Whitelisted IPs (returns false) </br>
      *
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean
@@ -246,9 +248,9 @@ public class IPBanManager {
 
     /**
      * Used to add an IP to the ban list. Will be removed after duration
-     * <p>
-     * Returns false if ip is already banned
-     * Ignores Whitelisted IPs (returns false)
+     *
+     * Returns false if ip is already banned </br>
+     * Ignores Whitelisted IPs (returns false) </br>
      *
      * @param ip       as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @param duration in seconds
@@ -270,8 +272,8 @@ public class IPBanManager {
 
     /**
      * Used to extend the ban of an IP for a certain duration
-     * <p>
-     * Returns false if ip is not banned or permanently banned
+     *
+     * Returns false if ip is not banned or permanently banned </br>
      *
      * @param ip         as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @param additional in seconds
@@ -292,10 +294,10 @@ public class IPBanManager {
 
     /**
      * Flag an IP for bad behaviour
-     * <p>
-     * This will flag an IP for known bad behaviour.
-     * Flags will be removed by 1 every minute, more than x flags and the IP gets banned for an hour
-     * Ignores Whitelisted IPs (returns false)
+     *
+     * This will flag an IP for known bad behaviour. </br>
+     * Flags will be removed by 1 every minute, more than x flags and the IP gets banned for an hour </br>
+     * Ignores Whitelisted IPs (returns false) </br>
      *
      * @param ip as String (something like aaa.bbb.ccc.ddd or IPv6 equivalent)
      * @return boolean boolean

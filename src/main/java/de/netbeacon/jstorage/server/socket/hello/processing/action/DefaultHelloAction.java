@@ -24,7 +24,10 @@ import java.util.HashMap;
 
 /**
  * This Action represents the default response if something is requested
- * Returns a very basic site telling about this JStorage setup
+ *
+ * Returns a very basic site telling about this JStorage setup </br>
+ *
+ * @author horstexplorer
  */
 public class DefaultHelloAction implements HelloProcessingAction{
 

@@ -242,8 +242,8 @@ public class APIProcessorResult {
 
     /**
      * Returns additional information about the request result
-     * <p>
-     * Might be null if none have been added
+     *
+     * Might be null if none have been added </br>
      *
      * @return String string
      */
@@ -253,8 +253,8 @@ public class APIProcessorResult {
 
     /**
      * Returns the JSONObject for the body/payload
-     * <p>
-     * Might be null if no data has been inserted
+     *
+     * Might be null if no data has been inserted </br>
      *
      * @return JSOObject json object
      */

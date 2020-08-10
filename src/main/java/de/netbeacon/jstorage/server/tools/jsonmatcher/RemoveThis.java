@@ -18,5 +18,7 @@ package de.netbeacon.jstorage.server.tools.jsonmatcher;
 
 /**
  * This class helps to determine which objects to delete from a JSONArray
+ *
+ * @author horstexplorer
  */
 public class RemoveThis {}

@@ -30,20 +30,20 @@ import java.util.List;
 
 /**
  * Info Action - Basic Info
- * <p>
- * --- Does --- <br>
- * Provides basic information about this JStorage installation <br>
- * --- Returns --- <br>
- * basic information <br>
- * --- Requirements --- <br>
- * path: info/basic <br>
- * action: info <br>
- * http_method: get <br>
- * login-mode: all <br>
- * payload: no <br>
- * permissions: none <br>
- * required_arguments: <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Provides basic information about this JStorage installation </br>
+ * --- Returns --- </br>
+ * basic information </br>
+ * --- Requirements --- </br>
+ * path: info/basic </br>
+ * action: info </br>
+ * http_method: get </br>
+ * login-mode: all </br>
+ * payload: no </br>
+ * permissions: none </br>
+ * required_arguments: </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

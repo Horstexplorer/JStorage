@@ -31,21 +31,21 @@ import java.util.List;
 
 /**
  * User Action - User Change Password
- * <p>
- * --- Does --- <br>
- * Tries to change the password of the current or selected user <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * userid <br>
- * --- Requirements --- <br>
- * path: user/mng <br>
- * action: changepw <br>
- * http_method: put <br>
- * login-mode: password <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin, GlobalPermission.UserAdmin_Self, UserDefault_Self <br>
- * required_arguments: password(String, newPassword) <br>
- * optional_arguments: identifier(String, userID) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to change the password of the current or selected user </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * userid </br>
+ * --- Requirements --- </br>
+ * path: user/mng </br>
+ * action: changepw </br>
+ * http_method: put </br>
+ * login-mode: password </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin, GlobalPermission.UserAdmin_Self, UserDefault_Self </br>
+ * required_arguments: password(String, newPassword) </br>
+ * optional_arguments: identifier(String, userID) </br>
  *
  * @author horstexplorer
  */

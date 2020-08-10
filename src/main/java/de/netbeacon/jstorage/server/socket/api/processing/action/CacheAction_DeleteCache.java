@@ -33,23 +33,23 @@ import java.util.List;
 
 /**
  * Cache Action - Delete Cache
- * <p>
- * --- Does --- <br>
- * Tries to delete the specified cache <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * cache <br>
- * --- Requirements --- <br>
- * path: cache/mng <br>
- * action: delete <br>
- * http_method: delete <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, DependentPermission.CacheAdmin_Creator <br>
- * required_arguments: identifier(String, cacheIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to delete the specified cache </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * cache </br>
+ * --- Requirements --- </br>
+ * path: cache/mng </br>
+ * action: delete </br>
+ * http_method: delete </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, DependentPermission.CacheAdmin_Creator </br>
+ * required_arguments: identifier(String, cacheIdentifier) </br>
+ * optional_arguments: </br>
  *
- * @author horstexplorer <br>
+ * @author horstexplorer </br>
  */
 public class CacheAction_DeleteCache implements ProcessingAction {
 

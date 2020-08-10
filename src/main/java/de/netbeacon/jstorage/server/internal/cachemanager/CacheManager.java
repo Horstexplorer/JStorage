@@ -35,9 +35,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class takes care of preparing and accessing all Cache objects
- * <p>
- * The user should only access the objects through this class but should be able to create them outside of it
- * This works quite similar to the dataManager but the usage and protection should be a lot easier
+ *
+ * The user should only access the objects through this class but should be able to create them outside of it </br>
+ * This works quite similar to the dataManager but the usage and protection should be a lot easier </br>
  *
  * @author horstexplorer
  */
@@ -62,6 +62,7 @@ public class CacheManager {
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return CacheManager
      */
     public static CacheManager getInstance(){
@@ -70,8 +71,9 @@ public class CacheManager {
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return CacheManager
      */
@@ -181,8 +183,8 @@ public class CacheManager {
 
     /**
      * Used for initial setup of the CacheManager
-     * <p>
-     * Creates all listed Cache objects. See {@link Cache}
+     *
+     * Creates all listed Cache objects. See {@link Cache} </br>
      *
      * @throws SetupException on error
      */

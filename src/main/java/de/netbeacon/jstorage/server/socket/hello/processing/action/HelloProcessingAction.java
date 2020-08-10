@@ -44,6 +44,7 @@ public interface HelloProcessingAction {
 
     /**
      * Used to determine if an auth is required
+     *
      * @return boolean
      */
     default boolean requiresAuth(){ return false; }

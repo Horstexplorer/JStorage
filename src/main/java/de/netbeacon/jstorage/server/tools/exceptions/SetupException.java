@@ -22,6 +22,7 @@ package de.netbeacon.jstorage.server.tools.exceptions;
  * @author horstexplorer
  */
 public class SetupException extends Exception {
+
     /**
      * Instantiates a new Setup exception.
      *

@@ -21,6 +21,8 @@ import org.json.JSONObject;
 
 /**
  * A helper class representing a notification
+ *
+ * @author horstexplorer
  */
 public class DataNotification {
 
@@ -41,6 +43,7 @@ public class DataNotification {
 
     /**
      * Used to create new instances of this class
+     *
      * @param user the user causing this notification
      * @param dataBase the affected db (might be null)
      * @param dataTable the affected table (might be null)
@@ -60,6 +63,7 @@ public class DataNotification {
 
     /**
      * Used to get the user causing this notification
+     *
      * @return User
      */
     public User getOriginUser(){
@@ -68,6 +72,7 @@ public class DataNotification {
 
     /**
      * Used to get the affected db
+     *
      * @return String or null
      */
     public String getOriginDB(){
@@ -76,6 +81,7 @@ public class DataNotification {
 
     /**
      * Used to get the affected table
+     *
      * @return String or null
      */
     public String getOriginTable(){
@@ -84,6 +90,7 @@ public class DataNotification {
 
     /**
      * Used to get the content of the notification
+     *
      * @return Content
      */
     public Content getContent() {
@@ -92,6 +99,7 @@ public class DataNotification {
 
     /**
      * Returns this notification as json with a timestamp
+     *
      * @return JSONObject
      */
     public JSONObject asJSON(){

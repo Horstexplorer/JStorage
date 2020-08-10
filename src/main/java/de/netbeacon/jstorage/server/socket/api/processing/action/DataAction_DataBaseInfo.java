@@ -34,22 +34,22 @@ import java.util.List;
 
 /**
  * Data Action - Data Base Info
- * <p>
- * --- Does --- <br>
- * Tries to list information for all or a specific database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database, tables or <br>
- * databases as JSONObject <br>
- * --- Requirements --- <br>
- * path: data/db <br>
- * action: info <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User <br>
- * required_arguments: <br>
- * optional_arguments: identifier(String, databaseIdentifier) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to list information for all or a specific database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database, tables or </br>
+ * databases as JSONObject </br>
+ * --- Requirements --- </br>
+ * path: data/db </br>
+ * action: info </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User </br>
+ * required_arguments: </br>
+ * optional_arguments: identifier(String, databaseIdentifier) </br>
  *
  * @author horstexplorer
  */

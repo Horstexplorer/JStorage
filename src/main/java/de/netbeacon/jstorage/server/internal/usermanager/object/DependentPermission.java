@@ -61,9 +61,9 @@ public enum DependentPermission {
 
     /**
      * Used to get the enum matching the string
-     * <p>
-     * Should be used instead of the valueOf method
-     * returns null if no matching enum has been found
+     *
+     * Should be used instead of the valueOf method </br>
+     * returns null if no matching enum has been found </br>
      *
      * @param name identifier of the enum
      * @return DependentPermission or Null

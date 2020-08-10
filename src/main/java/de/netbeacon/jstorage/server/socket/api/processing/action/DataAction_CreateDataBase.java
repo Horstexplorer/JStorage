@@ -33,22 +33,22 @@ import java.util.List;
 
 /**
  * Data Action - Create Data Base
- * <p>
- * --- Does --- <br>
- * Tries to create a specific database <br>
- * User will receive DBAdmin_Creator permission for the new database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database as JSON <br>
- * --- Requirements --- <br>
- * path: data/db <br>
- * action: create <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin <br>
- * required_arguments: identifier(String, databaseIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to create a specific database </br>
+ * User will receive DBAdmin_Creator permission for the new database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database as JSON </br>
+ * --- Requirements --- </br>
+ * path: data/db </br>
+ * action: create </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin </br>
+ * required_arguments: identifier(String, databaseIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

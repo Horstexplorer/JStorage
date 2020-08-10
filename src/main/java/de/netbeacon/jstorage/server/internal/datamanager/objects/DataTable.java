@@ -39,8 +39,8 @@ import static java.util.stream.Collectors.toMap;
 
 /**
  * This class represents an object within a database
- * <p>
- * This is used to to make data affiliation clearer
+ *
+ * This is used to to make data affiliation clearer </br>
  *
  * @author horstexplorer
  */
@@ -74,8 +74,8 @@ public class DataTable {
 
     /**
      * Creates a new DataTable
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param dataBase  the superordinate DataBase {@link DataBase} object.
      * @param identifier the name of the this object.
@@ -156,8 +156,9 @@ public class DataTable {
 
     /**
      * Used to set the mode for automatically repairing data inconsistencies
-     * <p>
-     * Set to -1 to disable; See {@link DataTable#resolveDataInconsistency(int)} for other modes
+     *
+     * Set to -1 to disable; See {@link DataTable#resolveDataInconsistency(int)} for other modes </br>
+     *
      * @param mode int
      */
     public void setAutoResolveDataInconsistency(int mode){
@@ -166,8 +167,8 @@ public class DataTable {
 
     /**
      * Returns the mode this object uses to repair data inconsistencies on its own (each 24h)
-     * <p>
-     * Returns -1 if disabled
+     *
+     * Returns -1 if disabled </br>
      *
      * @return int
      */
@@ -177,9 +178,10 @@ public class DataTable {
 
     /**
      * Sets the target default structure for all objects in this table
-     * <p>
-     * this does not influence already existing objects
-     * will only set the jsonobject as structure if it matches the correct specifications for a dataset (only jsonObjects at layer 0; except id keys (they will be ignored))
+     *
+     * this does not influence already existing objects </br>
+     * will only set the jsonobject as structure if it matches the correct specifications for a dataset (only jsonObjects at layer 0; except id keys (they will be ignored)) </br>
+     *
      * @param jsonObject representing target and or default structure
      */
     public void setDefaultStructure(JSONObject jsonObject){
@@ -212,6 +214,7 @@ public class DataTable {
 
     /**
      * Returns a serialized copy of the default structure ready to be used in an dataset
+     *
      * @param identifier identifier of the dataset
      * @return JSONObject
      */
@@ -243,6 +246,7 @@ public class DataTable {
 
     /**
      * Used to enable or disable secure insert mode
+     *
      * @param value boolean
      */
     public void setSecureInsert(boolean value){
@@ -251,6 +255,7 @@ public class DataTable {
 
     /**
      * Used to determine if secure insert mode is enabled
+     *
      * @return boolean
      */
     public boolean hasSecureInsertEnabled(){
@@ -261,8 +266,8 @@ public class DataTable {
 
     /**
      * Used to get a DataSet with the matching identifier from the DataTable
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataSet
      * @return DataSet data set
@@ -391,8 +396,8 @@ public class DataTable {
 
     /**
      * Used to delete a DataSet from the DataTable
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataSet
      * @throws DataStorageException on various errors such as the object not being found, loading issues and other
@@ -456,8 +461,8 @@ public class DataTable {
 
     /**
      * Used to check if the DataTable contains a specific DataSet
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier identifier of the DataSet. See {@link DataSet} for further information.
      * @return boolean boolean
@@ -484,7 +489,8 @@ public class DataTable {
     /**
      * Used to get the statistics for the selected dataset
      *
-     * This function should only be used as loopback from datasets within this datatable
+     * This function should only be used as loopback from datasets within this datatable </br>
+     *
      * @param identifier of the dataset
      * @return DataSetMetaStatistics
      */
@@ -499,13 +505,13 @@ public class DataTable {
 
     /**
      * Used to automatically resolve data inconsistency errors
-     * <p>
-     * ! Using this function may result in data loss. Manual correction recommended.
-     * There are different modes to choose from:
-     * 0 - do nothing but remove the lock
-     * 1 - remove entries from index with non existing shards only
-     * 2 - remove entries from index with non existing shards & check if the shard contains the other objects
-     * 3 - rebuild index from loaded shards & all files inside the storage dir
+     *
+     * ! Using this function may result in data loss. Manual correction recommended. </br>
+     * There are different modes to choose from: </br>
+     * 0 - do nothing but remove the lock </br>
+     * 1 - remove entries from index with non existing shards only </br>
+     * 2 - remove entries from index with non existing shards & check if the shard contains the other objects </br>
+     * 3 - rebuild index from loaded shards & all files inside the storage dir </br>
      *
      * @param mode selection of the action
      */
@@ -629,7 +635,8 @@ public class DataTable {
 
     /**
      * Used to automatically upgrade all datasets to match the pattern of the default structure
-     * ! Using this function may result in data loss due to storage errors. Manual correction recommended.
+     *
+     * ! Using this function may result in data loss due to storage errors. Manual correction recommended. </br>
      */
     public void upgradeToDefaultStructure(){
         lock.writeLock().lock();
@@ -677,8 +684,8 @@ public class DataTable {
 
     /**
      * Optimizes utilisation of shards by grouping frequently used data sets
-     * <p>
-     * ! Using this function may result in data loss. Manual correction recommended.
+     *
+     * ! Using this function may result in data loss. Manual correction recommended. </br>
      */
     public void optimize(){
         // enable lock
@@ -784,8 +791,8 @@ public class DataTable {
 
     /**
      * Used for initial setup of the DataTable object
-     * <p>
-     * Loads index from a file and rebuilds and initializes shards (if necessary)
+     *
+     * Loads index from a file and rebuilds and initializes shards (if necessary) </br>
      *
      * @throws DataStorageException on error
      */
@@ -859,8 +866,8 @@ public class DataTable {
 
     /**
      * Used to store content on shutdown
-     * <p>
-     * This will instruct all loaded shards inside the table to write their information to a file, export its own index and then clear everything.
+     *
+     * This will instruct all loaded shards inside the table to write their information to a file, export its own index and then clear everything. </br>
      *
      * @throws DataStorageException on any error. This may result in data getting lost.
      */
@@ -924,8 +931,8 @@ public class DataTable {
 
     /**
      * Used to safely delete this object and its content
-     * <p>
-     * This will make this object unusable
+     *
+     * This will make this object unusable </br>
      */
     protected void delete(){
         shutdown.set(true);

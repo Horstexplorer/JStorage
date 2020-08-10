@@ -35,22 +35,22 @@ import java.util.List;
 
 /**
  * Data Action - Get Data Type
- * <p>
- * --- Does --- <br>
- * Tries to get the data from a specific datatype within the selected dataset <br>
- * Allows the type to be acquired for updating its content <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * dataset basics, datatype data <br>
- * --- Requirements --- <br>
- * path: data/db/table/dataset/datatype <br>
- * action: get <br>
- * http_method: delete <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), dataset(String, datasetIdentifier), identifier(String, dataType) <br>
- * optional_arguments: acquire(Boolean, boolean) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to get the data from a specific datatype within the selected dataset </br>
+ * Allows the type to be acquired for updating its content </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * dataset basics, datatype data </br>
+ * --- Requirements --- </br>
+ * path: data/db/table/dataset/datatype </br>
+ * action: get </br>
+ * http_method: delete </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify </br>
+ * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), dataset(String, datasetIdentifier), identifier(String, dataType) </br>
+ * optional_arguments: acquire(Boolean, boolean) </br>
  *
  * @author horstexplorer
  */

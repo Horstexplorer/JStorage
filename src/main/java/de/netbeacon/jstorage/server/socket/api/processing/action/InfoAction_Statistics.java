@@ -36,20 +36,20 @@ import java.util.List;
 
 /**
  * Info Action - Statistics
- * <p>
- * --- Does --- <br>
- * Provides statistics about selected types <br>
- * --- Returns --- <br>
- * basic information <br>
- * --- Requirements --- <br>
- * path: info/stats <br>
- * action: statistics <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: none <br>
- * required_arguments: <br>
- * optional_arguments: database, table, dataset <br>
+ * 
+ * --- Does --- </br>
+ * Provides statistics about selected types </br>
+ * --- Returns --- </br>
+ * basic information </br>
+ * --- Requirements --- </br>
+ * path: info/stats </br>
+ * action: statistics </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: none </br>
+ * required_arguments: </br>
+ * optional_arguments: database, table, dataset </br>
  *
  * @author horstexplorer
  */
@@ -98,7 +98,7 @@ public class InfoAction_Statistics implements ProcessingAction{
 
     @Override
     public void process() throws DataStorageException, GenericObjectException, CryptException, NullPointerException {
-        UsageStatistics usageStatistics = null;
+        UsageStatistics usageStatistics;
         JSONObject customResponseDatas = new JSONObject();
         DataBase dataBase = DataManager.getInstance().getDataBase(args.get("database"));
         customResponseDatas.put("database", dataBase.getIdentifier());

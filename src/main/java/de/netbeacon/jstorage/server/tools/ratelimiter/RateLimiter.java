@@ -90,8 +90,8 @@ public class RateLimiter {
 
     /**
      * Increases the usage by one, returns true if this usage fits into the limit
-     * <p>
-     * This will count up until double of the limit is reached
+     *
+     * This will count up until double of the limit is reached </br>
      *
      * @return boolean
      */
@@ -113,8 +113,8 @@ public class RateLimiter {
 
     /**
      * Increases the usage by one
-     * <p>
-     * This will count up until double of the limit is reached
+     *
+     * This will count up until double of the limit is reached </br>
      *
      * @throws RateLimitException if the usage wont fit into the limit
      */
@@ -138,6 +138,9 @@ public class RateLimiter {
 
     /*              Exception                   */
 
+    /**
+     * Helper class for exceptions
+     */
     public static class RateLimitException extends Exception {
         public RateLimitException(String msg){
             super(msg);

@@ -276,6 +276,7 @@ public class HelloSocketHandler implements Runnable {
 
     /**
      * Used to send a new line after the headers had been sent
+     *
      * @throws Exception on exception
      */
     private void endHeaders() throws Exception{
@@ -284,7 +285,7 @@ public class HelloSocketHandler implements Runnable {
     }
 
     /**
-     * Used to send data without adding line seperators
+     * Used to send data without adding line separators
      *
      * @param data data as string
      * @throws Exception on socket/writer error

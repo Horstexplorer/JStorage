@@ -31,22 +31,22 @@ import java.util.List;
 
 /**
  * User Action - User Get New Login Token
- * <p>
- * --- Does --- <br>
- * Tries to create a new login token for the current or selected user <br>
- * Old token will be invalid <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * userID, userName, loginToken as JSONObject <br>
- * --- Requirements --- <br>
- * path: user/mng <br>
- * action: getnewlogintoken <br>
- * http_method: put <br>
- * login-mode: password <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin, GlobalPermission.UserAdmin_Self, UserDefault_Self <br>
- * required_arguments: <br>
- * optional_arguments: identifier(String, userID) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to create a new login token for the current or selected user </br>
+ * Old token will be invalid </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * userID, userName, loginToken as JSONObject </br>
+ * --- Requirements --- </br>
+ * path: user/mng </br>
+ * action: getnewlogintoken </br>
+ * http_method: put </br>
+ * login-mode: password </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin, GlobalPermission.UserAdmin_Self, UserDefault_Self </br>
+ * required_arguments: </br>
+ * optional_arguments: identifier(String, userID) </br>
  *
  * @author horstexplorer
  */

@@ -82,8 +82,8 @@ public class Cache {
 
     /**
      * Returns the current status of the object
-     * <p>
-     * -2 - insufficient memory error | -1 - general_error | 0 - unloaded | 1 - unloading | 2 - loading | 3 - loaded/ready
+     *
+     * -2 - insufficient memory error | -1 - general_error | 0 - unloaded | 1 - unloading | 2 - loading | 3 - loaded/ready </br>
      *
      * @return int int
      */
@@ -153,8 +153,8 @@ public class Cache {
 
     /**
      * Used to insert data to a cache
-     * <p>
-     * Will throw an exception if the data already exists but will replace it when its no longer valid
+     *
+     * Will throw an exception if the data already exists but will replace it when its no longer valid </br>
      *
      * @param data which should be inserted
      * @throws DataStorageException on various errors such as the object already existing, loading issues and other
@@ -203,9 +203,9 @@ public class Cache {
 
     /**
      * Used to remove data from the cache
-     * <p>
-     * This works only for data which is no longer valid or which has no expiration set
-     * Using the read lock instead of the write lock performance is more important than data consistency here
+     *
+     * This works only for data which is no longer valid or which has no expiration set </br>
+     * Using the read lock instead of the write lock performance is more important than data consistency here </br>
      *
      * @param identifier of the target cached data, converted to lowercase
      * @throws DataStorageException on various errors such as the object not being found, loading issues and other
@@ -352,8 +352,8 @@ public class Cache {
 
     /**
      * Used to unload the content of this object to a file.
-     * <p>
-     * This function should be used to delete the cache and its CachedData {@link CachedData} child
+     *
+     * This function should be used to delete the cache and its CachedData {@link CachedData} child </br>
      *
      * @param unload      if the data should be removed from the object
      * @param saveToFile  if the data should be saved to a file

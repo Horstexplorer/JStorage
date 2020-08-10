@@ -35,21 +35,21 @@ import java.util.List;
 
 /**
  * Data Action - Delete Data Table
- * <p>
- * --- Does --- <br>
- * Tries to delete a specific datatable within the selected database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database, table <br>
- * --- Requirements --- <br>
- * path: data/db/table <br>
- * action: delete <br>
- * http_method: delete <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User <br>
- * required_arguments: database(String, databaseIdentifier), identifier(String, tableIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to delete a specific datatable within the selected database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database, table </br>
+ * --- Requirements --- </br>
+ * path: data/db/table </br>
+ * action: delete </br>
+ * http_method: delete </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User </br>
+ * required_arguments: database(String, databaseIdentifier), identifier(String, tableIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

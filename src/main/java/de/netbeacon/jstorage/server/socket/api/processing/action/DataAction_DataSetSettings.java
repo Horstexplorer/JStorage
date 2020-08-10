@@ -31,21 +31,21 @@ import java.util.List;
 
 /**
  * Data Action - Data Set Settings
- * <p>
- * --- Does --- <br>
- * Tries to change settings for dataset management <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * global dataset settings <br>
- * --- Requirements --- <br>
- * path: data/db/table/dataset <br>
- * action: settings <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: yes - optional: maxSTPEThreads(int), dataSetsPerThread(int) <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin <br>
- * required_arguments: <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to change settings for dataset management </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * global dataset settings </br>
+ * --- Requirements --- </br>
+ * path: data/db/table/dataset </br>
+ * action: settings </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: yes - optional: maxSTPEThreads(int), dataSetsPerThread(int) </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin </br>
+ * required_arguments: </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

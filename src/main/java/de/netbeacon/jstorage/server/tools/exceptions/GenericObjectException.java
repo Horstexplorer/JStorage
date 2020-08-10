@@ -18,23 +18,23 @@ package de.netbeacon.jstorage.server.tools.exceptions;
 
 /**
  * Used for general error handling
- * <p>
- * Error types:
- * 000 - Undefined Error
- * 1xx - Not Ready
- * 0 -
- * 0 - Undefined
- * 1 - Loading
- * 2 - Unloading
- * 2xx - Not Found
- * 0 -
- * 0 - Undefined
- * 3xx - Already Existing
- * 0 -
- * 0 - Undefined
- * 4xx - Format Exception
- * 0 -
- * 0 - Undefined
+ *
+ * Error types: </br>
+ * 000 - Undefined Error </br>
+ * 1xx - Not Ready </br>
+ * 0 - </br>
+ * 0 - Undefined </br>
+ * 1 - Loading </br>
+ * 2 - Unloading </br>
+ * 2xx - Not Found </br>
+ * 0 - </br>
+ * 0 - Undefined </br>
+ * 3xx - Already Existing </br>
+ * 0 - </br>
+ * 0 - Undefined </br>
+ * 4xx - Format Exception </br>
+ * 0 - </br>
+ * 0 - Undefined </br>
  *
  * @author horstexplorer
  */

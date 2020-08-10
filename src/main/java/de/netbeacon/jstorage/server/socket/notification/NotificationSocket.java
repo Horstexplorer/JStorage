@@ -54,6 +54,7 @@ public class NotificationSocket implements Runnable{
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return NotificationSocket
      */
     public static NotificationSocket getInstance(){
@@ -62,8 +63,9 @@ public class NotificationSocket implements Runnable{
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return NotificationSocket
      */

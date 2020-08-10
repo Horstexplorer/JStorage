@@ -71,8 +71,8 @@ public class User {
 
     /**
      * Used to create a new User
-     * <p>
-     * Only for internal used to restore users from file on startup
+     *
+     * Only for internal used to restore users from file on startup </br>
      *
      * @param userID       userID
      * @param userName     userName
@@ -139,8 +139,8 @@ public class User {
 
     /**
      * Returns the login token for this user
-     * <p>
-     * Creates a new login token if none existed yet
+     *
+     * Creates a new login token if none existed yet </br>
      *
      * @return String string
      */
@@ -177,8 +177,8 @@ public class User {
 
     /**
      * Used to check if the user request is within his rate limit
-     * <p>
-     * returns true on success - decreases the rate limit on each call
+     *
+     * returns true on success - decreases the rate limit on each call </br>
      *
      * @return boolean boolean
      */
@@ -188,8 +188,8 @@ public class User {
 
     /**
      * Used to set the maximum size for the request bucket
-     * <p>
-     * size == 0 -> set to default of 240
+     *
+     * size == 0 -> set to default of 240 </br>
      *
      * @param newSize new size
      */
@@ -314,8 +314,8 @@ public class User {
 
     /**
      * Should be called when the user is unloaded or deleted to cancel the refill task and update the thread pool
-     * <p>
-     * The userID of the current object will be available again - this function should only be used by the DataManager itself.
+     *
+     * The userID of the current object will be available again - this function should only be used by the DataManager itself. </br>
      */
     public void onUnload(){
         occupiedIDs.remove(userID); // this may result in objects being created which are not unique

@@ -34,21 +34,21 @@ import java.util.List;
 
 /**
  * Cache Action - Cache Info
- * <p>
- * --- Does --- <br>
- * Tries to list information for all or a specific cache <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * identifier, lastAccess, status, size, adaptiveLoading as JSONObject <br>
- * --- Requirements --- <br>
- * path: cache<br>
- * action: info <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, CacheAdmin_Creator, CacheAdmin_User <br>
- * required_arguments: <br>
- * optional_arguments: identifier(String, cacheIdentifier) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to list information for all or a specific cache </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * identifier, lastAccess, status, size, adaptiveLoading as JSONObject </br>
+ * --- Requirements --- </br>
+ * path: cache</br>
+ * action: info </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, CacheAdmin_Creator, CacheAdmin_User </br>
+ * required_arguments: </br>
+ * optional_arguments: identifier(String, cacheIdentifier) </br>
  *
  * @author horstexplorer
  */
@@ -105,9 +105,7 @@ public class CacheAction_CacheInfo implements ProcessingAction {
             customResponseData.put("content", jsonArray);
         }else{
             JSONArray jsonArray = new JSONArray();
-            CacheManager.getInstance().getDataPool().values().forEach(v->{
-                jsonArray.put(new JSONObject().put("identifier", v.getIdentifier()).put("lastAccess", v.getLastAccess()).put("status", v.getStatus()).put("size", v.size()).put("adaptiveLoading", v.isAdaptive()));
-            });
+            CacheManager.getInstance().getDataPool().values().forEach(v-> jsonArray.put(new JSONObject().put("identifier", v.getIdentifier()).put("lastAccess", v.getLastAccess()).put("status", v.getStatus()).put("size", v.size()).put("adaptiveLoading", v.isAdaptive())));
             customResponseData.put("caches", jsonArray);
         }
         // set result

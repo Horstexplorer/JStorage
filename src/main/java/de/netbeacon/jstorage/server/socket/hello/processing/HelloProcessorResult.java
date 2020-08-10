@@ -70,6 +70,7 @@ public class HelloProcessorResult {
 
     /**
      * Used to get the plain text used in the result
+     *
      * @return String
      */
     public String getBodyPage(){ return bodyPage; }

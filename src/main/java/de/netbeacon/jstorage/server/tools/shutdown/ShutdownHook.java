@@ -42,8 +42,8 @@ public class ShutdownHook {
 
     /**
      * Insert this as ShutdownHook
-     * <p>
-     * Will only add itself once
+     *
+     * Will only add itself once </br>
      */
     public ShutdownHook(){
         if(!inserted.get()){

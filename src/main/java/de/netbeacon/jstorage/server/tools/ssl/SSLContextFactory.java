@@ -67,8 +67,8 @@ public class SSLContextFactory {
 
     /**
      * Used to add certificates and their private key
-     * <p>
-     * Requires an Base64 encoded X509 certificate and Base64 encoded RSA or EC key
+     *
+     * Requires an Base64 encoded X509 certificate and Base64 encoded RSA or EC key </br>
      *
      * @param alias            preferred alias for this certificate. Something like: some.domain.tld
      * @param pathToCert       path to the certificate. Something like ./dir/to/cert.pem
@@ -87,7 +87,7 @@ public class SSLContextFactory {
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             X509Certificate certificate = (X509Certificate)certFactory.generateCertificate(new ByteArrayInputStream(cert));
 
-            PrivateKey privateKey = null;
+            PrivateKey privateKey;
 
             byte[] key = Files.readAllBytes(Path.of(pathToPrivateKey));
             String keys = new String(key);
@@ -125,7 +125,7 @@ public class SSLContextFactory {
     }
 
     /**
-     * Used to recive an SSLContext from the keystore
+     * Used to receive an SSLContext from the keystore
      *
      * @return SSLContext ssl context
      */

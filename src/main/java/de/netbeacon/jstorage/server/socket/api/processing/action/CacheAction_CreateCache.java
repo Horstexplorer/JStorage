@@ -33,22 +33,22 @@ import java.util.List;
 
 /**
  * Cache Action - Create Cache
- * <p>
- * --- Does --- <br>
- * Tries to create a specific cache <br>
- * User will receive CacheAdmin_Creator permission for the new cache <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * cache as JSON <br>
- * --- Requirements --- <br>
- * path: cache/mng <br>
- * action: create <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin <br>
- * required_arguments: identifier(String, cacheIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to create a specific cache </br>
+ * User will receive CacheAdmin_Creator permission for the new cache </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * cache as JSON </br>
+ * --- Requirements --- </br>
+ * path: cache/mng </br>
+ * action: create </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin </br>
+ * required_arguments: identifier(String, cacheIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

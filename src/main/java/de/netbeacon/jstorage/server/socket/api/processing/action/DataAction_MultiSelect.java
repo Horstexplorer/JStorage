@@ -36,21 +36,21 @@ import java.util.List;
 
 /**
  * Data Action - Multi Select
- * <p>
- * --- Does --- <br>
- * Tries to update the data from a specific datatype within the selected dataset <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * datatype data <br>
- * --- Requirements --- <br>
- * path: data/tool <br>
- * action: multiselect <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: yes <br>
- * permissions: none -> GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to update the data from a specific datatype within the selected dataset </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * datatype data </br>
+ * --- Requirements --- </br>
+ * path: data/tool </br>
+ * action: multiselect </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: yes </br>
+ * permissions: none -> GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify </br>
+ * required_arguments: </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

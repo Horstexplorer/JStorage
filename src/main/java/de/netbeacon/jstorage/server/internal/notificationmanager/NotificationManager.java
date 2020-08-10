@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class takes care of receiving and handling incoming and outgoing notifications
+ *
+ * @author horstexplorer
  */
 public class NotificationManager {
 
@@ -48,6 +50,7 @@ public class NotificationManager {
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return DataManager
      */
     public static NotificationManager getInstance(){
@@ -56,8 +59,9 @@ public class NotificationManager {
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return DataManager
      */
@@ -70,6 +74,7 @@ public class NotificationManager {
 
     /**
      * Used to add notifications
+     *
      * @param notification notification
      */
     public void notify(DataNotification notification){
@@ -80,6 +85,7 @@ public class NotificationManager {
 
     /**
      * Added function to register & deregister listeners
+     *
      * @param notificationListener the listener
      * @param mode true to register
      */
@@ -93,6 +99,7 @@ public class NotificationManager {
 
     /**
      * Used to set up the required worker
+     *
      * @throws SetupException on exception
      */
     public void setup() throws SetupException{
@@ -137,6 +144,7 @@ public class NotificationManager {
 
     /**
      * Used to shut down execution
+     *
      * @throws ShutdownException on exception
      */
     public void shutdown() throws ShutdownException{

@@ -26,6 +26,8 @@ import java.util.HashMap;
 
 /**
  * Used to get extended system stats
+ *
+ * @author horstexplorer
  */
 public class AdvancedStatisticsAction implements HelloProcessingAction{
 

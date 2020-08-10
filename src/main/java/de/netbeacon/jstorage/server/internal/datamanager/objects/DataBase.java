@@ -37,8 +37,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This class represents the lowest classification level of the data assignment
- * <p>
- * This is used to to store DataSets {@link DataSet} within tables {@link DataTable} by their identifier
+ *
+ * This is used to to store DataSets {@link DataSet} within tables {@link DataTable} by their identifier </br>
  *
  * @author horstexplorer
  */
@@ -58,8 +58,8 @@ public class DataBase {
 
     /**
      * Creates a new DataBase object
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier the identifier of this object
      * @throws DataStorageException when running setup() fails.
@@ -115,10 +115,10 @@ public class DataBase {
 
     /**
      * Used to enable or disable encryption for this database
-     * <p>
-     * Changes will only take effect on shards the next time they are loaded
-     * This will only encrypt the data storage files itself, not the table/shard index
-     * ! If this is enabled encryption will use the global encryption password - if this is not set or wrong data may be lost during en or decryption tries
+     *
+     * Changes will only take effect on shards the next time they are loaded </br>
+     * This will only encrypt the data storage files itself, not the table/shard index </br>
+     * ! If this is enabled encryption will use the global encryption password - if this is not set or wrong data may be lost during en or decryption tries </br>
      *
      * @param value enable/disable boolean
      * @throws CryptException on exception such as the CryptTool not being set up
@@ -134,8 +134,8 @@ public class DataBase {
 
     /**
      * Used to get a DataTable with the matching identifier from the DataBase
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataTable
      * @return DataTable table
@@ -205,8 +205,8 @@ public class DataBase {
 
     /**
      * Used to delete a DataTable from the DataBase
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataTable
      * @throws DataStorageException on various errors such as the object not being found
@@ -240,8 +240,8 @@ public class DataBase {
 
     /**
      * Used to check if the DataBase contains a specific DataTable
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier identifier of the DataTable. See {@link DataTable} for further information.
      * @return boolean boolean
@@ -259,8 +259,8 @@ public class DataBase {
 
     /**
      * Used for initial setup of the DataBase object
-     * <p>
-     * Creates all listed DataTables. See {@link DataTable}
+     *
+     * Creates all listed DataTables. See {@link DataTable} </br>
      *
      * @throws DataStorageException on error
      */
@@ -347,8 +347,8 @@ public class DataBase {
 
     /**
      * Used to safely delete this object and its content
-     * <p>
-     * This will make this object unusable
+     *
+     * This will make this object unusable </br>
      */
     public void delete(){
         shutdown.set(true);

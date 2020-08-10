@@ -36,9 +36,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * This class is used to break down the whole data of a DataTable into multiple smaller objects & files
- * <p>
- * This tries to load only required object groups to reduce the memory consumption
- * Used for internal data management only. User should not have direct interactions with this class
+ *
+ * This tries to load only required object groups to reduce the memory consumption </br>
+ * Used for internal data management only. User should not have direct interactions with this class </br>
  *
  * @author horstexplorer
  */
@@ -62,8 +62,8 @@ public class DataShard {
 
     /**
      * Creates new DataShard
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param dataBase the superordinate DataBase {@link DataBase} object
      * @param table    the parent DataTable {@link DataTable} object
@@ -83,8 +83,8 @@ public class DataShard {
 
     /**
      * Creates new DataShard
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param dataBase     the superordinate DataBase {@link DataBase} object
      * @param table    the parent DataTable {@link DataTable} object
@@ -109,8 +109,8 @@ public class DataShard {
 
     /**
      * Sets the maximum number of DataSets a DataShard should contain
-     * <p>
-     * Values smaller than 0 will set it to -1 or infinite, equal 0 to the default (10000) and all values above 0 to their respective value
+     *
+     * Values smaller than 0 will set it to -1 or infinite, equal 0 to the default (10000) and all values above 0 to their respective value </br>
      *
      * @param value maximum number of DataSets per shard
      */
@@ -146,7 +146,8 @@ public class DataShard {
 
     /**
      * Returns the current value for the maximum number of DataSets
-     * Returns current+1 if value is set to infinite so there is always 1 slot empty
+     *
+     * Returns current+1 if value is set to infinite so there is always 1 slot empty </br>
      *
      * @return int int
      */
@@ -170,8 +171,8 @@ public class DataShard {
 
     /**
      * Used to get a DataSet with the matching identifier from the shard
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataSet
      * @return DataSet {@link DataSet}
@@ -284,8 +285,8 @@ public class DataShard {
 
     /**
      * Used to delete a DataSet from the shard
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier of the target DataSet
      * @throws DataStorageException on various errors such as the object not being found, loading issues and other
@@ -343,8 +344,8 @@ public class DataShard {
 
     /**
      * Used to check if the shard contains a specific DataSet
-     * <p>
-     * Every String type input will be converted to lowercase only to simplify handling.
+     *
+     * Every String type input will be converted to lowercase only to simplify handling. </br>
      *
      * @param identifier identifier of the DataSet. See {@link DataSet} for further information.
      * @return boolean boolean
@@ -361,13 +362,13 @@ public class DataShard {
 
     /**
      * Returns the current status of this object
-     * <p>
-     * 3 - ready
-     * 2 - loading
-     * 1 - unloading
-     * 0 - unloaded
-     * -1 - general error
-     * -2 - out of memory interception
+     *
+     * 3 - ready </br>
+     * 2 - loading </br>
+     * 1 - unloading </br>
+     * 0 - unloaded </br>
+     * -1 - general error </br>
+     * -2 - out of memory interception </br>
      *
      * @return int current status
      */
@@ -477,8 +478,8 @@ public class DataShard {
 
     /**
      * Used to unload the content of this object to a file.
-     * <p>
-     * This function should be used to delete the shard and its child DataSets {@link DataSet} when their parent {@link DataTable} is getting deleted.
+     *
+     * This function should be used to delete the shard and its child DataSets {@link DataSet} when their parent {@link DataTable} is getting deleted. </br>
      *
      * @param unload      if the data should be removed from the object
      * @param saveToFile  if the data should be saved to a file

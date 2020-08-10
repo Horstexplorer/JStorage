@@ -37,21 +37,21 @@ import java.util.List;
 
 /**
  * Data Action - Create Data Set
- * <p>
- * --- Does --- <br>
- * Tries to create a specific dataset within the selected table from a database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * dataset <br>
- * --- Requirements --- <br>
- * path: data/db/table/dataset <br>
- * action: create <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: optional <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to create a specific dataset within the selected table from a database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * dataset </br>
+ * --- Requirements --- </br>
+ * path: data/db/table/dataset </br>
+ * action: create </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: optional </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify </br>
+ * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

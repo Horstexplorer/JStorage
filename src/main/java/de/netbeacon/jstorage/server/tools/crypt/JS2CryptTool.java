@@ -83,9 +83,9 @@ public class JS2CryptTool {
 
     /**
      * Used to insert the decryption password
-     * <p>
-     * If no password has been set before, this will set it
-     * If a password has been set before this will verify the password
+     *
+     * If no password has been set before, this will set it </br>
+     * If a password has been set before this will verify the password </br>
      *
      * @param password password
      * @throws CryptException on exceptions such as the tool already being ready or the password being invalid
@@ -125,8 +125,8 @@ public class JS2CryptTool {
 
     /**
      * Can be used to test if the data is in the correct format
-     * <p>
-     * <base64 encoded salt>.<base64 encoded + encrypted data>
+     *
+     * <base64 encoded salt>.<base64 encoded + encrypted data> </br>
      *
      * @param test data to test
      * @return boolean

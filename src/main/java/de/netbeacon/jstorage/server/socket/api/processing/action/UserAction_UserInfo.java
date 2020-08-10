@@ -32,22 +32,22 @@ import java.util.List;
 
 /**
  * User Action - User Info
- * <p>
- * --- Does --- <br>
- * Tries to list information for all or a specific user <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * userID, userName, bucketSize, globalPermission, dependentPermission or <br>
- * users as JSONObject <br>
- * --- Requirements --- <br>
- * path: user <br>
- * action: info <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin, GlobalPermission.UserAdmin_Self, UserDefault_Self <br>
- * required_arguments: <br>
- * optional_arguments: identifier(String, userID) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to list information for all or a specific user </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * userID, userName, bucketSize, globalPermission, dependentPermission or </br>
+ * users as JSONObject </br>
+ * --- Requirements --- </br>
+ * path: user </br>
+ * action: info </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin, GlobalPermission.UserAdmin_Self, UserDefault_Self </br>
+ * required_arguments: </br>
+ * optional_arguments: identifier(String, userID) </br>
  *
  * @author horstexplorer
  */
@@ -112,9 +112,7 @@ public class UserAction_UserInfo implements ProcessingAction {
             customResponseData.put("globalPermission", jsonArray1).put("dependentPermission", jsonArray2);
         }else{
             JSONArray jsonArray = new JSONArray();
-            UserManager.getInstance().getDataPool().values().forEach(v->{
-                jsonArray.put(new JSONObject().put("userName", v.getUserName()).put("userID", v.getUserID()));
-            });
+            UserManager.getInstance().getDataPool().values().forEach(v-> jsonArray.put(new JSONObject().put("userName", v.getUserName()).put("userID", v.getUserID())));
             customResponseData.put("users", jsonArray);
         }
         // set result

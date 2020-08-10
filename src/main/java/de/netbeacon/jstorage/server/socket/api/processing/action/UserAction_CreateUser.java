@@ -32,21 +32,21 @@ import java.util.List;
 
 /**
  * User Action - Create User
- * <p>
- * --- Does --- <br>
- * Tries to create a new user <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * Returns userID, userName, password, bucketSize as json on success <br>
- * --- Requirements --- <br>
- * path: user/mng <br>
- * action: create <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin <br>
- * required_arguments: identifier(String, Username) <br>
- * optional_arguments: password(String), bucketSize(int) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to create a new user </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * Returns userID, userName, password, bucketSize as json on success </br>
+ * --- Requirements --- </br>
+ * path: user/mng </br>
+ * action: create </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.UserAdmin </br>
+ * required_arguments: identifier(String, Username) </br>
+ * optional_arguments: password(String), bucketSize(int) </br>
  *
  * @author horstexplorer
  */

@@ -40,8 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Creates the socket for client connections
- * <p>
- * Supports SSL/TLS connections only due to security reasons
+ *
+ * Supports SSL/TLS connections only due to security reasons </br>
  *
  * @author horstexplorer
  */
@@ -65,6 +65,7 @@ public class APISocket implements Runnable {
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return APISocket
      */
     public static APISocket getInstance(){
@@ -73,8 +74,9 @@ public class APISocket implements Runnable {
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return APISocket
      */
@@ -212,8 +214,8 @@ public class APISocket implements Runnable {
 
     /**
      * Returns the shared executor.
-     * <br>
-     * This should only be used by the SystemStats tool for read only operations.
+     *
+     * This should only be used by the SystemStats tool for read only operations. </br>
      *
      * @return ScalingExecutor
      */

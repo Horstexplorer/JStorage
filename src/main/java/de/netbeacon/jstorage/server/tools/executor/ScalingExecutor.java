@@ -25,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Used to handle executions in a fast scaling way
+ *
+ * @author horstexplorer
  */
 public class ScalingExecutor {
 
@@ -52,6 +54,7 @@ public class ScalingExecutor {
 
     /**
      * Execute a new runnable
+     *
      * @param runnable Runnable
      * @throws RejectedExecutionException if the queue is full
      */
@@ -65,6 +68,7 @@ public class ScalingExecutor {
 
     /**
      * Returns the number of threads always available
+     *
      * @return int
      */
     public int getCorePoolSize(){
@@ -73,6 +77,7 @@ public class ScalingExecutor {
 
     /**
      * Returns the number of threads available at most
+     *
      * @return int
      */
     public int getMaxPoolSize(){
@@ -80,7 +85,8 @@ public class ScalingExecutor {
     }
 
     /**
-     * Returns the current number of threads used in the threadpool
+     * Returns the current number of threads used in the thread pool
+     *
      * @return int
      */
     public int getCurrentPoolSize(){
@@ -89,6 +95,7 @@ public class ScalingExecutor {
 
     /**
      * Used to get the remaining capacity of the queue
+     *
      * @return int
      */
     public int getRemainingQueueCapacity(){
@@ -97,6 +104,7 @@ public class ScalingExecutor {
 
     /**
      * Used to get the maximum capacity of the queue
+     *
      * @return int
      */
     public int getMaxQueueCapacity(){
@@ -105,6 +113,7 @@ public class ScalingExecutor {
 
     /**
      * Used to get the number of currently active threads
+     *
      * @return int
      */
     public int getActiveThreads(){
@@ -121,6 +130,7 @@ public class ScalingExecutor {
 
     /**
      * Used to shutdown now
+     *
      * @return List<Runnable>
      * @throws SecurityException on Exception
      */

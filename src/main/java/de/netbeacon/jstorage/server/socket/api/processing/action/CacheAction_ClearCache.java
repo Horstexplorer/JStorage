@@ -33,21 +33,21 @@ import java.util.List;
 
 /**
  * Cache Action - Clear Cache
- * <p>
- * --- Does --- <br>
- * Tries to clear a specific cache <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * cache <br>
- * --- Requirements --- <br>
- * path: cache/mng <br>
- * action: clear <br>
- * http_method: delete <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, CacheAdmin_Creator, CacheAdmin_User <br>
- * required_arguments: identifier(String, cacheIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to clear a specific cache </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * cache </br>
+ * --- Requirements --- </br>
+ * path: cache/mng </br>
+ * action: clear </br>
+ * http_method: delete </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, CacheAdmin_Creator, CacheAdmin_User </br>
+ * required_arguments: identifier(String, cacheIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

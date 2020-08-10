@@ -40,7 +40,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Creates the socket used for "ping" responses
- * This provides a message of what this is and provides easier access to logging and statistics
+ *
+ * This provides a message of what this is and provides easier access to logging and statistics </br>
  *
  * @author horstexplorer
  */
@@ -64,6 +65,7 @@ public class HelloSocket implements Runnable{
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return HelloSocket
      */
     public static HelloSocket getInstance(){
@@ -72,8 +74,9 @@ public class HelloSocket implements Runnable{
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return HelloSocket
      */

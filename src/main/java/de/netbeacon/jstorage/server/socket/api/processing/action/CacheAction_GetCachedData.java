@@ -34,22 +34,22 @@ import java.util.List;
 
 /**
  * Cache Action - Get Cached Data
- * <p>
- * --- Does --- <br>
- * Tries to get the selected data from the specified cache <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * cache, identifier, isvalid, isValidUntil, data if cached data is valid, else <br>
- * cache, identifier, isvalid as JSON <br>
- * --- Requirements --- <br>
- * path: cache/data <br>
- * action: get <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, DependentPermission.CacheAdmin_Creator, DependentPermission.CacheAdmin_User, DependentPermission.CacheAccess_Modify, DependentPermission.CacheAccess_Read <br>
- * required_arguments: cache(String, cacheIdentifier), identifier(String, dataIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to get the selected data from the specified cache </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * cache, identifier, isvalid, isValidUntil, data if cached data is valid, else </br>
+ * cache, identifier, isvalid as JSON </br>
+ * --- Requirements --- </br>
+ * path: cache/data </br>
+ * action: get </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, DependentPermission.CacheAdmin_Creator, DependentPermission.CacheAdmin_User, DependentPermission.CacheAccess_Modify, DependentPermission.CacheAccess_Read </br>
+ * required_arguments: cache(String, cacheIdentifier), identifier(String, dataIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

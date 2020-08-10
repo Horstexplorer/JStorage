@@ -39,8 +39,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * This class takes care of preparing and accessing all User objects
- * <p>
- * The user should only access the objects through this class but should be able to create them outside of it
+ *
+ * The user should only access the objects through this class but should be able to create them outside of it </br>
  *
  * @author horstexplorer
  */
@@ -61,6 +61,7 @@ public class UserManager {
 
     /**
      * Used to get the instance of this class without forcing initialization
+     *
      * @return UserManager
      */
     public static UserManager getInstance(){
@@ -69,8 +70,9 @@ public class UserManager {
 
     /**
      * Used to get the instance of this class
-     * <p>
-     * Can be used to initialize the class if this didnt happened yet
+     *
+     * Can be used to initialize the class if this didnt happened yet </br>
+     *
      * @param initializeIfNeeded boolean
      * @return UserManager
      */
@@ -191,8 +193,8 @@ public class UserManager {
 
     /**
      * Used for initial setup of the UserManager
-     * <p>
-     * Creates all listed User objects. See {@link User}
+     *
+     * Creates all listed User objects. See {@link User} </br>
      *
      * @throws SetupException on error
      */

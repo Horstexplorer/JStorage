@@ -39,8 +39,8 @@ public class Crypt {
     /**
      * Used to encrypt the input with a given password.
      *
-     * <p>
-     * This calls {@link Crypt#encrypt(byte[], String, byte[])} with {@link Crypt#nullSalt()} as salt
+     * This calls {@link Crypt#encrypt(byte[], String, byte[])} with {@link Crypt#nullSalt()} as salt </br>
+     *
      * @param bytes input bytes
      * @param password password
      * @return encrypted bytes
@@ -65,8 +65,9 @@ public class Crypt {
 
     /**
      * Used to decrypt the input with a given password.
-     * <p>
-     * This calls {@link Crypt#decrypt(byte[], String, byte[])} with {@link Crypt#nullSalt()} as salt
+     *
+     * This calls {@link Crypt#decrypt(byte[], String, byte[])} with {@link Crypt#nullSalt()} as salt </br>
+     *
      * @param bytes input bytes
      * @param password password
      * @return encrypted bytes
@@ -106,7 +107,7 @@ public class Crypt {
         byte[] result = new byte[cipher.getOutputSize(bytes.length)];
 
         int outputLength = 0;
-        int bytesProcessed = 0;
+        int bytesProcessed;
 
         bytesProcessed = cipher.processBytes(bytes, 0, bytes.length, result, 0);
         outputLength += bytesProcessed;
@@ -128,6 +129,7 @@ public class Crypt {
 
     /**
      * Returns CipherParameters for the given input
+     *
      * @param passwd password (char array)
      * @param salt salt (byte array)
      * @return CipherParameters
@@ -142,6 +144,7 @@ public class Crypt {
 
     /**
      * Provides default/empty salt
+     *
      * @return salt
      */
     private static byte[] nullSalt(){
@@ -150,6 +153,7 @@ public class Crypt {
 
     /**
      * Provides a random 16 byte salt
+     *
      * @return salt
      */
     public static byte[] genSalt(){

@@ -92,8 +92,8 @@ public class CachedData {
 
     /**
      * Used to check if this object is still valid
-     * <p>
-     * Returns true if it is or if there is no expiration time set (expressed as negative values)
+     *
+     * Returns true if it is or if there is no expiration time set (expressed as negative values) </br>
      *
      * @return boolean boolean
      */

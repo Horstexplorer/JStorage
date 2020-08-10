@@ -26,6 +26,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * This class takes care of handling the notification transport between the NotificationManager and the NotificationSocket
+ *
+ * @author horstexplorer
  */
 public class NotificationListener {
 
@@ -35,6 +37,7 @@ public class NotificationListener {
 
     /**
      * Creates a new instance of this class
+     *
      * @param user the user owning this listener
      * @param requestedNotifications wanted notifications
      */
@@ -45,8 +48,8 @@ public class NotificationListener {
 
     /**
      * Used to offer a notification to this listener
-     * <br>
-     * This will only be queued if it the notification did not come from the same user and the notification comes from a wanted origin
+     *
+     * This will only be queued if it the notification did not come from the same user and the notification comes from a wanted origin </br>
      *
      * @param notification the notification
      * @throws InterruptedException on exception
@@ -66,8 +69,9 @@ public class NotificationListener {
 
     /**
      * Used to get the next notification from the queue.
-     * <br>
-     * This basically just wraps blockingQueue.take()
+     *
+     * This basically just wraps blockingQueue.take() </br>
+     *
      * @return DataNotification
      * @throws InterruptedException on exception
      */

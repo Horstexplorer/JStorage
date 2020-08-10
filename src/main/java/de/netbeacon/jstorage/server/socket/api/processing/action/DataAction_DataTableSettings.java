@@ -34,21 +34,21 @@ import java.util.List;
 
 /**
  * Cache Action - Data Table Settings
- * <p>
- * --- Does --- <br>
- * Tries to change settings for a specific datatable within a database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database, table, settings <br>
- * --- Requirements --- <br>
- * path: data/db/table <br>
- * action: settings <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: yes - optional: adaptiveLoading(boolean), defaultStructure(JSONObject), autoOptimize(Boolean), autoResolveDataInconsistency(Integer in range -1 to 3), secureInsert (Boolean) <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator <br>
- * required_arguments: database(String, databaseIdentifier), identifier(String, tableIdentifier) <br>
- * optional_arguments: optimize(Boolean), resolvedatainconsistency(Integer in range -1 to 3), upgradestructure (Boolean) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to change settings for a specific datatable within a database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database, table, settings </br>
+ * --- Requirements --- </br>
+ * path: data/db/table </br>
+ * action: settings </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: yes - optional: adaptiveLoading(boolean), defaultStructure(JSONObject), autoOptimize(Boolean), autoResolveDataInconsistency(Integer in range -1 to 3), secureInsert (Boolean) </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator </br>
+ * required_arguments: database(String, databaseIdentifier), identifier(String, tableIdentifier) </br>
+ * optional_arguments: optimize(Boolean), resolvedatainconsistency(Integer in range -1 to 3), upgradestructure (Boolean) </br>
  *
  * @author horstexplorer
  */

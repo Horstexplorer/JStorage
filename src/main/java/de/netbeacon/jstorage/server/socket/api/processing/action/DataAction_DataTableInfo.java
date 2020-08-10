@@ -35,22 +35,22 @@ import java.util.List;
 
 /**
  * Data Action - Data Table Info
- * <p>
- * --- Does --- <br>
- * Tries to list information for all or a specific data table within a database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database, table, adaptiveLoad, datasets, shards or <br>
- * database, tables as JSONObject <br>
- * --- Requirements --- <br>
- * path: data/db/table <br>
- * action: info <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify, DependentPermission.DBAccess_Read <br>
- * required_arguments: database(String, databaseIdentifier) <br>
- * optional_arguments: identifier(String, tableIdentifier) <br>
+ * 
+ * --- Does --- </br>
+ * Tries to list information for all or a specific data table within a database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database, table, adaptiveLoad, datasets, shards or </br>
+ * database, tables as JSONObject </br>
+ * --- Requirements --- </br>
+ * path: data/db/table </br>
+ * action: info </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify, DependentPermission.DBAccess_Read </br>
+ * required_arguments: database(String, databaseIdentifier) </br>
+ * optional_arguments: identifier(String, tableIdentifier) </br>
  *
  * @author horstexplorer
  */

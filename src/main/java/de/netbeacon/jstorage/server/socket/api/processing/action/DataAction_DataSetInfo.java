@@ -36,21 +36,21 @@ import java.util.List;
 
 /**
  * Data Action - Data Set Info
- * <p>
- * --- Does --- <br>
- * Tries to list information for a specific database within a within a datatable <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * database, table, identifier, size, keys <br>
- * --- Requirements --- <br>
- * path: data/db/table/dataset <br>
- * action: info <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify, DependentPermission.DBAccess_Read <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to list information for a specific database within a within a datatable </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * database, table, identifier, size, keys </br>
+ * --- Requirements --- </br>
+ * path: data/db/table/dataset </br>
+ * action: info </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify, DependentPermission.DBAccess_Read </br>
+ * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

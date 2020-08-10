@@ -35,21 +35,21 @@ import java.util.List;
 
 /**
  * Data Action - GET Data Set
- * <p>
- * --- Does --- <br>
- * Tries to get and return a specific dataset datatable within the selected table from a database <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * Dataset as JSONObject <br>
- * --- Requirements --- <br>
- * path: data/db/table/dataset <br>
- * action: get <br>
- * http_method: get <br>
- * login-mode: token <br>
- * payload: no <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify <br>
- * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to get and return a specific dataset datatable within the selected table from a database </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * Dataset as JSONObject </br>
+ * --- Requirements --- </br>
+ * path: data/db/table/dataset </br>
+ * action: get </br>
+ * http_method: get </br>
+ * login-mode: token </br>
+ * payload: no </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.DBAdmin, DependentPermission.DBAdmin_Creator, DependentPermission.DBAdmin_User, DependentPermission.DBAccess_Modify </br>
+ * required_arguments: database(String, databaseIdentifier), table(String, tableIdentifier), identifier(String, datasetIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */

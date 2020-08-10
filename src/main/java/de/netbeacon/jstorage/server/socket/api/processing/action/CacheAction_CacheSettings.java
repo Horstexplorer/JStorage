@@ -34,21 +34,21 @@ import java.util.List;
 
 /**
  * Cache Action - Cache Settings
- * <p>
- * --- Does --- <br>
- * Tries to change settings for a specific cache <br>
- * Exceptions catched by superordinate processing handler <br>
- * --- Returns --- <br>
- * Info <br>
- * --- Requirements --- <br>
- * path: cache <br>
- * action: settings <br>
- * http_method: put <br>
- * login-mode: token <br>
- * payload: yes - optional: adaptiveLoading(boolean) <br>
- * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, CacheAdmin_Creator, CacheAdmin_User <br>
- * required_arguments: identifier(String, cacheIdentifier) <br>
- * optional_arguments: <br>
+ * 
+ * --- Does --- </br>
+ * Tries to change settings for a specific cache </br>
+ * Exceptions catched by superordinate processing handler </br>
+ * --- Returns --- </br>
+ * Info </br>
+ * --- Requirements --- </br>
+ * path: cache </br>
+ * action: settings </br>
+ * http_method: put </br>
+ * login-mode: token </br>
+ * payload: yes - optional: adaptiveLoading(boolean) </br>
+ * permissions: GlobalPermission.Admin, GlobalPermission.CacheAdmin, CacheAdmin_Creator, CacheAdmin_User </br>
+ * required_arguments: identifier(String, cacheIdentifier) </br>
+ * optional_arguments: </br>
  *
  * @author horstexplorer
  */
