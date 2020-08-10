@@ -61,7 +61,7 @@ public class APISocketHandler implements Runnable {
     private static final long timeoutms = 15000; // 15s
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private ScheduledFuture<?> timeoutTask;
-    private static ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
     private final Logger logger = LoggerFactory.getLogger(APISocketHandler.class);
 
@@ -192,7 +192,7 @@ public class APISocketHandler implements Runnable {
                             }catch (Exception e){throw new HTTPException(400);}
                             // get data
                             //bufferedReader.readLine(); // skip empty line // not needed as we use this line to determine that we stop reading the header
-                            // start reading, max & 16MB
+                            // start reading, max at the maximum body size
                             if(1024*maxbodysize >= clength){
                                 ByteBuffer bodyBuffer = ByteBuffer.allocate(1024*maxbodysize);
                                 try{
