@@ -25,6 +25,7 @@ import de.netbeacon.jstorage.server.internal.usermanager.object.User;
 import de.netbeacon.jstorage.server.socket.notification.object.NotificationListener;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.exceptions.HTTPException;
+import de.netbeacon.jstorage.server.tools.executor.TimeoutExecutor;
 import de.netbeacon.jstorage.server.tools.info.Info;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
 import org.json.JSONObject;
@@ -40,10 +41,6 @@ import java.io.OutputStreamWriter;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -62,15 +59,23 @@ public class NotificationSocketHandler implements Runnable{
 
     private static final int maxheadersize = 8; // 8kb
     private static final long timeoutms = 3000; // 3s
+    private final TimeoutExecutor timeoutExecutor;
     private final AtomicBoolean canceled = new AtomicBoolean(false);
-    private ScheduledFuture<?> timeoutTask;
-    private static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
     private final Logger logger = LoggerFactory.getLogger(NotificationSocketHandler.class);
 
     protected NotificationSocketHandler(SSLSocket sslSocket){
         this.socket = sslSocket;
         this.ip = socket.getRemoteSocketAddress().toString().substring(1, socket.getRemoteSocketAddress().toString().indexOf(":"));
+
+        this.timeoutExecutor = new TimeoutExecutor(()->{
+            canceled.set(true);
+            try {
+                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_Notify/"+ Info.VERSION, "Connection: close");
+                endHeaders();
+            } catch (Exception ignore) {}
+            close();
+        });
     }
 
     @Override
@@ -78,7 +83,7 @@ public class NotificationSocketHandler implements Runnable{
         try{
             try{
                 // start timeout task initially (to make sure the connection is not just opened for fun)
-                startTimeoutTask(2500);
+                timeoutExecutor.start(2500);
                 // handshake
                 socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                 socket.startHandshake();
@@ -94,7 +99,7 @@ public class NotificationSocketHandler implements Runnable{
                     HEADERS
                  */
                 // (re)start timeout task; this will be used to wait for the header finishing to transmit
-                startTimeoutTask(timeoutms);
+                timeoutExecutor.start(timeoutms);
                 // get header (8kbit max, throw 413 else), get body if exists
                 int b;
                 ByteBuffer byteBuffer = ByteBuffer.allocate(1024*maxheadersize);
@@ -124,7 +129,7 @@ public class NotificationSocketHandler implements Runnable{
                     }
                 });
                 // stop timeout
-                stopTimeout();
+                timeoutExecutor.stop();
                 // check headers
                 if(!headers.containsKey("requested-notification")){
                     throw new HTTPException(400);
@@ -206,9 +211,13 @@ public class NotificationSocketHandler implements Runnable{
             // handshake failed or something else we dont really need to know
             logger.debug("SSLException On Hello Socket: ", e);
         }catch (Exception e){
-            // return 500
-            try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_Notify/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
-            logger.error("Exception On Notification Socket: ", e);
+            if(canceled.get()){ // if the connection will be closed on timeout so this code may throw an exception which we catch here (as this is not very interesting to us)
+                logger.debug("Request Timed Out");
+            }else{
+                // return 500
+                try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_Notify/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
+                logger.error("Exception On Notification Socket: ", e);
+            }
         }finally {
             close();
         }
@@ -259,36 +268,5 @@ public class NotificationSocketHandler implements Runnable{
         try{bufferedReader.close();}catch (Exception ignore){}
         try{bufferedWriter.close();}catch (Exception ignore){}
         try{socket.close();}catch (Exception ignore){}
-    }
-
-    /**
-     * Used to start a timeout for the connection
-     * <br>
-     * This will close the connection after a given time if not stopped
-     * If the task is already running it will be canceled and restarted
-     *
-     * @param timeout timeout in ms
-     */
-    private void startTimeoutTask(long timeout){
-        if(timeoutTask != null){
-            timeoutTask.cancel(true);
-        }
-        timeoutTask = ses.schedule(()->{
-            canceled.set(true);
-            try {
-                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_Notify/"+ Info.VERSION, "Connection: close");
-                endHeaders();
-            } catch (Exception ignore) {}
-            close();
-        }, timeout, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Used to stop the timeout task
-     */
-    private void stopTimeout(){
-        if(timeoutTask != null){
-            timeoutTask.cancel(true);
-        }
     }
 }

@@ -22,6 +22,7 @@ import de.netbeacon.jstorage.server.socket.hello.processing.HelloProcessor;
 import de.netbeacon.jstorage.server.socket.hello.processing.HelloProcessorResult;
 import de.netbeacon.jstorage.server.tools.exceptions.GenericObjectException;
 import de.netbeacon.jstorage.server.tools.exceptions.HTTPException;
+import de.netbeacon.jstorage.server.tools.executor.TimeoutExecutor;
 import de.netbeacon.jstorage.server.tools.info.Info;
 import de.netbeacon.jstorage.server.tools.ipban.IPBanManager;
 import de.netbeacon.jstorage.server.tools.ratelimiter.RateLimiter;
@@ -40,7 +41,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -58,9 +60,8 @@ public class HelloSocketHandler implements Runnable {
 
     private static final int maxheadersize = 8; // 8kb
     private static final long timeoutms = 3000; // 3s
+    private final TimeoutExecutor timeoutExecutor;
     private final AtomicBoolean canceled = new AtomicBoolean(false);
-    private ScheduledFuture<?> timeoutTask;
-    private static final ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
     private static final ConcurrentHashMap<String, RateLimiter> ipRateLimiter = new ConcurrentHashMap<>();
 
@@ -75,6 +76,15 @@ public class HelloSocketHandler implements Runnable {
         this.socket = socket;
         logger.debug("Handling Connection From "+socket.getRemoteSocketAddress());
         this.ip = socket.getRemoteSocketAddress().toString().substring(1, socket.getRemoteSocketAddress().toString().indexOf(":"));
+
+        this.timeoutExecutor = new TimeoutExecutor(()->{
+            canceled.set(true);
+            try {
+                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_Notify/"+ Info.VERSION, "Connection: close");
+                endHeaders();
+            } catch (Exception ignore) {}
+            close();
+        });
     }
 
 
@@ -83,7 +93,7 @@ public class HelloSocketHandler implements Runnable {
         try{
             try{
                 // start timeout task initially (to make sure the connection is not just opened for fun)
-                startTimeoutTask(2500);
+                timeoutExecutor.start(2500);
                 // handshake
                 socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                 socket.startHandshake();
@@ -103,7 +113,7 @@ public class HelloSocketHandler implements Runnable {
 
                  */
                 // (re)start timeout task; this will be used to wait for the header finishing to transmit
-                startTimeoutTask(timeoutms);
+                timeoutExecutor.start(timeoutms);
                 // get header (8kbit max, throw 413 else), get body if exists
                 int b;
                 ByteBuffer byteBuffer = ByteBuffer.allocate(1024*maxheadersize);
@@ -133,7 +143,7 @@ public class HelloSocketHandler implements Runnable {
                     }
                 });
                 // stop timeout
-                stopTimeout();
+                timeoutExecutor.stop();
                 // analyse headers
                 // check if all required headers exist
                 if(!headers.containsKey("http_method") || !headers.containsKey("http_url")){
@@ -238,9 +248,13 @@ public class HelloSocketHandler implements Runnable {
             // handshake failed or something else we dont really need to know
             logger.debug("SSLException On Hello Socket: ", e);
         }catch (Exception e){
-            // return 500
-            try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_Hello/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
-            logger.error("Exception On Hello Socket: ", e);
+            if(canceled.get()){ // if the connection will be closed on timeout so this code may throw an exception which we catch here (as this is not very interesting to us)
+                logger.debug("Request Timed Out");
+            }else{
+                // return 500
+                try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_Hello/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
+                logger.error("Exception On Hello Socket: ", e);
+            }
         }finally {
             logger.debug("Finished Processing Of "+socket.getRemoteSocketAddress());
             close();
@@ -289,34 +303,4 @@ public class HelloSocketHandler implements Runnable {
         try{socket.close();}catch (Exception ignore){}
     }
 
-    /**
-     * Used to start a timeout for the connection
-     * <br>
-     * This will close the connection after a given time if not stopped
-     * If the task is already running it will be canceled and restarted
-     *
-     * @param timeout timeout in ms
-     */
-    private void startTimeoutTask(long timeout){
-        if(timeoutTask != null){
-            timeoutTask.cancel(true);
-        }
-        timeoutTask = ses.schedule(()->{
-            canceled.set(true);
-            try {
-                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_Hello/"+ Info.VERSION, "Connection: close");
-                endHeaders();
-            } catch (Exception ignore) {}
-            close();
-        }, timeout, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Used to stop the timeout task
-     */
-    private void stopTimeout(){
-        if(timeoutTask != null){
-            timeoutTask.cancel(true);
-        }
-    }
 }
