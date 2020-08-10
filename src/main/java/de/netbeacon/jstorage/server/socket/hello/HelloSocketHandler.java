@@ -201,7 +201,7 @@ public class HelloSocketHandler implements Runnable {
                     throw new HTTPException(500); // should not happen, as processing should always return
                 }
                 // send
-                sendLines("HTTP/1.1 "+hpr.getHTTPStatusCode()+" "+hpr.getHTTPStatusMessage());
+                sendLines("HTTP/1.1 "+hpr.getHTTPStatusCode()+" "+hpr.getHTTPStatusMessage(), "Server: JStorage_API/"+Info.VERSION);
                 // server closes the connection
                 sendLines("Connection: close");
                 // send max & remaining bucket size + estimated refill time
@@ -228,9 +228,9 @@ public class HelloSocketHandler implements Runnable {
                 IPBanManager.getInstance().flagIP(ip); // may change later as not every exception should trigger ab ip flag
                 logger.debug("Send Result: ", e);
                 if(e.getAdditionalInformation() == null){
-                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage());
+                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION, "Connection: close");
                 }else{
-                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Additional-Information: "+e.getAdditionalInformation());
+                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION, "Connection: close", "Additional-Information: "+e.getAdditionalInformation());
                 }
                 endHeaders(); // "server: I finished sending headers"
             }
@@ -239,7 +239,7 @@ public class HelloSocketHandler implements Runnable {
             logger.debug("SSLException On Hello Socket: ", e);
         }catch (Exception e){
             // return 500
-            try{sendLines("HTTP/1.1 500 Internal Server Error"); endHeaders();}catch (Exception ignore){}
+            try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_API/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
             logger.error("Exception On Hello Socket: ", e);
         }finally {
             logger.debug("Finished Processing Of "+socket.getRemoteSocketAddress());
