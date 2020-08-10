@@ -38,6 +38,11 @@ import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The type Api socket handler.
@@ -53,6 +58,10 @@ public class APISocketHandler implements Runnable {
 
     private static final int maxheadersize = 8; // 8kb
     private static final int maxbodysize = 8000; //8mb
+    private static final long timeoutms = 15000; // 15s
+    private final AtomicBoolean canceled = new AtomicBoolean(false);
+    private ScheduledFuture<?> timeoutTask;
+    private static ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
 
     private final Logger logger = LoggerFactory.getLogger(APISocketHandler.class);
 
@@ -85,6 +94,8 @@ public class APISocketHandler implements Runnable {
     public void run(){
         try{
             try{
+                // start timeout task initially (to make sure the connection is not just opened for fun)
+                startTimeoutTask(2500);
                 // handshake
                 socket.setEnabledCipherSuites(socket.getSupportedCipherSuites());
                 socket.startHandshake();
@@ -105,7 +116,10 @@ public class APISocketHandler implements Runnable {
 
                     HEADERS AND DATA INPUT
 
-                 */
+                    */
+
+                    // (re)start timeout task; this will be used both to wait for a new request and the header finished to transmit
+                    startTimeoutTask(timeoutms);
 
                     // get header (8kbit max, throw 413 else), get body if exists
                     int b;
@@ -135,6 +149,9 @@ public class APISocketHandler implements Runnable {
                             }
                         }
                     });
+                    // stop timeout
+                    stopTimeout();
+
                     // analyse headers
                     // check if all required headers exist
                     if(!headers.containsKey("http_method") || !headers.containsKey("http_url")){
@@ -167,6 +184,9 @@ public class APISocketHandler implements Runnable {
                             if(!(headers.get("content-type").equalsIgnoreCase("application/json") || headers.get("content-type").equalsIgnoreCase("application/json; charset=utf-8"))){
                                 throw new HTTPException(406);
                             }
+                            // start timeout; this is the maximum amount of data / a second per mbyte (of the max request)
+                            startTimeoutTask(maxbodysize);
+
                             int clength = -1;
                             try{clength = Integer.parseInt(headers.get("content-length"));if(clength <= 0){throw new Exception();}
                             }catch (Exception e){throw new HTTPException(400);}
@@ -193,6 +213,9 @@ public class APISocketHandler implements Runnable {
                             }else{
                                 throw new HTTPException(413, "Body/Payload Exceeds Limit"); // should be thrown instead of rethrow in BOE
                             }
+                            // stop timeout
+                            stopTimeout();
+
                         }else{ // none
                             // not required as some data may be updated via header/request url
                             // may throw an exception in the future
@@ -276,7 +299,7 @@ public class APISocketHandler implements Runnable {
                     sendLines("HTTP/1.1 "+hpr.getHTTPStatusCode()+" "+hpr.getHTTPStatusMessage(), "Server: JStorage_API/"+Info.VERSION);
                     // server closes the connection
                     if(keepAlive){
-                        sendLines("Connection: keep-alive");
+                        sendLines("Connection: keep-alive", "Keep-Alive: timeout="+(timeoutms/1000));
                     }else{
                         sendLines("Connection: close");
                     }
@@ -309,9 +332,9 @@ public class APISocketHandler implements Runnable {
                 IPBanManager.getInstance().flagIP(ip); // may change later as not every exception should trigger ab ip flag
                 logger.debug("Sent Result: ", e);
                 if(e.getAdditionalInformation() == null){
-                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION);
+                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION, "Connection: close");
                 }else{
-                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION, "Additional-Information: "+e.getAdditionalInformation());
+                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION, "Connection: close", "Additional-Information: "+e.getAdditionalInformation());
                 }
                 endHeaders(); // "server: I finished sending headers"
                 close();
@@ -322,7 +345,7 @@ public class APISocketHandler implements Runnable {
             close();
         }catch (Exception e){
             // return 500
-            try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_API/"+Info.VERSION); endHeaders();}catch (Exception ignore){}
+            try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_API/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
             logger.error("Exception On API Socket: ", e);
             close();
         }
@@ -369,5 +392,36 @@ public class APISocketHandler implements Runnable {
         try{bufferedReader.close();}catch (Exception ignore){}
         try{bufferedWriter.close();}catch (Exception ignore){}
         try{socket.close();}catch (Exception ignore){}
+    }
+
+    /**
+     * Used to start a timeout for the connection
+     * <br>
+     * This will close the connection after a given time if not stopped
+     * If the task is already running it will be canceled and restarted
+     *
+     * @param timeout timeout in ms
+     */
+    private void startTimeoutTask(long timeout){
+        if(timeoutTask != null){
+            timeoutTask.cancel(true);
+        }
+        timeoutTask = ses.schedule(()->{
+            canceled.set(true);
+            try {
+                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_API/"+Info.VERSION, "Connection: close");
+                endHeaders();
+            } catch (Exception ignore) {}
+            close();
+        }, timeout, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Used to stop the timeout task
+     */
+    private void stopTimeout(){
+        if(timeoutTask != null){
+            timeoutTask.cancel(true);
+        }
     }
 }
