@@ -299,7 +299,7 @@ public class APISocketHandler implements Runnable {
                     sendLines("HTTP/1.1 "+hpr.getHTTPStatusCode()+" "+hpr.getHTTPStatusMessage(), "Server: JStorage_API/"+Info.VERSION);
                     // server closes the connection
                     if(keepAlive){
-                        sendLines("Connection: keep-alive", "Keep-Alive: timeout="+(timeoutms/1000));
+                        sendLines("Connection: keep-alive", "Keep-Alive: timeout="+Math.max((timeoutms/1000)-1, 0)); // we will close the connection a second after the min time
                     }else{
                         sendLines("Connection: close");
                     }
