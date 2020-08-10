@@ -11,6 +11,9 @@ patch - bug fixes
 counter - number of total changes
 ```
 
+## v1.7.4_29
+- added support for reusing a http connection on the api socket
+- improved http connection responses
 ## v1.7.3_28
 - added a timestamp to update & insert operations (datasets)
 - fixed a npe of the notification system
