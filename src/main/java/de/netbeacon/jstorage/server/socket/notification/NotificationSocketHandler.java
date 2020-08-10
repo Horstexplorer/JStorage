@@ -178,7 +178,7 @@ public class NotificationSocketHandler implements Runnable{
                     throw new HTTPException(400);
                 }
                 // send ok
-                sendLines("HTTP/1.1 200 OK", "Server: JStorage_API/"+Info.VERSION, "Connection: close");
+                sendLines("HTTP/1.1 200 OK", "Server: JStorage_Notify/"+Info.VERSION, "Connection: close");
                 endHeaders();
                 // register
                 notificationListener = new NotificationListener(user, requestedNotifications);
@@ -196,9 +196,9 @@ public class NotificationSocketHandler implements Runnable{
                 IPBanManager.getInstance().flagIP(ip); // may change later as not every exception should trigger ab ip flag
                 logger.debug("Send Result: ", e);
                 if(e.getAdditionalInformation() == null){
-                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION, "Connection: close");
+                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_Notify/"+Info.VERSION, "Connection: close");
                 }else{
-                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_API/"+Info.VERSION, "Connection: close", "Additional-Information: "+e.getAdditionalInformation());
+                    sendLines("HTTP/1.1 "+e.getStatusCode()+" "+e.getMessage(), "Server: JStorage_Notify/"+Info.VERSION, "Connection: close", "Additional-Information: "+e.getAdditionalInformation());
                 }
                 endHeaders(); // "server: I finished sending headers"
             }
@@ -207,7 +207,7 @@ public class NotificationSocketHandler implements Runnable{
             logger.debug("SSLException On Hello Socket: ", e);
         }catch (Exception e){
             // return 500
-            try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_API/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
+            try{sendLines("HTTP/1.1 500 Internal Server Error", "Server: JStorage_Notify/"+Info.VERSION, "Connection: close"); endHeaders();}catch (Exception ignore){}
             logger.error("Exception On Notification Socket: ", e);
         }finally {
             close();
@@ -276,7 +276,7 @@ public class NotificationSocketHandler implements Runnable{
         timeoutTask = ses.schedule(()->{
             canceled.set(true);
             try {
-                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_API/"+ Info.VERSION, "Connection: close");
+                sendLines("HTTP/1.1 408 Request Timeout", "Server: JStorage_Notify/"+ Info.VERSION, "Connection: close");
                 endHeaders();
             } catch (Exception ignore) {}
             close();
